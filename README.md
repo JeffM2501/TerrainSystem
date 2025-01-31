@@ -5,3 +5,5 @@
 * Grass instancing using custom attribute (vec4)
 * Grass animation using trig or trig table
 * Trees placed on material types
+* Fixed quad/octree for vis
+* draw sorted based on rings around player
