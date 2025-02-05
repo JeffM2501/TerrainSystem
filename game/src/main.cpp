@@ -29,11 +29,25 @@ Use this as a starting point or replace it with your code.
 #include "lib.h"	// an external header in the static lib project
 
 
+#include "terrain_tile.h"
+#include "tile_builder.h"
+#include "tile_renderer.h"
+
+TerrainInfo info;
+
+TerrainTile testTile(info);
+
 void GameInit()
 {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(InitalWidth, InitalHeight, "Example");
     SetTargetFPS(144);
+
+    testTile.TerranHeightmap = GenImagePerlinNoise(129, 129, 0, 0, 1);
+    testTile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
+
+    TileMeshBuilder builder;
+    builder.Build(testTile);
 
     // load resources
 }
