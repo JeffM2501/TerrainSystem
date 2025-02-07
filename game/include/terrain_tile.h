@@ -51,7 +51,7 @@ struct TerrainTile
     unsigned int VaoId = -1;
     unsigned int* VboId = nullptr;
 
-    TerrainLODTriangleInfo LODs[MaxLODLevels];
+    const TerrainLODTriangleInfo *LODs = nullptr;
 
     TerrainTile(TerrainInfo& info) : Info(info) {}
 };

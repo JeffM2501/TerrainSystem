@@ -28,7 +28,7 @@ Use this as a starting point or replace it with your code.
 #include "rcamera.h"
 
 #include "game.h"   // an external header in this project
-#include "lib.h"	// an external header in the static lib project
+
 
 int LODLevel = 0;
 
