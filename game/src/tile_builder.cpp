@@ -4,6 +4,62 @@
 #include "rlgl.h"
 #include "config.h"
 
+void BuildLODIndexList(uint16_t* indexes, size_t& triangleIndex, int grid, int offset = 1)
+{
+    bool flip = false;
+    // generate the index list
+    for (uint16_t y = 0; y < grid; y += offset)
+    {
+        for (uint16_t x = 0; x < grid; x += offset)
+        {
+            uint16_t x2 = x + offset;
+            uint16_t y2 = y + offset;
+
+            /*
+                B	C
+
+                P	A
+            */
+            uint16_t p = y * uint16_t(grid + 1) + x;
+            uint16_t a = y * uint16_t(grid + 1) + x2;
+            uint16_t b = y2 * uint16_t(grid + 1) + x;
+            uint16_t c = y2 * uint16_t(grid + 1) + x2;
+
+            if (flip)
+            {
+                // PAC
+                indexes[(triangleIndex * 3) + 0] = p;
+                indexes[(triangleIndex * 3) + 1] = a;
+                indexes[(triangleIndex * 3) + 2] = c;
+                triangleIndex++;
+
+                // PCB
+                indexes[(triangleIndex * 3) + 0] = p;
+                indexes[(triangleIndex * 3) + 1] = c;
+                indexes[(triangleIndex * 3) + 2] = b;
+                triangleIndex++;
+            }
+            else
+            {
+                // PAB
+                indexes[(triangleIndex * 3) + 0] = p;
+                indexes[(triangleIndex * 3) + 1] = a;
+                indexes[(triangleIndex * 3) + 2] = b;
+                triangleIndex++;
+
+                // ACB
+                indexes[(triangleIndex * 3) + 0] = a;
+                indexes[(triangleIndex * 3) + 1] = c;
+                indexes[(triangleIndex * 3) + 2] = b;
+                triangleIndex++;
+            }
+
+            flip = !flip;
+        }
+        flip = !flip;
+    }
+}
+
 void TileMeshBuilder::Build(TerrainTile& tile)
 {
     uint32_t vertCount = uint32_t(tile.Info.TerrainGridSize + 1) * uint32_t(tile.Info.TerrainGridSize + 1);
@@ -17,7 +73,7 @@ void TileMeshBuilder::Build(TerrainTile& tile)
 
     uint8_t* colors = (uint8_t*)MemAlloc(vertCount * 4);
 
-    uint16_t* indexes = (uint16_t*)MemAlloc(sizeof(uint16_t) * triangleCount * 3);
+    uint16_t* indexes = (uint16_t*)MemAlloc(sizeof(uint16_t) * (triangleCount + triangleCount/2 + triangleCount/4) * 3);
 
     float vertexScale = tile.Info.TerrainTileSize / tile.Info.TerrainGridSize;
     float uv2Scale = tile.Info.TerrainTileSize / tile.Info.TerrainGridSize;
@@ -55,61 +111,18 @@ void TileMeshBuilder::Build(TerrainTile& tile)
         }
     }
 
-    uint32_t triangleIndex = 0;
-    bool flip = false;
-    // generate the index list
-    for (uint16_t y = 0; y < tile.Info.TerrainGridSize; y++)
-    {
-        for (uint16_t x = 0; x < tile.Info.TerrainGridSize; x++)
-        {
-            uint16_t x2 = x + 1;
-            uint16_t y2 = y + 1;
+    size_t triangleIndex = 0;
+    tile.LODs[0].IndexStart = 0;
+    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 1);
+    tile.LODs[0].IndexCount = triangleIndex;
 
-            /*
-                B	C
+    tile.LODs[1].IndexStart = triangleIndex;
+    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 2);
+    tile.LODs[1].IndexCount = triangleIndex;
 
-                P	A
-            */
-            uint16_t p = y * uint16_t(tile.Info.TerrainGridSize + 1) + x;
-            uint16_t a = y * uint16_t(tile.Info.TerrainGridSize + 1) + x2;
-            uint16_t b = y2 * uint16_t(tile.Info.TerrainGridSize + 1) + x;
-            uint16_t c = y2 * uint16_t(tile.Info.TerrainGridSize + 1) + x2;
-
-            if (flip)
-            { 
-                // PAC
-                indexes[(triangleIndex * 3) + 0] = p;
-                indexes[(triangleIndex * 3) + 1] = a;
-                indexes[(triangleIndex * 3) + 2] = c;
-                triangleIndex++;
-
-                // PCB
-                indexes[(triangleIndex * 3) + 0] = p;
-                indexes[(triangleIndex * 3) + 1] = c;
-                indexes[(triangleIndex * 3) + 2] = b;
-                triangleIndex++;
-            }
-             else
-             {
-                 // PAB
-                 indexes[(triangleIndex * 3) + 0] = p;
-                 indexes[(triangleIndex * 3) + 1] = a;
-                 indexes[(triangleIndex * 3) + 2] = b;
-                 triangleIndex++;
- 
-                 // ACB
-                 indexes[(triangleIndex * 3) + 0] = a;
-                 indexes[(triangleIndex * 3) + 1] = c;
-                 indexes[(triangleIndex * 3) + 2] = b;
-                 triangleIndex++;
-             }
-
-            flip = !flip;
-        }
-        flip = !flip;
-    }
-
-    tile.LODs[0].TriangleCount = triangleCount;
+    tile.LODs[2].IndexStart = triangleIndex;
+    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 4);
+    tile.LODs[2].IndexCount = triangleIndex;
 
     // upload the buffers
     tile.VboId = (unsigned int*)MemAlloc(MAX_MESH_VERTEX_BUFFERS * sizeof(unsigned int));
@@ -161,7 +174,7 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     rlSetVertexAttribute(5, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(5);
   
-    tile.LODs[0].VBO = rlLoadVertexBufferElement(indexes, tile.LODs[0].TriangleCount * 3 * sizeof(unsigned short), false);
+    tile.VboId[6] = rlLoadVertexBufferElement(indexes, triangleIndex * 3 * sizeof(unsigned short), false);
 
     rlDisableVertexArray();
 

@@ -30,6 +30,7 @@ Use this as a starting point or replace it with your code.
 #include "game.h"   // an external header in this project
 #include "lib.h"	// an external header in the static lib project
 
+int LODLevel = 0;
 
 #include "terrain_tile.h"
 #include "tile_builder.h"
@@ -180,19 +181,27 @@ bool GameUpdate()
 {
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
         UpdateCameraXY(&ViewCamera, CAMERA_THIRD_PERSON);
+
+    if (IsKeyDown(KEY_ONE))
+        LODLevel = 0;
+    if (IsKeyDown(KEY_TWO))
+        LODLevel = 1;
+    if (IsKeyDown(KEY_THREE))
+        LODLevel = 2;
+
     return true;
 }
 
 void GameDraw()
 {
     BeginDrawing();
-    ClearBackground(DARKGRAY);
+    ClearBackground(BLACK);
 
     BeginMode3D(ViewCamera);
 
     rlPushMatrix();
     rlRotatef(90, 1, 0, 0);
-    DrawGrid(200, 1);
+  //  DrawGrid(200, 1);
     rlPopMatrix();
 
     DrawCube(Vector3Zeros, 1, 1, 1, RED);
@@ -206,7 +215,7 @@ void GameDraw()
     DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 
     rlEnableWireMode();
-    Renderer.Draw(testTile);
+    Renderer.Draw(testTile, LODLevel);
     rlDisableWireMode();
 
     EndMode3D();

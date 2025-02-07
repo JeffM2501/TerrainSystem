@@ -33,8 +33,8 @@ static constexpr uint8_t MaxLODLevels = 3;
 
 struct TerrainLODTriangleInfo
 {
-    unsigned int VBO = -1;
-    size_t TriangleCount = 0;
+    size_t IndexStart= -1;
+    size_t IndexCount = 0;
 };
 
 struct TerrainTile
@@ -52,7 +52,6 @@ struct TerrainTile
     unsigned int* VboId = nullptr;
 
     TerrainLODTriangleInfo LODs[MaxLODLevels];
-    size_t LastUsedLOD = 0;
 
     TerrainTile(TerrainInfo& info) : Info(info) {}
 };
