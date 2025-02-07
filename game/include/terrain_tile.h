@@ -24,9 +24,17 @@ struct TerrainInfo
 {
     uint8_t TerrainGridSize = 128;
 
-    float TerrainTileSize = 128.0f;
+    float TerrainTileSize = 128;
     float TerrainMinZ = 0;
     float TerrainMaxZ = 300;
+};
+
+static constexpr uint8_t MaxLODLevels = 3;
+
+struct TerrainLODTriangleInfo
+{
+    unsigned int VBO = -1;
+    size_t TriangleCount = 0;
 };
 
 struct TerrainTile
@@ -42,6 +50,9 @@ struct TerrainTile
 
     unsigned int VaoId = -1;
     unsigned int* VboId = nullptr;
+
+    TerrainLODTriangleInfo LODs[MaxLODLevels];
+    size_t LastUsedLOD = 0;
 
     TerrainTile(TerrainInfo& info) : Info(info) {}
 };

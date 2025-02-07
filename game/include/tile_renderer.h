@@ -13,5 +13,5 @@ public:
 
     TerainRenderer();
 
-    void Draw(TerrainTile& tile);
+    void Draw(TerrainTile& tile, size_t lod = 0);
 };

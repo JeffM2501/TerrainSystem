@@ -6,8 +6,8 @@
 
 void TileMeshBuilder::Build(TerrainTile& tile)
 {
-    uint32_t vertCount = (tile.Info.TerrainGridSize + 1) * (tile.Info.TerrainGridSize + 1);
-    uint32_t triangleCount = tile.Info.TerrainGridSize * tile.Info.TerrainGridSize * 2;
+    uint32_t vertCount = uint32_t(tile.Info.TerrainGridSize + 1) * uint32_t(tile.Info.TerrainGridSize + 1);
+    uint32_t triangleCount = uint32_t(tile.Info.TerrainGridSize) * uint32_t(tile.Info.TerrainGridSize) * 2;
 
     float* verts = (float*)MemAlloc(sizeof(float) * vertCount * 3);
     float* normals = (float*)MemAlloc(sizeof(float) * vertCount * 3);
@@ -46,8 +46,8 @@ void TileMeshBuilder::Build(TerrainTile& tile)
             textureCord2s[(vertIndex * 2) + 0] = x * uv2Scale;
             textureCord2s[(vertIndex * 2) + 1] = y * uv2Scale;
 
-            colors[(vertIndex * 4) + 0] = x;
-            colors[(vertIndex * 4) + 1] = y;
+            colors[(vertIndex * 4) + 0] = 255;
+            colors[(vertIndex * 4) + 1] = 255;
             colors[(vertIndex * 4) + 2] = 255;
             colors[(vertIndex * 4) + 3] = 255;
 
@@ -58,22 +58,22 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     uint32_t triangleIndex = 0;
     bool flip = false;
     // generate the index list
-    for (int y = 0; y < tile.Info.TerrainGridSize; y++)
+    for (uint16_t y = 0; y < tile.Info.TerrainGridSize; y++)
     {
-        for (int x = 0; x < tile.Info.TerrainGridSize; x++)
+        for (uint16_t x = 0; x < tile.Info.TerrainGridSize; x++)
         {
-            int x2 = x + 1;
-            int y2 = y + 1;
+            uint16_t x2 = x + 1;
+            uint16_t y2 = y + 1;
 
             /*
                 B	C
 
                 P	A
             */
-            uint16_t p = y * (tile.Info.TerrainGridSize + 1) + x;
-            uint16_t a = y * (tile.Info.TerrainGridSize + 1) + x2;
-            uint16_t b = y2 * (tile.Info.TerrainGridSize + 1) + x;
-            uint16_t c = y2 * (tile.Info.TerrainGridSize + 1) + x2;
+            uint16_t p = y * uint16_t(tile.Info.TerrainGridSize + 1) + x;
+            uint16_t a = y * uint16_t(tile.Info.TerrainGridSize + 1) + x2;
+            uint16_t b = y2 * uint16_t(tile.Info.TerrainGridSize + 1) + x;
+            uint16_t c = y2 * uint16_t(tile.Info.TerrainGridSize + 1) + x2;
 
             if (flip)
             { 
@@ -89,23 +89,27 @@ void TileMeshBuilder::Build(TerrainTile& tile)
                 indexes[(triangleIndex * 3) + 2] = b;
                 triangleIndex++;
             }
-            else
-            {
-                // PAB
-                indexes[(triangleIndex * 3) + 0] = p;
-                indexes[(triangleIndex * 3) + 1] = a;
-                indexes[(triangleIndex * 3) + 2] = b;
-                triangleIndex++;
-                // ACB
-                indexes[(triangleIndex * 3) + 0] = a;
-                indexes[(triangleIndex * 3) + 1] = c;
-                indexes[(triangleIndex * 3) + 2] = b;
-                triangleIndex++;
-            }
+             else
+             {
+                 // PAB
+                 indexes[(triangleIndex * 3) + 0] = p;
+                 indexes[(triangleIndex * 3) + 1] = a;
+                 indexes[(triangleIndex * 3) + 2] = b;
+                 triangleIndex++;
+ 
+                 // ACB
+                 indexes[(triangleIndex * 3) + 0] = a;
+                 indexes[(triangleIndex * 3) + 1] = c;
+                 indexes[(triangleIndex * 3) + 2] = b;
+                 triangleIndex++;
+             }
 
             flip = !flip;
         }
+        flip = !flip;
     }
+
+    tile.LODs[0].TriangleCount = triangleCount;
 
     // upload the buffers
     tile.VboId = (unsigned int*)MemAlloc(MAX_MESH_VERTEX_BUFFERS * sizeof(unsigned int));
@@ -157,7 +161,7 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     rlSetVertexAttribute(5, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(5);
   
-    tile.VboId[6] = rlLoadVertexBufferElement(indexes, triangleCount * 3 * sizeof(unsigned short), false);
+    tile.LODs[0].VBO = rlLoadVertexBufferElement(indexes, tile.LODs[0].TriangleCount * 3 * sizeof(unsigned short), false);
 
     rlDisableVertexArray();
 

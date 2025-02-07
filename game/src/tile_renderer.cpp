@@ -3,6 +3,8 @@
 #include "rlgl.h"
 #include "raymath.h"
 
+#include "external/glad.h"
+
 constexpr float WHITEF[4] = { 1,1,1,1 };
 
 TerainRenderer::TerainRenderer()
@@ -10,7 +12,17 @@ TerainRenderer::TerainRenderer()
     TerrainShader = LoadShader(nullptr, nullptr);
 }
 
-void TerainRenderer::Draw(TerrainTile& tile)
+// Draw vertex array elements
+void rlDrawVertexArrayElementsQuads(int offset, int count, const void* buffer)
+{
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    unsigned short* bufferPtr = (unsigned short*)buffer;
+    if (offset > 0) bufferPtr += offset;
+
+    glDrawElements(GL_QUADS, count, GL_UNSIGNED_SHORT, (const unsigned short*)bufferPtr);
+}
+
+void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
 {
     rlEnableShader(TerrainShader.id);
     rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_DIFFUSE], WHITEF, SHADER_UNIFORM_VEC4, 1);
@@ -52,83 +64,28 @@ void TerainRenderer::Draw(TerrainTile& tile)
     rlSetUniform(TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE + 0], &slot, SHADER_UNIFORM_INT, 1);
 
     // bind vao
-    if (!rlEnableVertexArray(tile.VaoId))
-    {
-        // Bind mesh VBO data: vertex position (shader-location = 0)
-        rlEnableVertexBuffer(tile.VboId[0]);
-        rlSetVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_POSITION], 3, RL_FLOAT, 0, 0, 0);
-        rlEnableVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_POSITION]);
+    rlEnableVertexArray(tile.VaoId);
 
-        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
-        rlEnableVertexBuffer(tile.VboId[1]);
-        rlSetVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_TEXCOORD01], 2, RL_FLOAT, 0, 0, 0);
-        rlEnableVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_TEXCOORD01]);
+    Matrix matModelViewProjection = MatrixMultiply(matModelView, matProjection);
 
-        if (TerrainShader.locs[SHADER_LOC_VERTEX_NORMAL] != -1)
-        {
-            // Bind mesh VBO data: vertex normals (shader-location = 2)
-            rlEnableVertexBuffer(tile.VboId[2]);
-            rlSetVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_NORMAL], 3, RL_FLOAT, 0, 0, 0);
-            rlEnableVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_NORMAL]);
-        }
+    // Send combined model-view-projection matrix to shader
+    rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
-        // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
-        if (TerrainShader.locs[SHADER_LOC_VERTEX_COLOR] != -1)
-        {
-            if (tile.VboId[3] != 0)
-            {
-                rlEnableVertexBuffer(tile.VboId[3]);
-                rlSetVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_COLOR], 4, RL_UNSIGNED_BYTE, 1, 0, 0);
-                rlEnableVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_COLOR]);
-            }
-            else
-            {
-                // Set default value for defined vertex attribute in shader but not provided by mesh
-                // WARNING: It could result in GPU undefined behaviour
-                float value[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-                rlSetVertexAttributeDefault(TerrainShader.locs[SHADER_LOC_VERTEX_COLOR], value, SHADER_ATTRIB_VEC4, 4);
-                rlDisableVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_COLOR]);
-            }
-        }
+    // Draw mesh
+    rlDrawVertexArrayElements(0, tile.LODs[tile.LastUsedLOD].TriangleCount * 3, 0);
 
-        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
-        if (TerrainShader.locs[SHADER_LOC_VERTEX_TANGENT] != -1)
-        {
-            rlEnableVertexBuffer(tile.VboId[4]);
-            rlSetVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_TANGENT], 4, RL_FLOAT, 0, 0, 0);
-            rlEnableVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_TANGENT]);
-        }
+    // disable texture units
 
-        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
-        if (TerrainShader.locs[SHADER_LOC_VERTEX_TEXCOORD02] != -1)
-        {
-            rlEnableVertexBuffer(tile.VboId[5]);
-            rlSetVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_TEXCOORD02], 2, RL_FLOAT, 0, 0, 0);
-            rlEnableVertexAttribute(TerrainShader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
-        }
+    slot = 0;
+    rlActiveTextureSlot(slot);
+    rlDisableTexture();
 
-        rlEnableVertexBufferElement(tile.VboId[6]);
+    // Disable all possible vertex array objects (or VBOs)
+    rlDisableVertexArray();
+    rlDisableVertexBuffer();
+    rlDisableVertexBufferElement();
 
-        Matrix matModelViewProjection = MatrixMultiply(matModelView, matProjection);
-
-        // Send combined model-view-projection matrix to shader
-        rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
-
-        // Draw mesh
-        rlDrawVertexArrayElements(0, tile.Info.TerrainGridSize * tile.Info.TerrainGridSize * 3, 0);
-
-        // disable texture units
-
-        slot = 0;
-        rlActiveTextureSlot(slot);
-        rlDisableTexture();
-
-        // Disable all possible vertex array objects (or VBOs)
-        rlDisableVertexArray();
-        rlDisableVertexBuffer();
-        rlDisableVertexBufferElement();
-
-        // Disable shader program
-        rlDisableShader();
-    }
+    // Disable shader program
+    rlDisableShader();
+   
 }
