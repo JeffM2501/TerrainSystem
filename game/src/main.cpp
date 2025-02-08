@@ -41,8 +41,6 @@ TerrainInfo info;
 TerrainMaterial defaultMateral;
 
 std::vector<TerrainTile> Tiles;
-TerrainTile testTile(info);
-TerrainTile testTile2(info);
 
 Camera3D ViewCamera = { 0 };
 
@@ -154,9 +152,6 @@ void GameInit()
     rlSetClipPlanes(0.1f, 5000.0f);
 
     float perlinScale = 2;
-    
-    testTile.TerranHeightmap = GenImagePerlinNoise(129, 129, 0, 0, perlinScale);
-    testTile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
 
     info.TerrainMinZ = -6;
     info.TerrainMaxZ = 25;
@@ -173,7 +168,7 @@ void GameInit()
         for (int x = 0; x < grid; x++)
         {
             auto & tile = Tiles.emplace_back(info);
-            tile.TerranHeightmap = GenImagePerlinNoise(129, 129, x * 128, y*128, perlinScale);
+            tile.TerranHeightmap = GenImagePerlinNoise(130, 130, (x * 128) -1, (y*128)-1, perlinScale);
             tile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
             tile.LayerMaterials.push_back(&defaultMateral);
             tile.Origin = TerrainPosition{ x, y };
@@ -240,7 +235,7 @@ void GameDraw()
     rlEnableWireMode();
     for (int i = 0; i < Tiles.size(); i++)
     {
-        int lod = std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y)/3;
+        int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y)/3;
         if (lod >= MaxLODLevels)
             lod = MaxLODLevels - 1;
 

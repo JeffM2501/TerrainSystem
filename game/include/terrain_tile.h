@@ -54,4 +54,7 @@ struct TerrainTile
     const TerrainLODTriangleInfo *LODs = nullptr;
 
     TerrainTile(TerrainInfo& info) : Info(info) {}
+
+
+    float GetLocalHeight(int x, int y) const;
 };

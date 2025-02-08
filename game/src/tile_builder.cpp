@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include "rlgl.h"
+#include "raymath.h"
 #include "config.h"
 
 #include "external/glad.h"
@@ -92,9 +93,64 @@ void SetupIndexes(TerrainTile& tile)
     LODInfos[3].IndexCount = triangleIndex - LODInfos[3].IndexStart;
 
 
-    IndexList = rlLoadVertexBufferElement(indexes, triangleIndex * 3 * sizeof(unsigned short), false);
+    IndexList = rlLoadVertexBufferElement(indexes, (int)(triangleIndex * 3 * sizeof(unsigned short)), false);
 
     MemFree(indexes);
+}
+
+std::vector<Vector3> TileMeshBuilder::GetSiblingNormals(TerrainTile& tile, int16_t h, int16_t v)
+{
+    std::vector<Vector3> tempNormals;
+
+    Vector3 P = { 0,0,0 };
+
+    float thisH = tile.GetLocalHeight(h, v);
+
+    /*
+            B
+        A	P	C
+            D
+    */
+
+
+    Vector3 A = { -1, 0, tile.GetLocalHeight(h - 1,v) - thisH };
+    Vector3 B = { 0	, 1, tile.GetLocalHeight(h,v + 1) - thisH };
+    Vector3 C = { 1	, 0, tile.GetLocalHeight(h + 1,v) - thisH };
+    Vector3 D = { 0, -1, tile.GetLocalHeight(h,v - 1) - thisH };
+
+    Vector3 PA = Vector3Normalize(Vector3Subtract(A, P));
+    Vector3 PB = Vector3Normalize(Vector3Subtract(B, P));
+    Vector3 PC = Vector3Normalize(Vector3Subtract(C, P));
+    Vector3 PD = Vector3Normalize(Vector3Subtract(D, P));
+
+  //  if (IsPosValid(h - 1, v) && IsPosValid(h, v + 1))
+        tempNormals.push_back(Vector3CrossProduct(PB, PA));
+
+  //  if (IsPosValid(h, v + 1) && IsPosValid(h + 1, v))
+        tempNormals.push_back(Vector3CrossProduct(PC, PB));
+
+  //  if (IsPosValid(h + 1, v) && IsPosValid(h, v - 1))
+        tempNormals.push_back(Vector3CrossProduct(PD, PC));
+
+  //  if (IsPosValid(h, v + 1) && IsPosValid(h - 1, v))
+        tempNormals.push_back(Vector3CrossProduct(PA, PD));
+
+    return tempNormals;
+}
+
+Vector3 TileMeshBuilder::ComputeNormalForLocation(TerrainTile& tile, int16_t h, int16_t v)
+{
+    std::vector<Vector3> tempNormals = GetSiblingNormals(tile, h, v);
+
+    Vector3 totalNormal = { 0,0,0 };
+    for (const auto& norm : tempNormals)
+    {
+        totalNormal = Vector3Add(norm, totalNormal);
+    }
+
+    totalNormal = Vector3Scale(totalNormal, 1.0f / tempNormals.size());
+
+    return totalNormal;
 }
 
 void TileMeshBuilder::Build(TerrainTile& tile)
@@ -133,17 +189,16 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     {
         for (int x = 0; x < tile.Info.TerrainGridSize + 1; x++)
         {
-            float z = GetImageColor(tile.TerranHeightmap, x, y).r / 255.0f;
-            z *= (tile.Info.TerrainMaxZ - tile.Info.TerrainMinZ);
-            z += tile.Info.TerrainMinZ;
+            float z = tile.GetLocalHeight(x, y);
 
             verts[(vertIndex * 3) + 0] = x * vertexScale;
             verts[(vertIndex * 3) + 1] = y * vertexScale;
             verts[(vertIndex * 3) + 2] = z;
 
-            normals[(vertIndex * 3) + 0] = 0;
-            normals[(vertIndex * 3) + 1] = 0;
-            normals[(vertIndex * 3) + 2] = 1;
+            auto normal = ComputeNormalForLocation(tile, x, y);
+            normals[(vertIndex * 3) + 0] = normal.x;
+            normals[(vertIndex * 3) + 1] = normal.y;
+            normals[(vertIndex * 3) + 2] = normal.z;
 
             textureCords[(vertIndex * 2) + 0] = x / (float)(tile.Info.TerrainGridSize + 1);
             textureCords[(vertIndex * 2) + 1] = y / (float)(tile.Info.TerrainGridSize + 1);

@@ -72,7 +72,7 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
     rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
     // Draw mesh
-    rlDrawVertexArrayElements(tile.LODs[lod].IndexStart * 3, tile.LODs[lod].IndexCount * 3, 0);
+    rlDrawVertexArrayElements((int)tile.LODs[lod].IndexStart * 3, (int)tile.LODs[lod].IndexCount * 3, 0);
 
     // disable texture units
 
