@@ -41,6 +41,7 @@ TerrainInfo info;
 TerrainMaterial defaultMateral;
 
 TerrainTile testTile(info);
+TerrainTile testTile2(info);
 
 Camera3D ViewCamera = { 0 };
 
@@ -146,14 +147,22 @@ void GameInit()
     InitWindow(InitalWidth, InitalHeight, "Example");
     SetTargetFPS(144);
 
-    testTile.TerranHeightmap = GenImagePerlinNoise(129, 129, 0, 0, 5);
+    float perlinScale = 3;
+    
+    testTile.TerranHeightmap = GenImagePerlinNoise(129, 129, 0, 0, perlinScale);
     testTile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
 
     info.TerrainMinZ = -6;
-    info.TerrainMaxZ = 6;
+    info.TerrainMaxZ = 10;
 
     TileMeshBuilder builder;
     builder.Build(testTile);
+    testTile.Origin = TerrainPosition{ 0, 0 };
+
+    testTile2.TerranHeightmap = GenImagePerlinNoise(129, 129, 128, 0, perlinScale);
+    testTile2.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
+    builder.Build(testTile2);
+    testTile2.Origin = TerrainPosition{ 1, 0 };
 
     Renderer.TerrainShader.id = rlGetShaderIdDefault();
     Renderer.TerrainShader.locs = rlGetShaderLocsDefault();
@@ -161,6 +170,7 @@ void GameInit()
     defaultMateral.DiffuseMap = LoadTextureFromImage(GenImageColor(128, 128, DARKGREEN));
     defaultMateral.DiffuseShaderLoc = rlGetShaderLocsDefault()[SHADER_LOC_MAP_DIFFUSE];
     testTile.LayerMaterials.push_back(&defaultMateral);
+    testTile2.LayerMaterials.push_back(&defaultMateral);
 
     ViewCamera.fovy = 45;
     ViewCamera.position.z = 10;
@@ -188,7 +198,8 @@ bool GameUpdate()
         LODLevel = 1;
     if (IsKeyDown(KEY_THREE))
         LODLevel = 2;
-
+    if (IsKeyDown(KEY_FOUR))
+        LODLevel = 3;
     return true;
 }
 
@@ -216,10 +227,12 @@ void GameDraw()
 
     rlEnableWireMode();
     Renderer.Draw(testTile, LODLevel);
+    Renderer.Draw(testTile2, LODLevel);
     rlDisableWireMode();
 
     EndMode3D();
 
+    DrawText(TextFormat("LOD Level = %d", LODLevel), 3, 20, 20, WHITE);
     DrawFPS(3, 3);
     EndDrawing();
 }

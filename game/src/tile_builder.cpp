@@ -8,7 +8,7 @@
 
 int IndexList = -1;
 
-TerrainLODTriangleInfo LODInfos[3];
+TerrainLODTriangleInfo LODInfos[MaxLODLevels];
 
 void BuildLODIndexList(uint16_t* indexes, size_t& triangleIndex, int grid, int offset = 1)
 {
@@ -86,6 +86,11 @@ void SetupIndexes(TerrainTile& tile)
     LODInfos[2].IndexStart = triangleIndex;
     BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 4);
     LODInfos[2].IndexCount = triangleIndex - LODInfos[2].IndexStart;
+
+    LODInfos[3].IndexStart = triangleIndex;
+    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 8);
+    LODInfos[3].IndexCount = triangleIndex - LODInfos[3].IndexStart;
+
 
     IndexList = rlLoadVertexBufferElement(indexes, triangleIndex * 3 * sizeof(unsigned short), false);
 

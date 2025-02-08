@@ -29,7 +29,7 @@ struct TerrainInfo
     float TerrainMaxZ = 300;
 };
 
-static constexpr uint8_t MaxLODLevels = 3;
+static constexpr uint8_t MaxLODLevels = 4;
 
 struct TerrainLODTriangleInfo
 {

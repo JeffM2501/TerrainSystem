@@ -87,5 +87,4 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
 
     // Disable shader program
     rlDisableShader();
-   
 }
