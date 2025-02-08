@@ -40,6 +40,7 @@ TerrainInfo info;
 
 TerrainMaterial defaultMateral;
 
+std::vector<TerrainTile> Tiles;
 TerrainTile testTile(info);
 TerrainTile testTile2(info);
 
@@ -64,6 +65,9 @@ void UpdateCameraXY(Camera* camera, int mode)
 
     // Camera speeds based on frame time
     float cameraMoveSpeed = CAMERA_MOVE_SPEED * GetFrameTime();
+    if (IsKeyDown(KEY_LEFT_SHIFT))
+        cameraMoveSpeed *= 5;
+
     float cameraRotationSpeed = CAMERA_ROTATION_SPEED * GetFrameTime();
     float cameraPanSpeed = CAMERA_PAN_SPEED * GetFrameTime();
     float cameraOrbitalSpeed = CAMERA_ORBITAL_SPEED * GetFrameTime();
@@ -143,34 +147,42 @@ void UpdateCameraXY(Camera* camera, int mode)
 
 void GameInit()
 {
-    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(/*FLAG_VSYNC_HINT |*/ FLAG_WINDOW_RESIZABLE);
     InitWindow(InitalWidth, InitalHeight, "Example");
-    SetTargetFPS(144);
+   // SetTargetFPS(144);
 
-    float perlinScale = 3;
+    rlSetClipPlanes(0.1f, 5000.0f);
+
+    float perlinScale = 2;
     
     testTile.TerranHeightmap = GenImagePerlinNoise(129, 129, 0, 0, perlinScale);
     testTile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
 
     info.TerrainMinZ = -6;
-    info.TerrainMaxZ = 10;
-
-    TileMeshBuilder builder;
-    builder.Build(testTile);
-    testTile.Origin = TerrainPosition{ 0, 0 };
-
-    testTile2.TerranHeightmap = GenImagePerlinNoise(129, 129, 128, 0, perlinScale);
-    testTile2.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
-    builder.Build(testTile2);
-    testTile2.Origin = TerrainPosition{ 1, 0 };
-
-    Renderer.TerrainShader.id = rlGetShaderIdDefault();
-    Renderer.TerrainShader.locs = rlGetShaderLocsDefault();
+    info.TerrainMaxZ = 25;
 
     defaultMateral.DiffuseMap = LoadTextureFromImage(GenImageColor(128, 128, DARKGREEN));
     defaultMateral.DiffuseShaderLoc = rlGetShaderLocsDefault()[SHADER_LOC_MAP_DIFFUSE];
-    testTile.LayerMaterials.push_back(&defaultMateral);
-    testTile2.LayerMaterials.push_back(&defaultMateral);
+
+    TileMeshBuilder builder;
+
+    int grid = 12;
+
+    for (int y = 0; y < grid; y++)
+    {
+        for (int x = 0; x < grid; x++)
+        {
+            auto & tile = Tiles.emplace_back(info);
+            tile.TerranHeightmap = GenImagePerlinNoise(129, 129, x * 128, y*128, perlinScale);
+            tile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
+            tile.LayerMaterials.push_back(&defaultMateral);
+            tile.Origin = TerrainPosition{ x, y };
+            builder.Build(tile);
+        }
+    }
+    
+    Renderer.TerrainShader.id = rlGetShaderIdDefault();
+    Renderer.TerrainShader.locs = rlGetShaderLocsDefault();
 
     ViewCamera.fovy = 45;
     ViewCamera.position.z = 10;
@@ -226,8 +238,15 @@ void GameDraw()
     DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 
     rlEnableWireMode();
-    Renderer.Draw(testTile, LODLevel);
-    Renderer.Draw(testTile2, LODLevel);
+    for (int i = 0; i < Tiles.size(); i++)
+    {
+        int lod = std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y)/3;
+        if (lod >= MaxLODLevels)
+            lod = MaxLODLevels - 1;
+
+        Renderer.Draw(Tiles[i], lod);
+
+    }
     rlDisableWireMode();
 
     EndMode3D();
