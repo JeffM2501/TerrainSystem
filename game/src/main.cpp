@@ -42,7 +42,10 @@ int SunVectorLoc = 0;
 
 TerrainInfo info;
 
-TerrainMaterial defaultMateral;
+TerrainMaterial GrassMateral;
+TerrainMaterial GroundMateral;
+TerrainMaterial RoadMateral;
+TerrainMaterial SnowMateral;
 
 std::vector<TerrainTile> Tiles;
 
@@ -166,11 +169,11 @@ void GameInit()
     info.TerrainMinZ = -6;
     info.TerrainMaxZ = 25;
 
-    defaultMateral.DiffuseMap = LoadTexture("resources/terrain_materials/grass_ground_d-resized.png");// LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
-    defaultMateral.DiffuseShaderLoc = TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE];
+    GrassMateral.DiffuseMap = LoadTexture("resources/terrain_materials/grass_ground_d-resized.png");// LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
+    GrassMateral.DiffuseShaderLoc = TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE];
 
-    GenTextureMipmaps(&defaultMateral.DiffuseMap);
-    SetTextureFilter(defaultMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
+    GenTextureMipmaps(&GrassMateral.DiffuseMap);
+    SetTextureFilter(GrassMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
 
     TileMeshBuilder builder;
 
@@ -186,7 +189,7 @@ void GameInit()
             UnloadImage(heightmap);
 
             tile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
-            tile.LayerMaterials.push_back(&defaultMateral);
+            tile.LayerMaterials.push_back(&GrassMateral);
             tile.Origin = TerrainPosition{ x, y };
             builder.Build(tile);
         }
