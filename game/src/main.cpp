@@ -166,7 +166,7 @@ void GameInit()
     info.TerrainMinZ = -6;
     info.TerrainMaxZ = 25;
 
-    defaultMateral.DiffuseMap = LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
+    defaultMateral.DiffuseMap = LoadTexture("resources/terrain_materials/grass_ground_d-resized.png");// LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
     defaultMateral.DiffuseShaderLoc = TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE];
 
     GenTextureMipmaps(&defaultMateral.DiffuseMap);
