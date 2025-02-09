@@ -181,7 +181,7 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     uint8_t* colors = (uint8_t*)MemAlloc(vertCount * 4);
  
     float vertexScale = tile.Info.TerrainTileSize / tile.Info.TerrainGridSize;
-    float uv2Scale = tile.Info.TerrainTileSize / tile.Info.TerrainGridSize;
+    float uv2Scale = tile.Info.TerrainTileSize / (tile.Info.TerrainGridSize * 4);
     
     // generate the attribute buffers
     int vertIndex = 0;

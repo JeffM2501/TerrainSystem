@@ -36,6 +36,10 @@ int LODLevel = 0;
 #include "tile_builder.h"
 #include "tile_renderer.h"
 
+
+float SunVector[3] = { 0,0,1 };
+int SunVectorLoc = 0;
+
 TerrainInfo info;
 
 TerrainMaterial defaultMateral;
@@ -45,6 +49,8 @@ std::vector<TerrainTile> Tiles;
 Camera3D ViewCamera = { 0 };
 
 TerainRenderer Renderer;
+
+Shader TerrainShader = { 0 };
 
 static constexpr float CAMERA_MOVE_SPEED = 20;
 static constexpr float CAMERA_ROTATION_SPEED = 1;
@@ -147,7 +153,11 @@ void GameInit()
 {
     SetConfigFlags(/*FLAG_VSYNC_HINT |*/ FLAG_WINDOW_RESIZABLE);
     InitWindow(InitalWidth, InitalHeight, "Example");
-   // SetTargetFPS(144);
+    SetTargetFPS(144);
+    
+    TerrainShader = LoadShader("resources/base.vs", "resources/base.fs");
+
+    SunVectorLoc = GetShaderLocation(TerrainShader, "sunVector");
 
     rlSetClipPlanes(0.1f, 5000.0f);
 
@@ -156,19 +166,22 @@ void GameInit()
     info.TerrainMinZ = -6;
     info.TerrainMaxZ = 25;
 
-    defaultMateral.DiffuseMap = LoadTextureFromImage(GenImageColor(128, 128, DARKGREEN));
-    defaultMateral.DiffuseShaderLoc = rlGetShaderLocsDefault()[SHADER_LOC_MAP_DIFFUSE];
+    defaultMateral.DiffuseMap = LoadTexture("resources/grass.png");// LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
+    defaultMateral.DiffuseShaderLoc = TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE];
+
+    GenTextureMipmaps(&defaultMateral.DiffuseMap);
+    SetTextureFilter(defaultMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
 
     TileMeshBuilder builder;
 
-    int grid = 12;
+    int grid = 6;
 
     for (int y = 0; y < grid; y++)
     {
         for (int x = 0; x < grid; x++)
         {
             auto & tile = Tiles.emplace_back(info);
-            tile.TerranHeightmap = GenImagePerlinNoise(130, 130, (x * 128) -1, (y*128)-1, perlinScale);
+            tile.TerranHeightmap = GenImagePerlinNoise(131, 131, (x * 128) - 1, (y * 128) - 1, perlinScale);
             tile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
             tile.LayerMaterials.push_back(&defaultMateral);
             tile.Origin = TerrainPosition{ x, y };
@@ -176,8 +189,8 @@ void GameInit()
         }
     }
     
-    Renderer.TerrainShader.id = rlGetShaderIdDefault();
-    Renderer.TerrainShader.locs = rlGetShaderLocsDefault();
+    Renderer.TerrainShader.id = TerrainShader.id;
+    Renderer.TerrainShader.locs = TerrainShader.locs;
 
     ViewCamera.fovy = 45;
     ViewCamera.position.z = 10;
@@ -207,6 +220,13 @@ bool GameUpdate()
         LODLevel = 2;
     if (IsKeyDown(KEY_FOUR))
         LODLevel = 3;
+
+
+    SunVector[0] = sinf(float(GetTime()) / 4);
+    SunVector[1] = cosf(float(GetTime()) / 1.4f);
+    SunVector[1] = abs(cosf(float(GetTime()) / 2.4f));
+
+    SetShaderValue(TerrainShader, SunVectorLoc, SunVector, SHADER_UNIFORM_VEC3);
     return true;
 }
 
@@ -232,7 +252,7 @@ void GameDraw()
 
     DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 
-    rlEnableWireMode();
+  //  rlEnableWireMode();
     for (int i = 0; i < Tiles.size(); i++)
     {
         int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y)/3;
@@ -242,7 +262,7 @@ void GameDraw()
         Renderer.Draw(Tiles[i], lod);
 
     }
-    rlDisableWireMode();
+   // rlDisableWireMode();
 
     EndMode3D();
 
