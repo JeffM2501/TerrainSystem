@@ -43,7 +43,7 @@ struct TerrainTile
 
     TerrainPosition Origin = { 0,0 };
 
-    Image TerranHeightmap = { 0 };
+   std::vector<float> TerrainHeightMap;
 
     std::vector<TerrainMaterial*> LayerMaterials;
     std::vector<Image> LayerSplatMaps;
@@ -53,8 +53,10 @@ struct TerrainTile
 
     const TerrainLODTriangleInfo *LODs = nullptr;
 
-    TerrainTile(TerrainInfo& info) : Info(info) {}
+    TerrainTile(TerrainInfo& info);
+    ~TerrainTile();
 
+    void SetHeightsFromImage(Image& image);
 
     float GetLocalHeight(int x, int y) const;
 };

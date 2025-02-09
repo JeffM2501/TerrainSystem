@@ -92,7 +92,6 @@ void SetupIndexes(TerrainTile& tile)
     BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 8);
     LODInfos[3].IndexCount = triangleIndex - LODInfos[3].IndexStart;
 
-
     IndexList = rlLoadVertexBufferElement(indexes, (int)(triangleIndex * 3 * sizeof(unsigned short)), false);
 
     MemFree(indexes);
@@ -105,13 +104,11 @@ std::vector<Vector3> TileMeshBuilder::GetSiblingNormals(TerrainTile& tile, int16
     Vector3 P = { 0,0,0 };
 
     float thisH = tile.GetLocalHeight(h, v);
-
     /*
             B
         A	P	C
             D
     */
-
 
     Vector3 A = { -1, 0, tile.GetLocalHeight(h - 1,v) - thisH };
     Vector3 B = { 0	, 1, tile.GetLocalHeight(h,v + 1) - thisH };
@@ -123,17 +120,10 @@ std::vector<Vector3> TileMeshBuilder::GetSiblingNormals(TerrainTile& tile, int16
     Vector3 PC = Vector3Normalize(Vector3Subtract(C, P));
     Vector3 PD = Vector3Normalize(Vector3Subtract(D, P));
 
-  //  if (IsPosValid(h - 1, v) && IsPosValid(h, v + 1))
-        tempNormals.push_back(Vector3CrossProduct(PB, PA));
-
-  //  if (IsPosValid(h, v + 1) && IsPosValid(h + 1, v))
-        tempNormals.push_back(Vector3CrossProduct(PC, PB));
-
-  //  if (IsPosValid(h + 1, v) && IsPosValid(h, v - 1))
-        tempNormals.push_back(Vector3CrossProduct(PD, PC));
-
-  //  if (IsPosValid(h, v + 1) && IsPosValid(h - 1, v))
-        tempNormals.push_back(Vector3CrossProduct(PA, PD));
+    tempNormals.push_back(Vector3CrossProduct(PB, PA));
+    tempNormals.push_back(Vector3CrossProduct(PC, PB));
+    tempNormals.push_back(Vector3CrossProduct(PD, PC));
+    tempNormals.push_back(Vector3CrossProduct(PA, PD));
 
     return tempNormals;
 }

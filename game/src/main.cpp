@@ -166,7 +166,7 @@ void GameInit()
     info.TerrainMinZ = -6;
     info.TerrainMaxZ = 25;
 
-    defaultMateral.DiffuseMap = LoadTexture("resources/grass.png");// LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
+    defaultMateral.DiffuseMap = LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
     defaultMateral.DiffuseShaderLoc = TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE];
 
     GenTextureMipmaps(&defaultMateral.DiffuseMap);
@@ -181,7 +181,10 @@ void GameInit()
         for (int x = 0; x < grid; x++)
         {
             auto & tile = Tiles.emplace_back(info);
-            tile.TerranHeightmap = GenImagePerlinNoise(131, 131, (x * 128) - 1, (y * 128) - 1, perlinScale);
+            Image heightmap = GenImagePerlinNoise(131, 131, (x * 128) - 1, (y * 128) - 1, perlinScale);
+            tile.SetHeightsFromImage(heightmap);
+            UnloadImage(heightmap);
+
             tile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
             tile.LayerMaterials.push_back(&defaultMateral);
             tile.Origin = TerrainPosition{ x, y };
@@ -221,7 +224,6 @@ bool GameUpdate()
     if (IsKeyDown(KEY_FOUR))
         LODLevel = 3;
 
-
     SunVector[0] = sinf(float(GetTime()) / 4);
     SunVector[1] = cosf(float(GetTime()) / 1.4f);
     SunVector[1] = abs(cosf(float(GetTime()) / 2.4f));
@@ -252,7 +254,7 @@ void GameDraw()
 
     DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 
-  //  rlEnableWireMode();
+ // rlEnableWireMode();
     for (int i = 0; i < Tiles.size(); i++)
     {
         int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y)/3;
@@ -262,11 +264,11 @@ void GameDraw()
         Renderer.Draw(Tiles[i], lod);
 
     }
-   // rlDisableWireMode();
+  // rlDisableWireMode();
 
     EndMode3D();
 
-    DrawText(TextFormat("LOD Level = %d", LODLevel), 3, 20, 20, WHITE);
+   // DrawText(TextFormat("LOD Level = %d", LODLevel), 3, 20, 20, WHITE);
     DrawFPS(3, 3);
     EndDrawing();
 }

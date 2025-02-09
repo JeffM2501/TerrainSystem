@@ -7,3 +7,16 @@
 * Trees placed on material types
 * Fixed quad/octree for vis
 * draw sorted based on rings around player
+
+
+## TODO
+* Heightmap as floats (float16?)
+* Way to read heightmaps from mega image.
+* Materials to shader
+* Splatmaps
+* Lightmap
+* Terrain collision (Z Projection)
+* Picking
+* brush overlay in shader
+* folliage
+* stamps
