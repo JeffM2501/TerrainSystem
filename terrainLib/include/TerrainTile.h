@@ -5,6 +5,15 @@
 #include <stdint.h>
 #include <vector>
 
+struct TerrainInfo
+{
+    uint8_t TerrainGridSize = 128;
+
+    float TerrainTileSize = 128;
+    float TerrainMinZ = 0;
+    float TerrainMaxZ = 300;
+};
+
 struct TerrainPosition
 {
     int64_t X = 0;
@@ -20,14 +29,6 @@ struct TerrainMaterial
     int NormalShaderLoc;
 };
 
-struct TerrainInfo
-{
-    uint8_t TerrainGridSize = 128;
-
-    float TerrainTileSize = 128;
-    float TerrainMinZ = 0;
-    float TerrainMaxZ = 300;
-};
 
 static constexpr uint8_t MaxLODLevels = 4;
 

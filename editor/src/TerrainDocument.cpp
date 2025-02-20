@@ -1,59 +1,10 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
--- Copyright (c) 2020-2024 Jeffery Myers
---
---This software is provided "as-is", without any express or implied warranty. In no event 
---will the authors be held liable for any damages arising from the use of this software.
-
---Permission is granted to anyone to use this software for any purpose, including commercial 
---applications, and to alter it and redistribute it freely, subject to the following restrictions:
-
---  1. The origin of this software must not be misrepresented; you must not claim that you 
---  wrote the original software. If you use this software in a product, an acknowledgment 
---  in the product documentation would be appreciated but is not required.
---
---  2. Altered source versions must be plainly marked as such, and must not be misrepresented
---  as being the original software.
---
---  3. This notice may not be removed or altered from any source distribution.
-
-*/
+#include "TerrainDocument.h"
+#include "Application.h"
 
 #include "raylib.h"
+#include "rcamera.h"
 #include "raymath.h"
 #include "rlgl.h"
-#include "rcamera.h"
-
-#include "game.h"   // an external header in this project
-
-
-int LODLevel = 0;
-
-#include "terrain_tile.h"
-#include "tile_builder.h"
-#include "tile_renderer.h"
-
-
-float SunVector[3] = { 0,0,1 };
-int SunVectorLoc = 0;
-
-TerrainInfo info;
-
-TerrainMaterial GrassMateral;
-TerrainMaterial GroundMateral;
-TerrainMaterial RoadMateral;
-TerrainMaterial SnowMateral;
-
-std::vector<TerrainTile> Tiles;
-
-Camera3D ViewCamera = { 0 };
-
-TerainRenderer Renderer;
-
-Shader TerrainShader = { 0 };
 
 static constexpr float CAMERA_MOVE_SPEED = 20;
 static constexpr float CAMERA_ROTATION_SPEED = 1;
@@ -95,7 +46,7 @@ void UpdateCameraXY(Camera* camera, int mode)
         if (IsKeyDown(KEY_UP)) CameraPitch(camera, cameraRotationSpeed, lockView, rotateAroundTarget, rotateUp);
         if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -cameraRotationSpeed, rotateAroundTarget);
         if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, cameraRotationSpeed, rotateAroundTarget);
-       
+
 
         // Camera movement
         // Camera pan (for CAMERA_FREE)
@@ -152,142 +103,54 @@ void UpdateCameraXY(Camera* camera, int mode)
     }
 }
 
-void GameInit()
+std::string_view TerrainDocument::GetDocumentName()
 {
-    SetConfigFlags(/*FLAG_VSYNC_HINT |*/ FLAG_WINDOW_RESIZABLE);
-    InitWindow(InitalWidth, InitalHeight, "Example");
-    SetTargetFPS(144);
-    
-    TerrainShader = LoadShader("resources/base.vs", "resources/base.fs");
-
-    SunVectorLoc = GetShaderLocation(TerrainShader, "sunVector");
-
-    rlSetClipPlanes(0.1f, 5000.0f);
-
-    float perlinScale = 2;
-
-    info.TerrainMinZ = -6;
-    info.TerrainMaxZ = 25;
-
-    GrassMateral.DiffuseMap = LoadTexture("resources/terrain_materials/grass_ground_d-resized.png");// LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
-    GrassMateral.DiffuseShaderLoc = TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE];
-
-    GenTextureMipmaps(&GrassMateral.DiffuseMap);
-    SetTextureFilter(GrassMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
-
-    TileMeshBuilder builder;
-
-    int grid = 12;
-
-    for (int y = 0; y < grid; y++)
-    {
-        for (int x = 0; x < grid; x++)
-        {
-            auto & tile = Tiles.emplace_back(info);
-            Image heightmap = GenImagePerlinNoise(131, 131, (x * 128) - 1, (y * 128) - 1, perlinScale);
-            tile.SetHeightsFromImage(heightmap);
-            UnloadImage(heightmap);
-
-            tile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
-            tile.LayerMaterials.push_back(&GrassMateral);
-            tile.Origin = TerrainPosition{ x, y };
-            builder.Build(tile);
-        }
-    }
-    
-    Renderer.TerrainShader.id = TerrainShader.id;
-    Renderer.TerrainShader.locs = TerrainShader.locs;
-
-    ViewCamera.fovy = 45;
-    ViewCamera.position.z = 10;
-    ViewCamera.position.y = -10;
-
-    ViewCamera.up.z = 1;
-    // load resources
+    if (AssetPath.empty())
+        return TextFormat("Untitled Terrain %d", DocumentID);
+    else
+        return GetFileNameWithoutExt(AssetPath.c_str());
 }
 
-void GameCleanup()
+void TerrainDocument::OnUpdate(int width, int height)
 {
-    // unload resources
-
-    CloseWindow();
+    if (GetApp()->MouseIsInDocument() && IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+        UpdateCameraXY(&Camera, CAMERA_THIRD_PERSON);
 }
 
-bool GameUpdate()
+void TerrainDocument::OnShowContent(int width, int height)
 {
-    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-        UpdateCameraXY(&ViewCamera, CAMERA_THIRD_PERSON);
+    ClearBackground(DARKBLUE);
 
-    if (IsKeyDown(KEY_ONE))
-        LODLevel = 0;
-    if (IsKeyDown(KEY_TWO))
-        LODLevel = 1;
-    if (IsKeyDown(KEY_THREE))
-        LODLevel = 2;
-    if (IsKeyDown(KEY_FOUR))
-        LODLevel = 3;
-
-    SunVector[0] = sinf(float(GetTime()) / 4);
-    SunVector[1] = cosf(float(GetTime()) / 1.4f);
-    SunVector[1] = abs(cosf(float(GetTime()) / 2.4f));
-
-    SetShaderValue(TerrainShader, SunVectorLoc, SunVector, SHADER_UNIFORM_VEC3);
-    return true;
-}
-
-void GameDraw()
-{
-    BeginDrawing();
-    ClearBackground(BLACK);
-
-    BeginMode3D(ViewCamera);
-
+    BeginMode3D(Camera);
     rlPushMatrix();
     rlRotatef(90, 1, 0, 0);
-  //  DrawGrid(200, 1);
+    DrawGrid(1024, 16);
     rlPopMatrix();
 
     DrawCube(Vector3Zeros, 1, 1, 1, RED);
-    DrawCube(Vector3{ info.TerrainGridSize * 1.0f, info.TerrainGridSize * 1.0f,0 }, 1, 1, 1, BLUE);
-    DrawCube(Vector3{ 0, info.TerrainGridSize * 1.0f,0 }, 1, 1, 1, BLUE);
-    DrawCube(Vector3{ info.TerrainGridSize * 1.0f,0,0 }, 1, 1, 1, BLUE);
+    DrawCube(Vector3{ Info.TerrainGridSize * 1.0f, Info.TerrainGridSize * 1.0f,0 }, 1, 1, 1, BLUE);
+    DrawCube(Vector3{ 0, Info.TerrainGridSize * 1.0f,0 }, 1, 1, 1, BLUE);
+    DrawCube(Vector3{ Info.TerrainGridSize * 1.0f,0,0 }, 1, 1, 1, BLUE);
 
-    DrawCube(Vector3{ 0,info.TerrainGridSize * 0.5f,0 }, 0.5f, 0.5f, 0.5f, YELLOW);
-    DrawCube(Vector3{ info.TerrainGridSize * 0.5f,0,0 }, 0.5f, 0.5f, 0.5f, YELLOW);
+    DrawCube(Vector3{ 0,Info.TerrainGridSize * 0.5f,0 }, 0.5f, 0.5f, 0.5f, YELLOW);
+    DrawCube(Vector3{ Info.TerrainGridSize * 0.5f,0,0 }, 0.5f, 0.5f, 0.5f, YELLOW);
 
     DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 
- rlEnableWireMode();
-    for (int i = 0; i < Tiles.size(); i++)
-    {
-        int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y)/3;
-        if (lod >= MaxLODLevels)
-            lod = MaxLODLevels - 1;
-
-        Renderer.Draw(Tiles[i], LODLevel);
-
-    }
-  rlDisableWireMode();
+    // draw terrain
 
     EndMode3D();
-
-    DrawText(TextFormat("LOD Level = %d", LODLevel), 3, 20, 20, WHITE);
-    DrawFPS(3, 3);
-    EndDrawing();
 }
 
-int main()
+void TerrainDocument::OnShowUI()
 {
-    GameInit();
 
-    while (!WindowShouldClose())
-    {
-        if (!GameUpdate())
-            break;
+}
 
-        GameDraw();
-    }
-    GameCleanup();
-
-    return 0;
+void TerrainDocument::OnCreated()
+{
+    Camera.fovy = 45;
+    Camera.up.z = 1;
+    Camera.position.z = 100;
+    Camera.target.y = 50;
 }
