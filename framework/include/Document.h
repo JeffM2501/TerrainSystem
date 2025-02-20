@@ -48,13 +48,13 @@ namespace EditorFramework
 
 		Events::EventSource<Document> OnDirty;
 
-	protected:
-		virtual void SetDirty()
-		{
-			Dirty = true; 
-			OnDirty.Invoke(*this); 
-		}
+        virtual void SetDirty()
+        {
+            Dirty = true;
+            OnDirty.Invoke(*this);
+        }
 
+	protected:
 		size_t DocumentID = 0;
 		std::string AssetPath;
 

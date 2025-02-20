@@ -1,5 +1,9 @@
 #include "TerrainTile.h"
 
+#include "raylib.h"
+#include "rlgl.h"
+#include "config.h"
+
 TerrainTile::TerrainTile(TerrainInfo& info)
     : Info(info)
 {
@@ -32,4 +36,25 @@ float TerrainTile::GetLocalHeight(int x, int y) const
 {
     size_t index = (y + 1) * (Info.TerrainGridSize + 3) + x + 1;
     return TerrainHeightMap[index];
+}
+
+void TerrainTile::UnloadGeometry()
+{
+    rlUnloadVertexArray(VaoId);
+
+    if (VboId != nullptr)
+    {
+        for (int i = 0; i < MAX_MESH_VERTEX_BUFFERS; i++)
+            rlUnloadVertexBuffer(VboId[i]);
+    }
+    MemFree(VboId);
+
+    VaoId = -1;
+    VboId = nullptr;
+}
+
+void TerrainTile::UnloadSplats()
+{
+    UnloadTexture(Splatmap);
+    Splatmap.id = -1;
 }

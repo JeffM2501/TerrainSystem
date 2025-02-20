@@ -5,6 +5,7 @@
 #include "TerrainTile.h"
 
 #include "raylib.h"
+#include <vector>
 
 class TerrainDocument : public EditorFramework::Document
 {
@@ -17,6 +18,7 @@ public:
     void OnCreated() override;
 
     TerrainInfo Info;
+    std::vector<TerrainTile> Tiles;
 
 protected:
     Camera3D Camera = { 0 };

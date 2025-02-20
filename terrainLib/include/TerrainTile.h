@@ -49,6 +49,8 @@ struct TerrainTile
     std::vector<TerrainMaterial*> LayerMaterials;
     std::vector<Image> LayerSplatMaps;
 
+    Texture Splatmap;
+
     unsigned int VaoId = -1;
     unsigned int* VboId = nullptr;
 
@@ -60,4 +62,7 @@ struct TerrainTile
     void SetHeightsFromImage(Image& image);
 
     float GetLocalHeight(int x, int y) const;
+
+    void UnloadGeometry();
+    void UnloadSplats();
 };

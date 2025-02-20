@@ -12,6 +12,21 @@ TerainRenderer::TerainRenderer()
     TerrainShader = LoadShader(nullptr, nullptr);
 }
 
+void TerainRenderer::SetShader(Shader& shader)
+{
+    TerrainShader = shader;
+
+    for (int i = 0; i < 5; i++)
+    {
+        MaterialTextureLocs.push_back(GetShaderLocation(shader, TextFormat("matDiffuse%d", i)));
+        MaterialTintLocs.push_back(GetShaderLocation(shader, TextFormat("matTint%d", i)));
+    }
+
+    MaterialCountLoc = GetShaderLocation(shader, "materialCount");
+
+    SplatmapLoc = GetShaderLocation(shader, "splatmap");
+}
+
 // Draw vertex array elements
 void rlDrawVertexArrayElementsQuads(int offset, int count, const void* buffer)
 {
@@ -57,11 +72,24 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
     if (TerrainShader.locs[SHADER_LOC_MATRIX_NORMAL] != -1)
         rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
 
+    rlSetUniformSampler(SplatmapLoc, tile.Splatmap.id);
+
     // Select current shader texture slot
-    int slot = 0;
-    rlActiveTextureSlot(slot);
-    rlEnableTexture(tile.LayerMaterials[0]->DiffuseMap.id);
-    rlSetUniform(TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE + 0], &slot, SHADER_UNIFORM_INT, 1);
+    for (int i = 0; i < tile.LayerMaterials.size(); i++)
+    {
+        rlActiveTextureSlot(i);
+        rlSetUniformSampler(MaterialTextureLocs[i], tile.LayerMaterials[i]->DiffuseMap.id);
+          
+        float colors[4] = { float(tile.LayerMaterials[i]->DiffuseColor.r / 255.0f),
+                            float(tile.LayerMaterials[i]->DiffuseColor.g / 255.0f),
+                            float(tile.LayerMaterials[i]->DiffuseColor.b / 255.0f),
+                            float(tile.LayerMaterials[i]->DiffuseColor.a / 255.0f) };
+
+        rlSetUniform(MaterialTintLocs[i], colors, SHADER_UNIFORM_VEC4,1);
+    }
+
+    int matCount = int(tile.LayerMaterials.size());
+    rlSetUniform(MaterialCountLoc, &matCount, SHADER_UNIFORM_INT, 1);
 
     // bind vao
     rlEnableVertexArray(tile.VaoId);
@@ -76,7 +104,7 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
 
     // disable texture units
 
-    slot = 0;
+    int slot = 0;
     rlActiveTextureSlot(slot);
     rlDisableTexture();
 

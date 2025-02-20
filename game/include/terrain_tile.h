@@ -14,10 +14,8 @@ struct TerrainPosition
 struct TerrainMaterial
 {
     Texture DiffuseMap;
-    int DiffuseShaderLoc;
-
+    Color   DiffuseColor = WHITE;
     Texture NormalMap;
-    int NormalShaderLoc;
 };
 
 struct TerrainInfo
@@ -46,7 +44,7 @@ struct TerrainTile
     std::vector<float> TerrainHeightMap;
 
     std::vector<TerrainMaterial*> LayerMaterials;
-    std::vector<Image> LayerSplatMaps;
+    Texture Splatmap;
 
     unsigned int VaoId = -1;
     unsigned int* VboId = nullptr;

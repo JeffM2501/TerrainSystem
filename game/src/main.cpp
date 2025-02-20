@@ -30,6 +30,14 @@ Use this as a starting point or replace it with your code.
 #include "game.h"   // an external header in this project
 
 
+#if defined(_WIN32)
+#include "assert.h"
+#else
+void IGNORE(const char*){}
+#define _wassert (F, M) F IGNORE(M);
+#endif
+
+
 int LODLevel = 0;
 
 #include "terrain_tile.h"
@@ -160,6 +168,8 @@ void GameInit()
     
     TerrainShader = LoadShader("resources/base.vs", "resources/base.fs");
 
+    _ASSERT(IsShaderValid(TerrainShader));
+
     SunVectorLoc = GetShaderLocation(TerrainShader, "sunVector");
 
     rlSetClipPlanes(0.1f, 5000.0f);
@@ -169,11 +179,21 @@ void GameInit()
     info.TerrainMinZ = -6;
     info.TerrainMaxZ = 25;
 
-    GrassMateral.DiffuseMap = LoadTexture("resources/terrain_materials/grass_ground_d-resized.png");// LoadTextureFromImage(GenImageChecked(128, 128, 8, 8, DARKGREEN, DARKGRAY));
-    GrassMateral.DiffuseShaderLoc = TerrainShader.locs[SHADER_LOC_MAP_DIFFUSE];
-
+    GrassMateral.DiffuseMap = LoadTexture("resources/terrain_materials/grass_ground_d-resized.png");
     GenTextureMipmaps(&GrassMateral.DiffuseMap);
     SetTextureFilter(GrassMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
+
+    GroundMateral.DiffuseMap = LoadTexture("resources/terrain_materials/ground_crackedv_d-resized.png");
+    GenTextureMipmaps(&GroundMateral.DiffuseMap);
+    SetTextureFilter(GroundMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
+
+    RoadMateral.DiffuseMap = LoadTexture("resources/terrain_materials/ground_dry_d-resized.png");
+    GenTextureMipmaps(&RoadMateral.DiffuseMap);
+    SetTextureFilter(RoadMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
+
+    SnowMateral.DiffuseMap = LoadTexture("resources/terrain_materials/snow_grass3_d-resized.png");
+    GenTextureMipmaps(&SnowMateral.DiffuseMap);
+    SetTextureFilter(SnowMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
 
     TileMeshBuilder builder;
 
@@ -188,15 +208,24 @@ void GameInit()
             tile.SetHeightsFromImage(heightmap);
             UnloadImage(heightmap);
 
-            tile.LayerSplatMaps.push_back(GenImageColor(65, 65, GRAY));
+            Image testSplat = GenImageChecked(65, 65, 2, 2, Color{255,0,0,0}, Color{ 0,255,0,0 });
+            ImageDrawRectangle(&testSplat, 16, 16, 32,32, Color{ 0,0,0,0 });
+
+            //ImageDrawCircle(&testSplat, 32, 32, 8, Color{0,0,0,0});
+
+            tile.Splatmap = LoadTextureFromImage(testSplat);
+            UnloadImage(testSplat);
+
             tile.LayerMaterials.push_back(&GrassMateral);
+            tile.LayerMaterials.push_back(&GroundMateral);
+            tile.LayerMaterials.push_back(&RoadMateral);
+
             tile.Origin = TerrainPosition{ x, y };
             builder.Build(tile);
         }
     }
     
-    Renderer.TerrainShader.id = TerrainShader.id;
-    Renderer.TerrainShader.locs = TerrainShader.locs;
+    Renderer.SetShader(TerrainShader);
 
     ViewCamera.fovy = 45;
     ViewCamera.position.z = 10;
