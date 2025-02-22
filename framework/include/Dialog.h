@@ -1,7 +1,9 @@
 #pragma once
 
 #include "raylib.h"
+#include <deque>
 #include <string>
+#include <memory>
 #include <functional>
 
 #include "imgui.h"
@@ -55,6 +57,13 @@ namespace EditorFramework
         virtual void OnDecline();
         virtual void OnCancel();
 
+		template <class T, typename ...Args>
+		void ShowDialogBox(Args&&... args)
+		{
+			auto dlog = std::make_unique<T>(std::forward<Args>(args)...);
+            ChildDialogs.emplace_back(std::move(dlog));
+		}
+
     protected:
         std::string AcceptName;
         std::string DeclineName;
@@ -64,6 +73,8 @@ namespace EditorFramework
 
         ImVec2 MinimumSize = { 200,100 };
         bool Resizeable = false;
+
+        std::deque<std::unique_ptr<Dialog>> ChildDialogs;
 
     private:
         bool Created = false;

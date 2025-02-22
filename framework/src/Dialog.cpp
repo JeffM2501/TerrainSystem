@@ -91,8 +91,11 @@ namespace EditorFramework
             ImGui::PopStyleColor();
             ImGui::PopStyleVar(2);
 
+            ImGui::BeginDisabled(!ChildDialogs.empty());
             if (show)
                 results = OnShow();
+
+            ImGui::EndDisabled();
             ImGui::EndChild();
 
             if (results == DialogResult::None)
@@ -155,6 +158,13 @@ namespace EditorFramework
                 if (!open)
                     results = DialogResult::Cancel;
             }
+			if (!ChildDialogs.empty())
+            {
+                if (ChildDialogs.front()->Process())
+                    ChildDialogs.pop_front();
+            }
+            else
+            {
 
             if (results != DialogResult::None)
             {
@@ -177,6 +187,7 @@ namespace EditorFramework
 
                 ImGui::CloseCurrentPopup();
             }
+        }
 
             ImGui::EndPopup();
         }

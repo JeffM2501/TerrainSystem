@@ -206,14 +206,18 @@ namespace EditorFramework
 
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-			ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
+			ImGuiWindowFlags frameFlags = ImGuiWindowFlags_NoDecoration
 				| ImGuiWindowFlags_NoBackground
 				| ImGuiWindowFlags_NoDocking
-				| ImGuiWindowFlags_NoInputs
 				| ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoSavedSettings
+				| ImGuiWindowFlags_NoBringToFrontOnFocus
+				| ImGuiWindowFlags_NoFocusOnAppearing
+				| ImGuiWindowFlags_NoNavFocus
+				| ImGuiWindowFlags_NoNavInputs
 				| ImGuiWindowFlags_NoResize;
 
-			bool show = ImGui::Begin("###MAIN_FRAME", nullptr, flags);
+			bool show = ImGui::Begin("###MAIN_FRAME", nullptr, frameFlags);
 			ImGui::PopStyleVar();
 
 			// build a dockspace in the area we have left but don't let anyone dock to the central node, we want to leave that open for the document content and toolbar
@@ -270,7 +274,14 @@ namespace EditorFramework
 
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-				ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground;
+				ImGuiWindowFlags flags =ImGuiWindowFlags_NoBringToFrontOnFocus 
+					| ImGuiWindowFlags_DockNodeHost 
+					| ImGuiWindowFlags_NoFocusOnAppearing 
+					| ImGuiWindowFlags_NoMove 
+					| ImGuiWindowFlags_NoResize 
+					| ImGuiWindowFlags_NoBackground 
+					| ImGuiWindowFlags_NoNavFocus 
+					| ImGuiWindowFlags_NoNavInputs;
 				if (doc->IsDirty())
 					flags |= ImGuiWindowFlags_UnsavedDocument;
 
