@@ -16,6 +16,8 @@ namespace EditorFramework
     static constexpr char DialogNo[] = "No";
     static constexpr char DialogApply[] = "Apply";
 
+    ImVec2 GetButtonSize(std::string_view label);
+
     enum class DialogResult
     {
         None,

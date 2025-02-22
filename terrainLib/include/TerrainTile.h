@@ -5,15 +5,6 @@
 #include <stdint.h>
 #include <vector>
 
-struct TerrainInfo
-{
-    uint8_t TerrainGridSize = 128;
-
-    float TerrainTileSize = 128;
-    float TerrainMinZ = 0;
-    float TerrainMaxZ = 300;
-};
-
 struct TerrainPosition
 {
     int64_t X = 0;
@@ -23,12 +14,18 @@ struct TerrainPosition
 struct TerrainMaterial
 {
     Texture DiffuseMap;
-    int DiffuseShaderLoc;
-
+    Color   DiffuseColor = WHITE;
     Texture NormalMap;
-    int NormalShaderLoc;
 };
 
+struct TerrainInfo
+{
+    uint8_t TerrainGridSize = 128;
+
+    float TerrainTileSize = 128;
+    float TerrainMinZ = 0;
+    float TerrainMaxZ = 300;
+};
 
 static constexpr uint8_t MaxLODLevels = 4;
 
@@ -47,8 +44,6 @@ struct TerrainTile
     std::vector<float> TerrainHeightMap;
 
     std::vector<TerrainMaterial*> LayerMaterials;
-    std::vector<Image> LayerSplatMaps;
-
     Texture Splatmap;
 
     unsigned int VaoId = -1;

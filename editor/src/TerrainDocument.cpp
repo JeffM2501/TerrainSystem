@@ -1,5 +1,9 @@
 #include "TerrainDocument.h"
 #include "Application.h"
+#include "DisplayScale.h"
+#include "Dialog.h"
+
+#include "extras/IconsFontAwesome6.h"
 
 #include "raylib.h"
 #include "rcamera.h"
@@ -11,6 +15,8 @@ static constexpr float CAMERA_ROTATION_SPEED = 1;
 static constexpr float CAMERA_PAN_SPEED = 20;
 static constexpr float CAMERA_ORBITAL_SPEED = 0.25f;
 static constexpr float CAMERA_MOUSE_MOVE_SENSITIVITY = 0.003f;
+
+using namespace EditorFramework;
 
 void UpdateCameraXY(Camera* camera, int mode)
 {
@@ -144,7 +150,23 @@ void TerrainDocument::OnShowContent(int width, int height)
 
 void TerrainDocument::OnShowUI()
 {
+    auto size = GetButtonSize(ICON_FA_BOX);
 
+    //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
+    ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());
+    ImGui::SetNextWindowSize(ImVec2(-1,-1));
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking
+        | ImGuiWindowFlags_NoCollapse
+        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoNavFocus
+        | ImGuiWindowFlags_NoSavedSettings;
+
+
+    ImGui::Begin(ICON_FA_PALETTE "###Tools", nullptr, flags);
+  //  ImGui::PopStyleVar();
+    ImGui::Button(ICON_FA_PAINTBRUSH);
+    ImGui::End();
 }
 
 void TerrainDocument::OnCreated()

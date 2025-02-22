@@ -7,7 +7,7 @@
 
 namespace EditorFramework
 {
-    static ImVec2 GetButtonSize(std::string_view label)
+    ImVec2 GetButtonSize(std::string_view label)
     {
         ImVec2 result = ImGui::CalcTextSize(label.data());
         result.x += (ImGui::GetStyle().FramePadding.x + ImGui::GetStyle().FramePadding.x);
