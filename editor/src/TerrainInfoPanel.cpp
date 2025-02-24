@@ -70,23 +70,30 @@ void TerrainInfoPanel::OnShow()
 
         float height = (ImGui::GetTextLineHeight() * count) + (count - 1) * ImGui::GetStyle().ItemInnerSpacing.y;
 
-       // if (ImGui::BeginChild("TileList", ImVec2(ImGui::GetContentRegionAvail().x, height)))
+        if (ImGui::BeginChild("TileList", ImVec2(ImGui::GetContentRegionAvail().x, height)))
         {
             if (ImGui::BeginTable(propertyTableName, 2, tableFlags))
             {
                 for (const auto& tile : doc->Tiles)
                 {
+                    const char* label = TextFormat("%d, %d", tile.Origin.X, tile.Origin.Y);
+
+                    bool selected = doc->SelectedTileLoc == tile.Origin;
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
-                    ImGui::Text("%d, %d", tile.Origin.X, tile.Origin.Y);
 
+                    if (ImGui::Selectable(label, &selected, ImGuiSelectableFlags_SpanAllColumns))
+                    {
+                        doc->SelectedTileLoc = tile.Origin;
+                    }
+           
                     ImGui::TableNextColumn();
                     ImGui::Text("%d layers", tile.LayerMaterials.size());
                 }
                 ImGui::EndTable();
             }
         }
-       // ImGui::EndChild();
+        ImGui::EndChild();
     }
 
 }

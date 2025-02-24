@@ -168,7 +168,7 @@ namespace EditorFramework
                 ScrollToBottom = true;
             }
 
-            while (Items.size() > 100)
+            while (Items.size() > 250)
                 Items.pop_front();
 
             std::string copyBuffer;

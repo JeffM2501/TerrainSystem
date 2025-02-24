@@ -57,4 +57,6 @@ struct TerrainTile
     void SetHeightsFromImage(Image& image);
 
     float GetLocalHeight(int x, int y) const;
+
+    void Unload();
 };

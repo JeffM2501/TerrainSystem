@@ -6,6 +6,11 @@ in vec2 fragTexCoord2;
 in vec4 fragColor;
 in vec3 fragNormal;
 
+uniform int selected;
+uniform vec4 selectedColor;
+
+uniform int showSplat;
+
 uniform vec3 sunVector;
 
 uniform sampler2D matDiffuse0;
@@ -19,13 +24,11 @@ uniform vec4 matTint3;
 uniform sampler2D matDiffuse4;
 uniform vec4 matTint4;
 
+uniform vec4 colDiffuse;
+
 uniform int materialCount;
 
 uniform sampler2D splatmap;
-
-// Input uniform values
-uniform sampler2D texture0;
-uniform vec4 colDiffuse;
 
 // Output fragment color
 out vec4 finalColor;
@@ -34,8 +37,13 @@ out vec4 finalColor;
 
 void main()
 {
+    if (selected == 1)
+    {
+        finalColor = selectedColor;
+        return;
+    }
     // Texel color fetching from texture sampler
-    vec4 texelColor = texture(texture0, fragTexCoord2);
+    vec4 texelColor = vec4(1,0,1,1);
     vec4 splatColor = texture(splatmap, fragTexCoord);
 
     // TODO< check the splat map to see if we even need the base layer
@@ -48,28 +56,33 @@ void main()
 
      if (materialCount >= 2)
      {
-         splatmapColor = mix(texture(matDiffuse1, fragTexCoord2)* matTint1, splatmapColor,  splatColor.r);
+        vec4 mat1Color = texture(matDiffuse1, fragTexCoord2) * matTint1;
+        splatmapColor = mix(mat1Color, splatmapColor, 1-splatColor.r);
      }
     
-    if (materialCount >= 3)
+     if (materialCount >= 3)
+     {
+         vec4 mat2Color = texture(matDiffuse2, fragTexCoord2) * matTint2;
+         splatmapColor = mix(mat2Color, splatmapColor, 1-splatColor.g);
+     }
+     
+     if (materialCount >= 4)
+     {
+         vec4 mat3Color = texture(matDiffuse3, fragTexCoord2) * matTint3;
+         splatmapColor = mix(mat3Color, splatmapColor, 1-splatColor.b);
+     }
+     
+    if (materialCount >= 5 )
     {
-        splatmapColor = mix(texture(matDiffuse2, fragTexCoord2)* matTint2, splatmapColor,  splatColor.g);
+        vec4 mat4Color = texture(matDiffuse4, fragTexCoord2) * matTint4;
+        splatmapColor = mix(mat4Color, splatmapColor, 1-splatColor.a);
     }
-   //
-   // if (materialCount >= 4 && splatColor.b > 0)
-   // {
-   //     splatmapColor = mix(texture(matDiffuse3, fragTexCoord2)* matTint3, splatmapColor,  splatColor.b);
-   // }
-   //
-   // if (materialCount >= 5 && splatColor.a > 0)
-   // {
-   //     splatmapColor = mix(texture(matDiffuse4, fragTexCoord2)* matTint4, splatmapColor,  splatColor.a);
-   // }
 
     if (materialCount > 0)
         texelColor = splatmapColor;
 
-    texelColor = vec4(splatColor.r,splatColor.g,splatColor.b,1);
+    if (showSplat == 1)
+        texelColor = vec4(splatColor.r,splatColor.g,splatColor.b,1);
 
     vec3 normal = normalize(fragNormal);
 

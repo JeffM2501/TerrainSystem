@@ -2,6 +2,8 @@
 
 #include "Panel.h"
 
+#include "TerrainBuilder.h"
+
 class TerrainGenerationPanel : public EditorFramework::Panel
 {
 public:
@@ -10,9 +12,11 @@ public:
 protected:
     void OnShow() override;
 
-private:
-    int GridX = 12;
-    int GridY = 12;
+    TileMeshBuilder Builder;
 
-    float PerlinScale = 2;
+private:
+    int GridX = 6;
+    int GridY = 6;
+
+    float PerlinScale = 0.25f;
 };

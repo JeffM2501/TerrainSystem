@@ -32,6 +32,12 @@ void TerrainTile::SetHeightsFromImage(Image& image)
     }
 }
 
+void TerrainTile::AddMaterial(const TerrainMaterial* material)
+{
+    if (material)
+        LayerMaterials.push_back(material);
+}
+
 float TerrainTile::GetLocalHeight(int x, int y) const
 {
     size_t index = (y + 1) * (Info.TerrainGridSize + 3) + x + 1;
@@ -45,16 +51,23 @@ void TerrainTile::UnloadGeometry()
     if (VboId != nullptr)
     {
         for (int i = 0; i < MAX_MESH_VERTEX_BUFFERS; i++)
-            rlUnloadVertexBuffer(VboId[i]);
+        {
+            if (i != 6)
+                rlUnloadVertexBuffer(VboId[i]);
+        }
+            
     }
     MemFree(VboId);
 
     VaoId = -1;
     VboId = nullptr;
+
+    TerrainHeightMap.clear();
 }
 
 void TerrainTile::UnloadSplats()
 {
     UnloadTexture(Splatmap);
+    LayerMaterials.clear();
     Splatmap.id = -1;
 }

@@ -179,25 +179,25 @@ void GameInit()
     info.TerrainMinZ = -6;
     info.TerrainMaxZ = 25;
 
-    GrassMateral.DiffuseMap = LoadTexture("resources/terrain_materials/grass_ground_d-resized.png");
+    GrassMateral.DiffuseMap = LoadTextureFromImage(GenImageChecked(128,128, 32,32, DARKGREEN, GREEN));
     GenTextureMipmaps(&GrassMateral.DiffuseMap);
     SetTextureFilter(GrassMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
 
-    GroundMateral.DiffuseMap = LoadTexture("resources/terrain_materials/ground_crackedv_d-resized.png");
+    GroundMateral.DiffuseMap = LoadTextureFromImage(GenImageChecked(128, 128, 32, 32, DARKBROWN, BROWN));
     GenTextureMipmaps(&GroundMateral.DiffuseMap);
     SetTextureFilter(GroundMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
 
-    RoadMateral.DiffuseMap = LoadTexture("resources/terrain_materials/ground_dry_d-resized.png");
+    RoadMateral.DiffuseMap = LoadTextureFromImage(GenImageColor(128, 128, YELLOW));
     GenTextureMipmaps(&RoadMateral.DiffuseMap);
     SetTextureFilter(RoadMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
 
-    SnowMateral.DiffuseMap = LoadTexture("resources/terrain_materials/snow_grass3_d-resized.png");
+    SnowMateral.DiffuseMap = LoadTextureFromImage(GenImageColor(128, 128, PURPLE));
     GenTextureMipmaps(&SnowMateral.DiffuseMap);
     SetTextureFilter(SnowMateral.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
 
     TileMeshBuilder builder;
 
-    int grid = 12;
+    int grid = 6;
 
     for (int y = 0; y < grid; y++)
     {
@@ -286,7 +286,7 @@ void GameDraw()
 
     DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 
- rlEnableWireMode();
+ //rlEnableWireMode();
     for (int i = 0; i < Tiles.size(); i++)
     {
         int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y)/3;
@@ -296,7 +296,7 @@ void GameDraw()
         Renderer.Draw(Tiles[i], LODLevel);
 
     }
-  rlDisableWireMode();
+  //rlDisableWireMode();
 
     EndMode3D();
 

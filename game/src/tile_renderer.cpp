@@ -72,14 +72,15 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
     if (TerrainShader.locs[SHADER_LOC_MATRIX_NORMAL] != -1)
         rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
 
-    rlSetUniformSampler(SplatmapLoc, tile.Splatmap.id);
-
+   
     // Select current shader texture slot
     for (int i = 0; i < tile.LayerMaterials.size(); i++)
     {
         rlActiveTextureSlot(i);
-        rlSetUniformSampler(MaterialTextureLocs[i], tile.LayerMaterials[i]->DiffuseMap.id);
-          
+
+        rlEnableTexture(tile.LayerMaterials[i]->DiffuseMap.id);
+        rlSetUniform(MaterialTextureLocs[i], &i, SHADER_UNIFORM_INT, 1);
+
         float colors[4] = { float(tile.LayerMaterials[i]->DiffuseColor.r / 255.0f),
                             float(tile.LayerMaterials[i]->DiffuseColor.g / 255.0f),
                             float(tile.LayerMaterials[i]->DiffuseColor.b / 255.0f),
@@ -87,6 +88,13 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
 
         rlSetUniform(MaterialTintLocs[i], colors, SHADER_UNIFORM_VEC4,1);
     }
+
+    int maskSlot = tile.LayerMaterials.size();
+    rlActiveTextureSlot(maskSlot);
+
+    rlEnableTexture(tile.Splatmap.id);
+    rlSetUniform(SplatmapLoc, &maskSlot, SHADER_UNIFORM_INT, 1);
+
 
     int matCount = int(tile.LayerMaterials.size());
     rlSetUniform(MaterialCountLoc, &matCount, SHADER_UNIFORM_INT, 1);

@@ -9,6 +9,11 @@ struct TerrainPosition
 {
     int64_t X = 0;
     int64_t Y = 0;
+
+    bool operator == (const TerrainPosition& other) const
+    {
+        return X == other.X && Y == other.Y;
+    }   
 };
 
 struct TerrainMaterial
@@ -23,8 +28,8 @@ struct TerrainInfo
     uint8_t TerrainGridSize = 128;
 
     float TerrainTileSize = 128;
-    float TerrainMinZ = 0;
-    float TerrainMaxZ = 300;
+    float TerrainMinZ = -50;
+    float TerrainMaxZ = 100;
 };
 
 static constexpr uint8_t MaxLODLevels = 4;
@@ -43,7 +48,7 @@ struct TerrainTile
 
     std::vector<float> TerrainHeightMap;
 
-    std::vector<TerrainMaterial*> LayerMaterials;
+    std::vector<const TerrainMaterial*> LayerMaterials;
     Texture Splatmap;
 
     unsigned int VaoId = -1;
@@ -55,6 +60,8 @@ struct TerrainTile
     ~TerrainTile();
 
     void SetHeightsFromImage(Image& image);
+
+    void AddMaterial(const TerrainMaterial* material);
 
     float GetLocalHeight(int x, int y) const;
 

@@ -125,7 +125,7 @@ namespace EditorFramework
         std::vector<std::shared_ptr<CommandContainerItem>> Contents;
 
         template<class T, class... Args>
-        T& AddItem(size_t insertLocation, Args&&... args)
+        std::shared_ptr<T> AddItem(size_t insertLocation, Args&&... args)
         {
             auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
             ptr->SortIndex = insertLocation;
@@ -137,12 +137,30 @@ namespace EditorFramework
                 if ((*itr)->SortIndex > insertLocation)
                 {
                     Contents.insert(itr, ptr);
-                    return *(ptr.get());
+                    return ptr;
                 }
                 itr++;
             }
             Contents.push_back(ptr);
-            return *(ptr.get());
+            return ptr;
+        }
+
+        std::shared_ptr<CommandItem> AddItem(size_t insertLocation, std::shared_ptr<CommandItem> ptr)
+        {
+            auto itr = Contents.begin();
+
+            while (itr != Contents.end())
+            {
+                if ((*itr)->SortIndex > insertLocation)
+                {
+                    Contents.insert(itr, ptr);
+                    return ptr;
+                }
+                itr++;
+            }
+            ptr->SortIndex = insertLocation;
+            Contents.push_back(ptr);
+            return ptr;
         }
 
         CommandContainer& AddGroup(std::string_view name, std::string_view icon = "", size_t insertLocation = 0)
@@ -158,7 +176,7 @@ namespace EditorFramework
                 }
             }
 
-            CommandContainer& container = AddItem<CommandContainer>(insertLocation, name, icon);
+            CommandContainer& container = *AddItem<CommandContainer>(insertLocation, name, icon).get();
             return container;
 		}
 

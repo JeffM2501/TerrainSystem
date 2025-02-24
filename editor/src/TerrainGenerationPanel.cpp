@@ -31,34 +31,54 @@ void TerrainGenerationPanel::OnShow()
 
     ImGui::LabelTextLeft("PerlinScale"); ImGui::SameLine();
     ImGui::SetNextItemWidth(ScaleToDPI(100.0f));
-    ImGui::InputFloat("###PerlinScale", &PerlinScale, 0.125f, 0.5f);
+    ImGui::InputFloat("###PerlinScale", &PerlinScale, 0.0125f, 0.125f);
 
     if (ImGui::Button(ICON_FA_ARROW_UP_FROM_BRACKET " Generate"))
     {
-
         for (int y = 0; y < GridY; y++)
         {
             for (int x = 0; x < GridX; x++)
             {
-                auto& tile = doc->Tiles.emplace_back(doc->Info);
+                auto& tile = doc->GetTile(x, y);
+
+                tile.UnloadGeometry();
+                tile.UnloadSplats();
+
                 Image heightmap = GenImagePerlinNoise(131, 131, (x * 128) - 1, (y * 128) - 1, PerlinScale);
                 tile.SetHeightsFromImage(heightmap);
                 UnloadImage(heightmap);
 
-                Image testSplat = GenImageChecked(65, 65, 2, 2, Color{ 255,0,0,0 }, Color{ 0,255,0,0 });
-                ImageDrawRectangle(&testSplat, 16, 16, 32, 32, Color{ 0,0,0,0 });
+                Image testSplat = GenImageColor(65, 65, Color{ 0,0,0,255 });
+                ImageDrawRectangle(&testSplat, 16, 16, 32, 32, Color{ 255, 0, 0, 255 });
+                ImageDrawCircle(&testSplat, 32, 32, 8, Color{ 0,255,0,255 });
+                ImageDrawCircle(&testSplat, 16, 32, 8, Color{ 0,0,255,255 });
 
-                //ImageDrawCircle(&testSplat, 32, 32, 8, Color{0,0,0,0});
+                for (int y = 0; y < testSplat.height; y++)
+                {
+                    for (int x = 0; x < testSplat.width; x++)
+                    {
+                        Color c = GetImageColor(testSplat, x, y);
+                        if (y > 45)
+                            c.a = 255;
+                        else
+                            c.a = 0;
 
-               // tile.Splatmap = LoadTextureFromImage(testSplat);
+                        ImageDrawPixel(&testSplat, x, y, c);
+                    }
+                }
+
+                tile.Splatmap = LoadTextureFromImage(testSplat);
                 UnloadImage(testSplat);
 
-//                 tile.LayerMaterials.push_back(&GrassMateral);
-//                 tile.LayerMaterials.push_back(&GroundMateral);
-//                 tile.LayerMaterials.push_back(&RoadMateral);
+                 tile.AddMaterial(doc->GetMaterial("Grass"));
+                 tile.AddMaterial(doc->GetMaterial("Ground"));
+                 tile.AddMaterial(doc->GetMaterial("Road"));
+                 tile.AddMaterial(doc->GetMaterial("Snow"));
+                 tile.AddMaterial(doc->GetMaterial("Grid"));
+
 
                 tile.Origin = TerrainPosition{ x, y };
-               // builder.Build(tile);
+                Builder.Build(tile);
             }
         }
     }

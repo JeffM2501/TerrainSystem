@@ -121,6 +121,8 @@ void TerrainDocument::OnUpdate(int width, int height)
 {
     if (GetApp()->MouseIsInDocument() && IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
         UpdateCameraXY(&Camera, CAMERA_THIRD_PERSON);
+
+    SetShaderValue(TerrainShader, SunVectorLoc, SunVector, SHADER_UNIFORM_VEC3);
 }
 
 void TerrainDocument::OnShowContent(int width, int height)
@@ -143,7 +145,36 @@ void TerrainDocument::OnShowContent(int width, int height)
 
     DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 
+    int showSplat = ShowSplat ? 1 : 0;
+    SetShaderValue(TerrainShader, ShowSplatFlagLoc, &showSplat, SHADER_UNIFORM_INT);
+
     // draw terrain
+    for (int i = 0; i < Tiles.size(); i++)
+    {
+        // todo, compute the distance from the camera tile
+        int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y) / 3;
+        if (lod >= MaxLODLevels)
+            lod = MaxLODLevels - 1;
+
+       
+        int selected = 0;
+        SetShaderValue(TerrainShader, SelectedShaderFlagLoc, &selected, SHADER_UNIFORM_INT);
+        Renderer.Draw(Tiles[i], lod);
+        if (Tiles[i].Origin == SelectedTileLoc)
+        {
+            rlEnableWireMode();
+            rlSetLineWidth(2);
+            //rlDisableDepthTest();
+            selected = 1;
+            SetShaderValue(TerrainShader, SelectedShaderFlagLoc, &selected, SHADER_UNIFORM_INT);
+            Renderer.Draw(Tiles[i], lod);
+           // rlEnableDepthTest();
+   
+            rlDisableWireMode();
+            rlSetLineWidth(1);
+        }
+    }
+
 
     EndMode3D();
 }
@@ -175,4 +206,64 @@ void TerrainDocument::OnCreated()
     Camera.up.z = 1;
     Camera.position.z = 100;
     Camera.target.y = 50;
+
+    TerrainShader = LoadShader("resources/base.vs", "resources/base.fs");
+    if (!IsShaderValid(TerrainShader))
+        TerrainShader = LoadShader(nullptr, nullptr);
+
+    SunVectorLoc = GetShaderLocation(TerrainShader, "sunVector");
+
+    rlSetClipPlanes(0.1f, 5000.0f);
+
+    float selectedColor[4] = { 1,1,0,1 };
+    SetShaderValue(TerrainShader, GetShaderLocation(TerrainShader,"selectedColor"), selectedColor, SHADER_UNIFORM_VEC4);
+
+    SelectedShaderFlagLoc = GetShaderLocation(TerrainShader, "selected");
+    ShowSplatFlagLoc = GetShaderLocation(TerrainShader, "showSplat");
+
+    Renderer.SetShader(TerrainShader);
+
+    LoadMaterial("Grass", "resources/terrain_materials/grass_ground_d-resized.png");
+    LoadMaterial("Ground", "resources/terrain_materials/ground_crackedv_d-resized.png");
+    LoadMaterial("Road", "resources/terrain_materials/ground_dry_d-resized.png");
+    LoadMaterial("Snow", "resources/terrain_materials/snow_grass3_d-resized.png");
+
+    LoadMaterial("Grid", "resources/grid.png");
+
+    auto& visGroup = MainToolbar.AddGroup("TerrainVis");
+    auto splatCommand = visGroup.AddItem<WindowStateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this]() {ShowSplat = !ShowSplat; }, [this]() {return ShowSplat; });
+
+    auto& viewMenu = GetApp()->GetMenuBar().AddSubItem("View", "", 20);
+    auto& showGroup = viewMenu.AddGroup("Show", ICON_FA_EYE);
+    showGroup.AddItem(0, splatCommand);
+}
+
+TerrainTile& TerrainDocument::GetTile(int x, int y)
+{
+    for (auto& tile : Tiles)
+    {
+        if (tile.Origin.X == x && tile.Origin.Y == y)
+            return tile;
+    }
+    return Tiles.emplace_back(Info);
+}
+
+void TerrainDocument::LoadMaterial(const std::string& name, std::string_view path)
+{
+    TerrainMaterial &mat = MaterialLibrary.insert_or_assign(name, TerrainMaterial()).first->second;
+    if (mat.DiffuseMap.id > 0)
+        UnloadTexture(mat.DiffuseMap);
+
+    mat.DiffuseMap = LoadTexture(path.data());
+    GenTextureMipmaps(&mat.DiffuseMap);
+    SetTextureFilter(mat.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
+}
+
+const TerrainMaterial* TerrainDocument::GetMaterial(const std::string& name) const
+{
+    auto itr = MaterialLibrary.find(name);
+    if (itr == MaterialLibrary.end())
+        return nullptr;
+
+    return &itr->second;
 }
