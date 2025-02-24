@@ -2,8 +2,11 @@
 
 #include "TerrainDocument.h"
 
+#include "DisplayScale.h"
+
 #include "extras/IconsFontAwesome6.h"
 #include "ImGuiExtras.h"
+#include "rlImGui.h"
 
 #include <algorithm>
 
@@ -66,7 +69,7 @@ void TerrainInfoPanel::OnShow()
 
     if (ImGui::CollapsingHeader("Tiles", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        size_t count = std::min(std::max(size_t(1),doc->Tiles.size()), size_t(10));
+        size_t count = std::min(std::max(size_t(1),doc->Tiles.size()), size_t(5));
 
         float height = (ImGui::GetTextLineHeight() * count) + (count - 1) * ImGui::GetStyle().ItemInnerSpacing.y;
 
@@ -89,6 +92,59 @@ void TerrainInfoPanel::OnShow()
            
                     ImGui::TableNextColumn();
                     ImGui::Text("%d layers", tile.LayerMaterials.size());
+                }
+                ImGui::EndTable();
+            }
+        }
+        ImGui::EndChild();
+    }
+
+    if (ImGui::CollapsingHeader("Overview", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::BeginChild("Map", ImGui::GetContentRegionAvail(), ImGuiChildFlags_Border))
+        {
+            ImGuiTableFlags gridFlags = ImGuiTableFlags_SizingFixedSame | ImGuiTableFlags_BordersInner;
+
+            float gridSize = ScaleToDPI(48.0f);
+
+            if (ImGui::BeginTable("TileGrid", doc->TerrainBounds.Y + 1, gridFlags))
+            {
+                for (int h = 0; h <= doc->TerrainBounds.X; h++)
+                {
+                    ImGui::TableSetupColumn(TextFormat("%d", h), ImGuiTableColumnFlags_NoResize, gridSize);
+                }
+
+                if (!doc->Tiles.empty())
+                {
+                    for (int y = doc->TerrainBounds.Y; y >= 0; y--)
+                    {
+                        ImGui::TableNextRow();
+                        for (int x = 0; x <= doc->TerrainBounds.X; x++)
+                        {
+                            ImGui::TableNextColumn();
+
+                            auto pos = ImGui::GetCursorPos();
+                            const char* label = TextFormat("%d, %d", x, y);
+                            if (ImGui::Selectable(label, doc->SelectedTileLoc == TerrainPosition{ x,y }, 0, ImVec2(gridSize, gridSize)))
+                            {
+                                doc->SelectedTileLoc = TerrainPosition{ x,y };
+                            }
+
+                            ImGui::SetCursorPos(pos);
+                            ImGui::SetNextItemAllowOverlap();
+                            if (doc->HasTile(x, y))
+                            {
+                                rlImGuiPushIconFont();
+                                ImGui::TextUnformatted(ICON_FA_MOUNTAIN);
+                                ImGui::PopFont();
+                            }
+                            else
+                            {
+                                ImGui::Dummy(ImVec2(gridSize, gridSize));
+                            }
+                            
+                        }
+                    }
                 }
                 ImGui::EndTable();
             }

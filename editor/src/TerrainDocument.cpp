@@ -245,7 +245,27 @@ TerrainTile& TerrainDocument::GetTile(int x, int y)
         if (tile.Origin.X == x && tile.Origin.Y == y)
             return tile;
     }
-    return Tiles.emplace_back(Info);
+    auto& tile = Tiles.emplace_back(Info);
+    tile.Origin.X = x;
+    tile.Origin.Y = y;
+
+    if (x > TerrainBounds.X)
+        TerrainBounds.X = x;
+    if (y > TerrainBounds.Y)
+        TerrainBounds.Y = y;
+
+    return tile;
+}
+
+bool TerrainDocument::HasTile(int x, int y) const
+{
+    for (auto& tile : Tiles)
+    {
+        if (tile.Origin.X == x && tile.Origin.Y == y)
+            return true;
+    }
+
+    return false;
 }
 
 void TerrainDocument::LoadMaterial(const std::string& name, std::string_view path)

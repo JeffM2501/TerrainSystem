@@ -87,7 +87,7 @@ namespace EditorFramework
         {
         case CommandItem::ItemType::Toggle:
         {
-            bool state = item.GetValue() != 0.0f;
+            bool state = item.IsChecked();
 
             if (state)
                 ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
@@ -99,9 +99,9 @@ namespace EditorFramework
 
             if (state)
                 ImGui::PopStyleColor();
-        }
 
             break;
+        }
 
         case CommandItem::ItemType::Button:
             if (ImGui::Button(imGuiName))

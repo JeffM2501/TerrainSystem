@@ -25,12 +25,15 @@ public:
     float SunVector[3] = { 0,0,1 };
 
     TerrainTile& GetTile(int x, int y);
+    bool HasTile(int x, int y) const;
 
     void LoadMaterial(const std::string& name,  std::string_view path);
 
     const TerrainMaterial* GetMaterial(const std::string& name) const;
 
     TerrainPosition SelectedTileLoc;
+
+    TerrainPosition TerrainBounds = { 0,0 };
     
 protected:
     Camera3D Camera = { 0 };

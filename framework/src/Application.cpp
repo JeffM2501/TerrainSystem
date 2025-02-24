@@ -274,8 +274,7 @@ namespace EditorFramework
 
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-				ImGuiWindowFlags flags =ImGuiWindowFlags_NoBringToFrontOnFocus 
-					| ImGuiWindowFlags_DockNodeHost 
+				ImGuiWindowFlags flags =ImGuiWindowFlags_NoBringToFrontOnFocus  
 					| ImGuiWindowFlags_NoFocusOnAppearing 
 					| ImGuiWindowFlags_NoMove 
 					| ImGuiWindowFlags_NoResize 

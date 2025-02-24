@@ -35,6 +35,7 @@ void TerrainGenerationPanel::OnShow()
 
     if (ImGui::Button(ICON_FA_ARROW_UP_FROM_BRACKET " Generate"))
     {
+        doc->SetDirty();
         for (int y = 0; y < GridY; y++)
         {
             for (int x = 0; x < GridX; x++)

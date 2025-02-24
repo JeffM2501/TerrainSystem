@@ -49,30 +49,37 @@ void main()
     // TODO< check the splat map to see if we even need the base layer
 
     vec4 splatmapColor = vec4(1,0,1,1);
-    if (materialCount >= 1)
+
+    int baseBlock = 0;
+    if (splatColor.r >= 1 || splatColor.g >= 1 || splatColor.b >= 1 || splatColor.a >= 1)
+    {
+        baseBlock = 1;
+    }
+
+    if (materialCount >= 1 && baseBlock == 0)
     {
         splatmapColor = texture(matDiffuse0, fragTexCoord2)* matTint0;
     }
 
-     if (materialCount >= 2)
+     if (materialCount >= 2 && splatColor.r > 0)
      {
         vec4 mat1Color = texture(matDiffuse1, fragTexCoord2) * matTint1;
         splatmapColor = mix(mat1Color, splatmapColor, 1-splatColor.r);
      }
     
-     if (materialCount >= 3)
+     if (materialCount >= 3 && splatColor.g > 0)
      {
          vec4 mat2Color = texture(matDiffuse2, fragTexCoord2) * matTint2;
          splatmapColor = mix(mat2Color, splatmapColor, 1-splatColor.g);
      }
      
-     if (materialCount >= 4)
+     if (materialCount >= 4 && splatColor.b > 0)
      {
          vec4 mat3Color = texture(matDiffuse3, fragTexCoord2) * matTint3;
          splatmapColor = mix(mat3Color, splatmapColor, 1-splatColor.b);
      }
      
-    if (materialCount >= 5 )
+    if (materialCount >= 5 && splatColor.a > 0)
     {
         vec4 mat4Color = texture(matDiffuse4, fragTexCoord2) * matTint4;
         splatmapColor = mix(mat4Color, splatmapColor, 1-splatColor.a);
