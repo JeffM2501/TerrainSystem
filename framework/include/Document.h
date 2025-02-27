@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "Events.h"
 #include "Toolbar.h"
+#include "Camera.h"
 
 #include <functional>
 #include <memory>
@@ -14,6 +15,8 @@ namespace EditorFramework
 	class Document
 	{
 	public:
+		virtual ~Document() = default;
+
 		virtual size_t GetDocumentTypeID() = 0;
 		void Created(size_t documentID) { DocumentID = documentID; OnCreated(); }
 
@@ -73,6 +76,23 @@ namespace EditorFramework
 	using DocumentFactory = std::function<DocumentPtr()>;
 
 	static constexpr char NO_EXTENSION[] = "";
+
+	class ViewportDocument : public Document
+	{
+	public:
+		ViewportDocument();
+		void OnShowContent(int width, int height) override;
+		void OnUpdate(int width, int height) override;
+
+	protected:
+		virtual void OnShowScene(const Vector2& renderSize) = 0;
+
+	protected:
+		EditorCamera VieportCamera;
+
+		Color ClearColor = SKYBLUE;
+		bool ZIsUp = true;
+	};
 }
 
 #define REGISTER_DOCUMENT(T, E) \
@@ -82,3 +102,5 @@ namespace EditorFramework
 	static std::string_view GetDocumentTypeName() { return #T; } \
 	inline size_t GetDocumentTypeID() override { return T::DocumentTypeID(); } \
 	inline std::string_view GetFileExtension()override { return #E; }
+
+

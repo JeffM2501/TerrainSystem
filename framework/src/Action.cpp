@@ -58,6 +58,33 @@ namespace EditorFramework
 			return IsActionTriggered(Hasher(name));
 		}
 
+		bool IsActionHeld(size_t hash, bool anyMod)
+		{
+			auto* action = GetAction(hash);
+
+			if (!action)
+				return false;
+
+			ImGuiKeyChord key_chord = action->Shortcut;
+
+			ImGuiContext& g = *GImGui;
+			key_chord = ImGui::FixupKeyChord(key_chord);
+			ImGuiKey mods = (ImGuiKey)(key_chord & ImGuiMod_Mask_);
+			if (!anyMod && (g.IO.KeyMods != mods))
+				return false;
+
+			ImGuiKey key = (ImGuiKey)(key_chord & ~ImGuiMod_Mask_);
+			if (key == ImGuiKey_None)
+				key = ImGui::ConvertSingleModFlagToKey(mods);
+
+			return ImGui::IsKeyDown(key);
+		}
+
+		bool IsActionHeld(std::string_view name, bool anyMod)
+		{
+			return IsActionHeld(Hasher(name), anyMod);
+		}
+
 		std::string_view GetActionButtonString(size_t hash)
 		{
 			static std::string ButtonStringCache;

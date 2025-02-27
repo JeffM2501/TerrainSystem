@@ -55,5 +55,4 @@ project (workspaceName)
     includedirs { "include" }
     
     link_raylib()
-    link_to("staticLib")
 -- To link to a lib use link_to("LIB_FOLDER_NAME")

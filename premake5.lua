@@ -164,7 +164,7 @@ workspace (workspaceName)
 
     targetdir "bin/%{cfg.buildcfg}/"
 
-    if(os.isdir("game")) then
+    if(os.isdir("editor")) then
         startproject(workspaceName)
     end
 

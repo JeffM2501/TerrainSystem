@@ -23,6 +23,20 @@ namespace EditorFramework
     static constexpr char PreferencesAction[] = "Preferences...";
     static constexpr char ShortcutKeysAction[] = "Shortcut Keys...";
 
+
+    // camera movement actions
+    static constexpr char OrbitModeAction[] = "Orbit Camera";
+	static constexpr char FPSModeAction[] = "FPS Camera";
+
+	static constexpr char CameraTranslateFowardAction[] = "Camera Forward";
+	static constexpr char CameraTranslateBackwardsAction[] = "Camera Backwards";
+	static constexpr char CameraTranslateLeftAction[] = "Camera Left";
+	static constexpr char CameraTranslateRightAction[] = "Camera Right";
+	static constexpr char CameraTranslateUpAction[] = "Camera Up";
+	static constexpr char CameraTranslateDownAction[] = "Camera Down";
+
+    static constexpr char CameraFastMoveAction[] = "Camera Fast";
+
     inline void RegisterStandardActions()
     {
         ActionRegistry::Register(ExitAction, ICON_FA_DOOR_OPEN, "Quit the application", ImGuiKey_F4 | ImGuiMod_Alt);
@@ -44,5 +58,18 @@ namespace EditorFramework
 
         ActionRegistry::Register(PreferencesAction, ICON_FA_LIST_CHECK, "System Preferences", ImGuiKey_None);
         ActionRegistry::Register(ShortcutKeysAction, ICON_FA_KEYBOARD, "Set Shortcut Keys", ImGuiKey_None);
+
+        ActionRegistry::Register(OrbitModeAction, ICON_FA_CAMERA_ROTATE, OrbitModeAction, ImGuiMod_Ctrl);
+        ActionRegistry::Register(FPSModeAction, ICON_FA_CAMERA, FPSModeAction, ImGuiKey_MouseRight);
+
+        ActionRegistry::Register(CameraFastMoveAction, ICON_FA_ROCKET, "Fast Camera Motion", ImGuiMod_Shift);
+
+        ActionRegistry::Register(CameraTranslateFowardAction, ICON_FA_ARROW_UP, "Move Camera Forward", ImGuiKey_W);
+        ActionRegistry::Register(CameraTranslateBackwardsAction, ICON_FA_ARROW_DOWN, "Move Camera Backwards", ImGuiKey_S);
+        ActionRegistry::Register(CameraTranslateLeftAction, ICON_FA_ARROW_LEFT, "Move Camera Left", ImGuiKey_A);
+        ActionRegistry::Register(CameraTranslateRightAction, ICON_FA_ARROW_RIGHT, "Move Camera Right", ImGuiKey_D);
+
+		ActionRegistry::Register(CameraTranslateUpAction, ICON_FA_ARROW_TURN_UP, "Move Camera Up", ImGuiKey_E);
+		ActionRegistry::Register(CameraTranslateDownAction, ICON_FA_ARROW_TURN_DOWN, "Move Camera Down", ImGuiKey_Q);
     }
 }

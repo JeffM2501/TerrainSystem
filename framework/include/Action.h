@@ -33,6 +33,9 @@ namespace EditorFramework
 		bool IsActionTriggered(size_t hash);
 		bool IsActionTriggered(std::string_view name);
 
+		bool IsActionHeld(size_t hash, bool anyMod = false);
+		bool IsActionHeld(std::string_view name, bool anyMod = false);
+
 		std::string_view GetActionButtonString(size_t hash);
 		std::string_view GetActionButtonString(std::string_view name);
 		std::string_view GetActionToolBarButtonString(size_t hash);

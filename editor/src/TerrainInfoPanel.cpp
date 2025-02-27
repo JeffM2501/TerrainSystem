@@ -107,7 +107,7 @@ void TerrainInfoPanel::OnShow()
 
             float gridSize = ScaleToDPI(48.0f);
 
-            if (ImGui::BeginTable("TileGrid", doc->TerrainBounds.Y + 1, gridFlags))
+            if (ImGui::BeginTable("TileGrid", int(doc->TerrainBounds.Y) + 1, gridFlags))
             {
                 for (int h = 0; h <= doc->TerrainBounds.X; h++)
                 {
@@ -116,7 +116,7 @@ void TerrainInfoPanel::OnShow()
 
                 if (!doc->Tiles.empty())
                 {
-                    for (int y = doc->TerrainBounds.Y; y >= 0; y--)
+                    for (int y = int(doc->TerrainBounds.Y); y >= 0; y--)
                     {
                         ImGui::TableNextRow();
                         for (int x = 0; x <= doc->TerrainBounds.X; x++)

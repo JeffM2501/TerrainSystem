@@ -119,17 +119,16 @@ std::string_view TerrainDocument::GetDocumentName()
 
 void TerrainDocument::OnUpdate(int width, int height)
 {
-    if (GetApp()->MouseIsInDocument() && IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-        UpdateCameraXY(&Camera, CAMERA_THIRD_PERSON);
+    ViewportDocument::OnUpdate(width, height);
 
+//     if (GetApp()->MouseIsInDocument() && IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+//         UpdateCameraXY(&VieportCamera, CAMERA_THIRD_PERSON);
+// 
     SetShaderValue(TerrainShader, SunVectorLoc, SunVector, SHADER_UNIFORM_VEC3);
 }
 
-void TerrainDocument::OnShowContent(int width, int height)
+void TerrainDocument::OnShowScene(const Vector2& renderSize)
 {
-    ClearBackground(DARKBLUE);
-
-    BeginMode3D(Camera);
     rlPushMatrix();
     rlRotatef(90, 1, 0, 0);
     DrawGrid(1024, 16);
@@ -174,9 +173,6 @@ void TerrainDocument::OnShowContent(int width, int height)
             rlSetLineWidth(1);
         }
     }
-
-
-    EndMode3D();
 }
 
 void TerrainDocument::OnShowUI()
@@ -202,10 +198,10 @@ void TerrainDocument::OnShowUI()
 
 void TerrainDocument::OnCreated()
 {
-    Camera.fovy = 45;
-    Camera.up.z = 1;
-    Camera.position.z = 100;
-    Camera.target.y = 50;
+//     Camera.fovy = 45;
+//     Camera.up.z = 1;
+//     Camera.position.z = 100;
+//     Camera.target.y = 50;
 
     TerrainShader = LoadShader("resources/base.vs", "resources/base.fs");
     if (!IsShaderValid(TerrainShader))

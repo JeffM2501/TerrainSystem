@@ -9,13 +9,13 @@
 #include <vector>
 #include <string>
 
-class TerrainDocument : public EditorFramework::Document
+class TerrainDocument : public EditorFramework::ViewportDocument
 {
 public:
     REGISTER_DOCUMENT(TerrainDocument, terrain);
     std::string_view GetDocumentName();
     void OnUpdate(int width, int height);
-    void OnShowContent(int width, int height) override;
+    void OnShowScene(const Vector2& renderSize) override;
     void OnShowUI() override;
     void OnCreated() override;
 
@@ -36,7 +36,7 @@ public:
     TerrainPosition TerrainBounds = { 0,0 };
     
 protected:
-    Camera3D Camera = { 0 };
+   // Camera3D Camera = { 0 };
 
     bool ShowSplat = false;
 
