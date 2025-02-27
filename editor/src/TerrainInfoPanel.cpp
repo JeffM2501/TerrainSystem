@@ -128,6 +128,20 @@ void TerrainInfoPanel::OnShow()
                             if (ImGui::Selectable(label, doc->SelectedTileLoc == TerrainPosition{ x,y }, 0, ImVec2(gridSize, gridSize)))
                             {
                                 doc->SelectedTileLoc = TerrainPosition{ x,y };
+
+                                auto& tile = doc->GetTile(x, y);
+
+                                auto* focusController = doc->GetCamera().FindController<FocusCameraController>();
+                                if (focusController)
+                                {
+                                    focusController->SetFocusPoint(doc->GetCamera(), 
+                                        Vector3{float(x * tile.Info.TerrainGridSize),
+                                                float(y * tile.Info.TerrainGridSize) ,
+                                                float(tile.Info.TerrainMaxZ - tile.Info.TerrainMinZ + tile.Info.TerrainMinZ) },
+                                        10.0f, 
+                                        tile.Info.TerrainGridSize,
+                                        false);
+                                }
                             }
 
                             ImGui::SetCursorPos(pos);

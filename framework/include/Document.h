@@ -84,6 +84,8 @@ namespace EditorFramework
 		void OnShowContent(int width, int height) override;
 		void OnUpdate(int width, int height) override;
 
+        EditorCamera& GetCamera() { return VieportCamera; }
+
 	protected:
 		virtual void OnShowScene(const Vector2& renderSize) = 0;
 
