@@ -72,7 +72,6 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
     if (TerrainShader.locs[SHADER_LOC_MATRIX_NORMAL] != -1)
         rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
 
-   
     // Select current shader texture slot
     for (int i = 0; i < tile.LayerMaterials.size(); i++)
     {
@@ -89,7 +88,7 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
         rlSetUniform(MaterialTintLocs[i], colors, SHADER_UNIFORM_VEC4,1);
     }
 
-    int maskSlot = tile.LayerMaterials.size();
+    int maskSlot = int(tile.LayerMaterials.size());
     rlActiveTextureSlot(maskSlot);
 
     rlEnableTexture(tile.Splatmap.id);

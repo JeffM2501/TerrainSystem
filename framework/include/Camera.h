@@ -32,13 +32,14 @@ namespace EditorFramework
         void ApplyTranslation(EditorCamera& camera);
 	};
 
-    class FocusCameraController : public EditorCameraController
+    class AnimateViewController : public EditorCameraController
     {
     public:
-        DEFINE_CAMERA_CONTROLLER(FocusCameraController);
+        DEFINE_CAMERA_CONTROLLER(AnimateViewController);
         bool Update(EditorCamera& camera, const Vector2& renderSize) final;
 
 		void SetFocusPoint(EditorCamera& camera, const Vector3& point, float time = 1.0f, float distance = 10.0f, bool focusFirst = true);
+        void SetView(EditorCamera& camera, const Vector3& point, const Vector3& target, float time = 1.0f);
 
     private:
         Vector3 DesiredCameraPosition = { 0, 0, 0 };
@@ -85,6 +86,7 @@ namespace EditorFramework
                 }
                 return nullptr;
             }
+
             EditorCameraController* FindController(std::string_view controllerName)
             {
                 for (auto& controller : Controllers)
@@ -94,6 +96,7 @@ namespace EditorFramework
                 }
                 return nullptr;
             }
+
 			template <class T>
             T* FindController()
             {

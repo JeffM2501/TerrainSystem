@@ -79,7 +79,7 @@ namespace EditorFramework
 		return true;
 	}
 
-    bool FocusCameraController::Update(EditorCamera& camera, const Vector2& renderSize)
+    bool AnimateViewController::Update(EditorCamera& camera, const Vector2& renderSize)
     {
 		if (CurrentTime >= TotalTime)
 			return false;
@@ -94,16 +94,25 @@ namespace EditorFramework
 		return true;
     }
 
-    void FocusCameraController::SetFocusPoint(EditorCamera& camera, const Vector3& point, float time /*= 1.0f*/, float distance /*= 10.0f*/, bool focusFirst /*= true*/)
+    void AnimateViewController::SetFocusPoint(EditorCamera& camera, const Vector3& point, float time /*= 1.0f*/, float distance /*= 10.0f*/, bool focusFirst /*= true*/)
     {
 		Vector3 forward = Vector3Normalize(GetCameraForward(camera.GetCamera()));
 
         DesiredCameraPosition = point + Vector3Scale(forward, -distance);
 		DesiredCameraTarget = point;
 		if (focusFirst)
-			camera.GetCamera()->target = DesiredCameraPosition;
+			camera.GetCamera()->target = DesiredCameraTarget;
 
 		CurrentTime = 0;
 		TotalTime = time;
+    }
+
+    void AnimateViewController::SetView(EditorCamera& camera, const Vector3& point, const Vector3& target, float time /*= 1.0f*/)
+    {
+        DesiredCameraPosition = point;
+        DesiredCameraTarget = target;
+
+        CurrentTime = 0;
+        TotalTime = time;
     }
 }

@@ -21,7 +21,7 @@ namespace EditorFramework
 
 		VieportCamera.PushController<OribitCameraController>();
 		VieportCamera.PushController<FPSCameraController>();
-		VieportCamera.PushController<FocusCameraController>();
+		VieportCamera.PushController<AnimateViewController>();
 	}
 
 	void ViewportDocument::OnShowContent(int width, int height)

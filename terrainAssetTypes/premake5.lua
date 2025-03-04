@@ -32,7 +32,8 @@ project (baseName)
     includedirs { "./" }
     includedirs { "./src" }
     includedirs { "./include" }
-
-    link_to("rlImGui")
-    link_to("assetSystemLib")
+    includedirs { "../framework/include" }
     include_raylib()
+	
+	link_to("assetSystemLib")
+    link_to("terrainLib")

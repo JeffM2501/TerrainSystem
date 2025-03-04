@@ -131,7 +131,7 @@ void TerrainInfoPanel::OnShow()
 
                                 auto& tile = doc->GetTile(x, y);
 
-                                auto* focusController = doc->GetCamera().FindController<FocusCameraController>();
+                                auto* focusController = doc->GetCamera().FindController<AnimateViewController>();
                                 if (focusController)
                                 {
                                     focusController->SetFocusPoint(doc->GetCamera(), 
@@ -140,7 +140,7 @@ void TerrainInfoPanel::OnShow()
                                                 float(tile.Info.TerrainMaxZ - tile.Info.TerrainMinZ + tile.Info.TerrainMinZ) },
                                         10.0f, 
                                         tile.Info.TerrainGridSize,
-                                        false);
+                                        true);
                                 }
                             }
 
