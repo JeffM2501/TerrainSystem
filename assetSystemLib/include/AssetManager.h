@@ -20,12 +20,12 @@ namespace AssetSystem
         static AssetFile::Ptr OpenAsset(const GUID& assetId);
 
         template<typename T>
-        static std::shared_ptr<T> OpenAsset(std::string_view assetPath)
+        static std::shared_ptr<T> OpenAsset(const std::string& assetPath)
         {
             return std::dynamic_pointer_cast<T>(OpenAsset(assetPath));
         }
 
-        static AssetFile::Ptr OpenAsset(std::string_view assetPath);
+        static AssetFile::Ptr OpenAsset(const std::string& assetPath);
 
         static AssetFile::Ptr CloseAsset(const GUID& assetId);
 

@@ -2,6 +2,7 @@
 
 #include "AssetDatabase.h"
 #include "AssetFile.h"
+#include "rapidjson/document.h"
 
 namespace AssetSystem
 {
@@ -15,6 +16,11 @@ namespace AssetSystem
 
     static std::unordered_map<uint64_t, std::function<std::shared_ptr<AssetFile>()>> AssetFactories;
     static std::unordered_map<GUID, AssetFileInfo> LoadedAssets;
+
+
+    void ReadAssetContents(std::string_view filePath, rapidjson::Document& doc)
+    {
+    }
 
 
     AssetFile::Ptr AssetManager::OpenAsset(const GUID& assetId)
@@ -56,20 +62,20 @@ namespace AssetSystem
             assetInfo->second.OpenCount--;
             if (assetInfo->second.OpenCount == 0)
             {
-                assetInfo->second.AssetData->Unload();
-                m_loadedAssets.erase(assetInfo);
+               /* assetInfo->second.AssetData->Unload();*/
+                LoadedAssets.erase(assetInfo);
             }
         }
         return nullptr;
     }
     void AssetManager::RegisterAssetType(uint64_t assetTypeId, std::function<AssetFile::Ptr()> factory)
     {
-        m_assetFactories[assetTypeId] = factory;
+        AssetFactories[assetTypeId] = factory;
     }
     AssetFile::Ptr AssetManager::CreateAsset(uint64_t assetTypeId)
     {
-        auto factory = m_assetFactories.find(assetTypeId);
-        if (factory != m_assetFactories.end())
+        auto factory = AssetFactories.find(assetTypeId);
+        if (factory != AssetFactories.end())
         {
             return factory->second();
         }

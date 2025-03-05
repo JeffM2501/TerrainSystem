@@ -51,4 +51,18 @@ namespace AssetSystem
     private:
         std::array<uint8_t, 16> m_data;
     };
+
+}
+
+namespace std
+{
+    template<>
+    struct hash<AssetSystem::GUID>
+    {
+        size_t operator()(const AssetSystem::GUID& guid) const
+        {
+            std::hash<std::string> hasher;
+            return hasher(guid.ToString());
+        }
+    };
 }
