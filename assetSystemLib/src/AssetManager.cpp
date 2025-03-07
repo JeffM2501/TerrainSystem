@@ -4,6 +4,8 @@
 #include "AssetFile.h"
 #include "rapidjson/document.h"
 
+#include "raylib.h"
+
 namespace AssetSystem
 {
     struct AssetFileInfo
@@ -18,8 +20,16 @@ namespace AssetSystem
     static std::unordered_map<GUID, AssetFileInfo> LoadedAssets;
 
 
-    void ReadAssetContents(std::string_view filePath, rapidjson::Document& doc)
+
+
+    AssetInfo ReadAssetContents(std::string_view filePath, rapidjson::Document& doc)
     {
+        auto text = LoadFileText(filePath.data());
+        doc.Parse(text);
+        UnloadFileText(text);
+
+        auto infoMember = doc.FindMember("AssetInfo");
+        if ()
     }
 
 

@@ -13,7 +13,6 @@ namespace AssetSystem
         GUID AssetId = GUID::Generate();
 
         uint64_t AssetTypeID = 0;
-        uint64_t ContentHash = 0;
     };
 
     class AssetFile

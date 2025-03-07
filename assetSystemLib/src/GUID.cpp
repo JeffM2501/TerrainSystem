@@ -4,6 +4,8 @@ namespace AssetSystem
 {
     // Implementation
 
+    const GUID GUID::Invalid(0,0);
+
     GUID::GUID() : m_data{ 0 } 
     {
     }
@@ -36,26 +38,6 @@ namespace AssetSystem
     {
         std::memcpy(m_data.data(), &data1, 8);
         std::memcpy(m_data.data() + 8, &data2, 8);
-    }
-
-    GUID::GUID(const uint64_t& data1, const uint64_t& data2, const uint64_t& data3, const uint64_t& data4) 
-    {
-        std::memcpy(m_data.data(), &data1, 8);
-        std::memcpy(m_data.data() + 8, &data2, 8);
-        std::memcpy(m_data.data() + 16, &data3, 8);
-        std::memcpy(m_data.data() + 24, &data4, 8);
-    }
-
-    GUID::GUID(const uint64_t& data1, const uint64_t& data2, const uint64_t& data3, const uint64_t& data4, const uint64_t& data5, const uint64_t& data6, const uint64_t& data7, const uint64_t& data8)
-    {
-        std::memcpy(m_data.data(), &data1, 8);
-        std::memcpy(m_data.data() + 8, &data2, 8);
-        std::memcpy(m_data.data() + 16, &data3, 8);
-        std::memcpy(m_data.data() + 24, &data4, 8);
-        std::memcpy(m_data.data() + 32, &data5, 8);
-        std::memcpy(m_data.data() + 40, &data6, 8);
-        std::memcpy(m_data.data() + 48, &data7, 8);
-        std::memcpy(m_data.data() + 56, &data8, 8);
     }
 
     GUID& GUID::operator=(const GUID& other) {
@@ -119,11 +101,6 @@ namespace AssetSystem
     GUID::operator std::string() const 
     {
         return ToString();
-    }
-
-    GUID::operator std::vector<uint8_t>() const 
-    {
-        return ToData();
     }
 
     std::string GUID::ToString() const 
