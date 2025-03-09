@@ -18,43 +18,19 @@
 baseName = path.getbasename(os.getcwd());
 
 project (baseName)
-    kind "ConsoleApp"
+    kind "StaticLib"
     location "./"
     targetdir "../bin/%{cfg.buildcfg}"
 
-    filter "action:vs*"
-        debugdir "$(SolutionDir)"
-
-    filter {"action:vs*"}
-        kind "WindowedApp"
-        entrypoint "mainCRTStartup"
-
-    filter{}
-
     vpaths 
     {
-        ["Header Files/*"] = { "include/**.h",  "include/**.hpp", "src/**.h", "src/**.hpp", "**.h", "**.hpp"},
-        ["Source Files/*"] = {"src/**.c", "src/**.cpp","**.c", "**.cpp"},
-        ["Application Resource Files/*"] = {"src/**.rc", "src/**.ico"},
+        ["Header Files/*"] = { "include/**.h", "include/**.hpp", "**.h", "**.hpp"},
+        ["Source Files/*"] = { "src/**.cpp", "src/**.c", "**.cpp","**.c"},
     }
-    files {"**.c", "**.cpp", "**.h", "**.hpp"}
+    files {"**.hpp", "**.h", "**.cpp","**.c"}
 
-    filter "system:windows"
-        files {"src/**.rc", "src/**.ico"}
-        resincludedirs { "src/**" }
-		links{"Shell32"}
-    filter{}
-
-    filter "files:**.ico"
-        buildaction "Embed"
-		
-    filter{}
-
-  
     includedirs { "./" }
-    includedirs { "src" }
-    includedirs { "include" }
-    
-    link_raylib()
-    link_to("asset_manager")
--- To link to a lib use link_to("LIB_FOLDER_NAME")
+    includedirs { "./src" }
+    includedirs { "./include" }
+
+    include_raylib()

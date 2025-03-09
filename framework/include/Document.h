@@ -254,5 +254,3 @@ namespace EditorFramework
 	static std::string_view GetDocumentTypeName() { return #T; } \
 	inline size_t GetDocumentTypeID() override { return T::DocumentTypeID(); } \
 	inline std::string_view GetFileExtension()override { return #E; }
-
-
