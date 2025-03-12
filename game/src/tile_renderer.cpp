@@ -89,8 +89,8 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
         rlSetUniform(MaterialTintLocs[i], colors, SHADER_UNIFORM_VEC4,1);
     }
 
-    int maskSlot = tile.LayerMaterials.size();
-    rlActiveTextureSlot(maskSlot);
+    size_t maskSlot = tile.LayerMaterials.size();
+    rlActiveTextureSlot(int(maskSlot));
 
     rlEnableTexture(tile.Splatmap.id);
     rlSetUniform(SplatmapLoc, &maskSlot, SHADER_UNIFORM_INT, 1);

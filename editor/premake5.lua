@@ -57,4 +57,8 @@ project (baseName)
     
     link_raylib()
     link_to("asset_manager")
+	link_to("framework")
+	link_to("rlImGui")
+	link_to("terrainLib")
+	link_to("common")
 -- To link to a lib use link_to("LIB_FOLDER_NAME")

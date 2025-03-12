@@ -1,15 +1,15 @@
 #include "AssetDatabase.h"
-
+#include "GUID.h"
 #include <unordered_map>
 
 namespace AssetSystem
 {
     namespace AssetFileDatabase
     {
-        static std::unordered_map<GUID, AssetFileRecord> AssetRecords;
-        static std::unordered_map<size_t, GUID> AssetsByPath;
+        static std::unordered_map<Hashes::GUID, AssetFileRecord> AssetRecords;
+        static std::unordered_map<size_t, Hashes::GUID> AssetsByPath;
 
-        const AssetFileRecord* GetAsset(const GUID& guid)
+        const AssetFileRecord* GetAsset(const Hashes::GUID& guid)
         {
             auto it = AssetRecords.find(guid);
             if (it != AssetRecords.end())
@@ -31,7 +31,7 @@ namespace AssetSystem
             return nullptr;
         }
 
-        void AddAsset(const GUID& guid, std::string_view path, size_t assetTypeId)
+        void AddAsset(const Hashes::GUID& guid, std::string_view path, size_t assetTypeId)
         {
             AssetFileRecord record;
             record.Guid = guid;
@@ -42,7 +42,7 @@ namespace AssetSystem
             AssetsByPath[record.PathHash] = guid;
         }
 
-        size_t GetAssetsOfType(size_t assetTypeId, std::vector<const AssetFileRecord*>& outAssets)
+        size_t GetAssetsOfType(uint64_t assetTypeId, std::vector<const AssetFileRecord*>& outAssets)
         {
             outAssets.clear();
             for (auto& [guid, record] : AssetRecords)

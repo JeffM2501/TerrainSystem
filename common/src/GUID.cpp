@@ -2,7 +2,7 @@
 
 #include <random>
 
-namespace AssetSystem
+namespace Hashes
 {
     static std::random_device RandomDevice;  // a seed source for the random number engine
     static std::mt19937 Generator(RandomDevice()); // mersenne_twister_engine seeded with rd()

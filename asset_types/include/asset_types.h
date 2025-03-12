@@ -1,3 +1,5 @@
+// C library
+/*
 -- Copyright (c) 2020-2024 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event 
@@ -14,24 +16,13 @@
 --  as being the original software.
 --
 --  3. This notice may not be removed or altered from any source distribution.
+*/
 
-baseName = path.getbasename(os.getcwd());
+#pragma once
 
-project (baseName)
-    kind "StaticLib"
-    location "./"
-    targetdir "../bin/%{cfg.buildcfg}"
+#include "type_database.h"
 
-    vpaths 
-    {
-        ["Header Files/*"] = { "include/**.h", "include/**.hpp", "**.h", "**.hpp"},
-        ["Source Files/*"] = { "src/**.cpp", "src/**.c", "**.cpp","**.c"},
-    }
-    files {"**.hpp", "**.h", "**.cpp","**.c"}
-
-    includedirs { "./" }
-    includedirs { "./src" }
-    includedirs { "./include" }
-
-    include_raylib()
-	link_to("common")
+namespace Types
+{
+    void RegisterTypes(TypeDatabase& typeDB);
+}

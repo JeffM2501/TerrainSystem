@@ -10,18 +10,18 @@ namespace AssetSystem
     {
         struct AssetFileRecord
         {
-            GUID Guid;
+            Hashes::GUID Guid;
             std::string Path;
-            size_t PathHash;
-            size_t AssetTypeId;
+            uint64_t PathHash;
+            uint64_t AssetTypeId;
         };
 
-        const AssetFileRecord* GetAsset(const GUID& guid);
+        const AssetFileRecord* GetAsset(const Hashes::GUID& guid);
         const AssetFileRecord* GetAsset(std::string_view path);
-        const AssetFileRecord* GetAsset(size_t pathHash);
+        const AssetFileRecord* GetAsset(uint64_t pathHash);
 
-        void AddAsset(const GUID& guid, std::string_view path, size_t assetTypeId);
+        void AddAsset(const Hashes::GUID& guid, std::string_view path, uint64_t assetTypeId);
 
-        size_t GetAssetsOfType(size_t assetTypeId, std::vector<const AssetFileRecord*>& outAssets);
+        size_t GetAssetsOfType(uint64_t assetTypeId, std::vector<const AssetFileRecord*>& outAssets);
     }
 }

@@ -34,4 +34,3 @@ project (baseName)
     includedirs { "./include" }
 
     include_raylib()
-	link_to("common")

@@ -34,5 +34,6 @@ project (baseName)
     includedirs { "./include" }
 	
     link_to("rlImGui")
+	link_to("common")
 
     include_raylib()
