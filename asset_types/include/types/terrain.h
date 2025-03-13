@@ -23,7 +23,7 @@ namespace AssetTypes
             type->AddPrimitiveField<int64_t>("Y", 1);
         }
 
-        const float& GetX() const { return ValuePtr->GetFieldPrimitiveValue<int64_t>(0); }
+        const int64_t& GetX() const { return ValuePtr->GetFieldPrimitiveValue<int64_t>(0); }
         void SetX(const int64_t& value) { ValuePtr->SetFieldPrimitiveValue<int64_t>(0, value); }
         void ResetX() { ValuePtr->ResetFieldToDefault(0); }
 
@@ -40,27 +40,23 @@ namespace AssetTypes
         static void Register(TypeDatabase& typeDB)
         {
             auto* type = typeDB.CreateType(TypeName);
+            type->AddPrimitiveField<std::string>("Name", "");
             type->AddTypeField("DiffuseTexture", ResourceReference::TypeName);
             type->AddPrimitiveField<Vector4>("DiffuseColor", Vector4{1,1,1,1});
             type->AddTypeField("NormalMap", ResourceReference::TypeName);
         }
 
-        ResourceReference GetDiffuseTexture() const { return ResourceReference(ValuePtr->GetTypeFieldValue(0)); }
+		const std::string& GetName() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
+		void SetName(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
+		void ResetName() { Value->ResetFieldToDefault(0); }
 
-        const Vector4& GetDiffuseColor() const { return ValuePtr->GetFieldPrimitiveValue<Vector4>(1); }
-        void SetDiffuseColor(const Vector4& value) { ValuePtr->SetFieldPrimitiveValue<Vector4>(1, value); }
-        void ResetDiffuseColor() { Value->ResetFieldToDefault(1); }
+        ResourceReference GetDiffuseTexture() const { return ResourceReference(ValuePtr->GetTypeFieldValue(1)); }
 
-        ResourceReference GetNormalMap() const { return ResourceReference(ValuePtr->GetTypeFieldValue(2)); }
-    };
+        const Vector4& GetDiffuseColor() const { return ValuePtr->GetFieldPrimitiveValue<Vector4>(2); }
+        void SetDiffuseColor(const Vector4& value) { ValuePtr->SetFieldPrimitiveValue<Vector4>(2, value); }
+        void ResetDiffuseColor() { Value->ResetFieldToDefault(2); }
 
-    struct TerrainInfo
-    {
-        uint8_t TerrainGridSize = 128;
-
-        float TerrainTileSize = 128;
-        float TerrainMinZ = -50;
-        float TerrainMaxZ = 100;
+        ResourceReference GetNormalMap() const { return ResourceReference(ValuePtr->GetTypeFieldValue(3)); }
     };
 
     class TerrainInfo : public TypeWraper
@@ -71,52 +67,82 @@ namespace AssetTypes
         static void Register(TypeDatabase& typeDB)
         {
             auto* type = typeDB.CreateType(TypeName);
-            type->AddPrimitiveField<float>("TestFloat", 123.456f);
-            type->AddPrimitiveField<int32_t>("TestInt", 123);
-            type->AddPrimitiveField<bool>("TestBool", false);
-            type->AddPrimitiveField<std::string>("TestString", "Default_Value");
+            type->AddPrimitiveField<uint8_t>("GridSize", 128);
+            type->AddPrimitiveField<float>("TileSize", 128);
+            type->AddPrimitiveField<float>("MinZ", -50);
+            type->AddPrimitiveField<float>("MaxZ", 100);
         }
 
-        const float& GetTestFloat() const { return ValuePtr->GetFieldPrimitiveValue<float>(0); }
-        void SetTestFloat(const float& value) { ValuePtr->SetFieldPrimitiveValue<float>(0, value); }
-        void ResetTestFloat() { ValuePtr->ResetFieldToDefault(0); }
+        const uint8_t& GetGridSize() const { return ValuePtr->GetFieldPrimitiveValue<uint8_t>(0); }
+        void SetGridSize(const uint8_t& value) { ValuePtr->SetFieldPrimitiveValue<uint8_t>(0, value); }
+        void ResetGridSize() { ValuePtr->ResetFieldToDefault(0); }
 
-        const int32_t& GetTestInt() const { return ValuePtr->GetFieldPrimitiveValue<int32_t>(1); }
-        void SetTestInt(const int32_t& value) { ValuePtr->SetFieldPrimitiveValue<int32_t>(1, value); }
-        void ResetTestInt() { Value->ResetFieldToDefault(1); }
+        const float& GetTileSize() const { return ValuePtr->GetFieldPrimitiveValue<float>(1); }
+        void SetTileSize(const float& value) { ValuePtr->SetFieldPrimitiveValue<float>(1, value); }
+        void ResetTileSize() { Value->ResetFieldToDefault(1); }
 
-        const bool& GetTestBool() const { return ValuePtr->GetFieldPrimitiveValue<bool>(2); }
-        void SetTestBool(const bool& value) { ValuePtr->SetFieldPrimitiveValue<bool>(2, value); }
-        void ResetTestBool() { ValuePtr->ResetFieldToDefault(2); }
+		const float& GetMinZ() const { return ValuePtr->GetFieldPrimitiveValue<float>(2); }
+		void SetTMinZ(const float& value) { ValuePtr->SetFieldPrimitiveValue<float>(2, value); }
+		void ResetMinZ() { Value->ResetFieldToDefault(2); }
 
-        const std::string& GetTestString() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(3); }
-        void SetTestString(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(3, value); }
-        void ResetTestString() { ValuePtr->ResetFieldToDefault(3); }
+		const float& GetMaxZ() const { return ValuePtr->GetFieldPrimitiveValue<float>(3); }
+		void SetMaxZ(const float& value) { ValuePtr->SetFieldPrimitiveValue<float>(3, value); }
+		void ResetMaxZ() { Value->ResetFieldToDefault(3); }
+    };
+
+	class TerrainSplatmap : public TypeWraper
+	{
+	public:
+		DEFINE_TYPE(TerrainSplatmap);
+
+		static void Register(TypeDatabase& typeDB)
+		{
+			auto* type = typeDB.CreateType(TypeName);
+			type->AddPrimitiveField<uint16_t>("Material", 128);
+            type->AddPrimitiveListField("Values", Types::PrimitiveType::UInt8);
+		}
+
+		const uint16_t& GetMaterial() const { return ValuePtr->GetFieldPrimitiveValue<uint16_t>(0); }
+		void SetMaterial(const uint16_t& value) { ValuePtr->SetFieldPrimitiveValue<uint16_t>(0, value); }
+		void ResetMaterial() { ValuePtr->ResetFieldToDefault(0); }
+
+		PrimitiveListFieldValue<uint8_t>& GetValues() const { return ValuePtr->GetPrimitiveListFieldValue<uint8_t>(1); }
+
+	};
+
+    class TerrainTile : public TypeWraper
+    {
+        public:
+			DEFINE_TYPE(TerrainTile);
+
+			static void Register(TypeDatabase& typeDB)
+			{
+				auto* type = typeDB.CreateType(TypeName); 
+                type->AddTypeField("Origin", TerrainPosition::TypeName);
+                type->AddPrimitiveListField("Heightmap", Types::PrimitiveType::Float32);
+                type->AddTypeListField("Layers", TerrainSplatmap::TypeName);
+			}
+
+            TerrainPosition GetOrigin() const { return TerrainPosition(ValuePtr->GetTypeFieldValue(0)); }
+            PrimitiveListFieldValue<float>& GetHeightmap() const { return ValuePtr->GetPrimitiveListFieldValue<float>(1); }
+			TypeListWrapper<TerrainSplatmap> GetLayers() const { return TypeListWrapper<TerrainSplatmap>(ValuePtr->GetTypeListFieldValue(2)); }
     };
 
     class TerrainAsset : public Asset
     {
     public:
-        DEFINE_TYPE(TerrainAsset);
+        DEFINE_DERIVED_TYPE(TerrainAsset, Asset);
 
         static void Register(TypeDatabase& typeDB)
         {
             auto* type = typeDB.CreateType(TypeName);
-            type->AddPrimitiveField<Hashes::GUID>("GUID", Hashes::GUID::Invalid());
-            type->AddPrimitiveField<uint64_t>("TypeId", 0);
-            type->AddPrimitiveField<std::string>("TypeName", "");
+            type->AddTypeField("Info", TerrainInfo::TypeName);
+            type->AddTypeListField("Materials", TerrainMaterial::TypeName);
+            type->AddTypeListField("Tiles", TerrainTile::TypeName);
         }
 
-        const Hashes::GUID& GetGUID() const { return ValuePtr->GetFieldPrimitiveValue<Hashes::GUID>(0); }
-        void SetGUID(const Hashes::GUID& value) { ValuePtr->SetFieldPrimitiveValue<Hashes::GUID>(0, value); }
-        void ResetGUID() { ValuePtr->ResetFieldToDefault(0); }
-
-        const uint64_t& GetTypeId() const { return ValuePtr->GetFieldPrimitiveValue<uint64_t>(1); }
-        void SetTypeId(const uint64_t& value) { ValuePtr->SetFieldPrimitiveValue<uint64_t>(1, value); }
-        void ResetTypeId() { ValuePtr->ResetFieldToDefault(1); }
-
-        const std::string& GetTypeName() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(2); }
-        void SetTypeName(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(2, value); }
-        void ResetTypeNameD() { ValuePtr->ResetFieldToDefault(2); }
+        TerrainInfo GetInfo() const { return TerrainInfo(ValuePtr->GetTypeFieldValue(0)); }
+        TypeListWrapper<TerrainMaterial> GetMaterials() const { return TypeListWrapper<TerrainMaterial>(ValuePtr->GetTypeListFieldValue(1)); }
+        TypeListWrapper<TerrainTile> GetTiles() const { return TypeListWrapper<TerrainTile>(ValuePtr->GetTypeListFieldValue(2)); }
     };
 }

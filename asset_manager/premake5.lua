@@ -35,3 +35,5 @@ project (baseName)
 
     include_raylib()
 	link_to("common")
+	link_to("asset_system")
+	link_to("asset_types")

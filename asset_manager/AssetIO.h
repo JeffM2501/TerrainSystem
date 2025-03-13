@@ -9,11 +9,5 @@
 
 namespace AssetSystem
 {
-    using AssetReader = std::function<void(Asset::Ptr asset, const rapidjson::Document& document)>;
-    using AssetWriter = std::function<void(const Asset::Ptr asset, rapidjson::Document& document)>;
 
-    namespace AssetIO
-    {
-
-    }
 }

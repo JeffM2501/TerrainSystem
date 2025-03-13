@@ -80,6 +80,6 @@ namespace AssetTypes
             type->AddTypeField("Meta", AssetMetaInfo::TypeName);
         }
 
-        AssetMetaInfo GetTestField() const { return AssetMetaInfo(ValuePtr->GetTypeFieldValue(0)); }
+        AssetMetaInfo GetMeta() const { return AssetMetaInfo(ValuePtr->GetTypeFieldValue(0)); }
     };
 }

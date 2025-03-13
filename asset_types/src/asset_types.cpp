@@ -2,6 +2,7 @@
 
 #include "types/test_type.h"
 #include "types/asset.h"
+#include "types/terrain.h"
 
 namespace Types
 {
@@ -20,5 +21,12 @@ namespace Types
         AssetTypes::AssetReference::Register(typeDB);
         AssetTypes::AssetMetaInfo::Register(typeDB);
         AssetTypes::Asset::Register(typeDB);
+
+		AssetTypes::TerrainPosition::Register(typeDB);
+		AssetTypes::TerrainMaterial::Register(typeDB);
+		AssetTypes::TerrainInfo::Register(typeDB);
+		AssetTypes::TerrainSplatmap::Register(typeDB);
+        AssetTypes::TerrainTile::Register(typeDB);
+        AssetTypes::TerrainAsset::Register(typeDB);
     }
 }
