@@ -13,27 +13,39 @@ namespace AssetSystem
 {
     namespace AssetManager
     {
-        AssetTypes::Asset* FindExistingAsset(std::string_view assetFilePath);
+        extern TypeDatabase TypeDB;
+
+        AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
         AssetTypes::Asset* FindExistingAsset(const Hashes::GUID& assetGUID);
+
+        void StoreAsset(const std::string& assetFilePath, std::shared_ptr<TypeWraper> assetData);
 
         void CloseAsset(AssetTypes::Asset* asset);
 
         template <class T>
-        T* OpenAsset(std::string_view assetFilePath)
+        T* OpenAsset(const std::string& assetFilePath)
         {
-            auto asset = OpenAsset(assetFilePath);
-            if(asset)
-            {
-                if (asset->TypeName != T::TypeName)
-                {
-                    CloseAsset(asset);
-                    return nullptr;
-                }
+            auto existing = FindExistingAsset(assetFilePath);
 
-                return static_pointer_cast<T>(asset);
+            if (existing)
+            {
+                if (existing->TypeName != T::TypeName)
+                    return nullptr;
+                return static_cast<T*>(existing);
+            }
+            
+            std::shared_ptr<T> asset = std::make_shared<T>();
+            asset->ReadAs<T>(assetFilePath, TypeDB, true);
+
+            auto asset = OpenAsset(assetFilePath);
+            if(!asset->IsValid())
+            {
+                return nullptr;
             }
 
-            return nullptr;
+            StoreAsset(assetFilePath, asset);
+
+            return asset.get();
         }
 
         template <class T>

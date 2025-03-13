@@ -16,7 +16,6 @@ namespace Types
         AssetTypes::TestTypeWithTypeList::Register(typeDB);
         AssetTypes::TestTypeWithPtrTypeList::Register(typeDB);
 
-
         AssetTypes::ResourceReference::Register(typeDB);
         AssetTypes::AssetReference::Register(typeDB);
         AssetTypes::AssetMetaInfo::Register(typeDB);
@@ -24,6 +23,7 @@ namespace Types
 
 		AssetTypes::TerrainPosition::Register(typeDB);
 		AssetTypes::TerrainMaterial::Register(typeDB);
+        AssetTypes::TerrainMaterialAsset::Register(typeDB);
 		AssetTypes::TerrainInfo::Register(typeDB);
 		AssetTypes::TerrainSplatmap::Register(typeDB);
         AssetTypes::TerrainTile::Register(typeDB);

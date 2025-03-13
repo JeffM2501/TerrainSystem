@@ -57,6 +57,8 @@ project (baseName)
     
     link_raylib()
     link_to("asset_manager")
+    link_to("asset_system")
+    link_to("asset_types")
 	link_to("framework")
 	link_to("rlImGui")
 	link_to("terrainLib")

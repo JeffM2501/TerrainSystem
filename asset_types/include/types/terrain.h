@@ -59,6 +59,25 @@ namespace AssetTypes
         ResourceReference GetNormalMap() const { return ResourceReference(ValuePtr->GetTypeFieldValue(3)); }
     };
 
+    class TerrainMaterialAsset : public Asset
+    {
+    public:
+        DEFINE_DERIVED_TYPE(TerrainMaterialAsset, Asset);
+
+        static void Register(TypeDatabase& typeDB)
+        {
+            auto* type = typeDB.CreateType(TypeName);
+            type->AddTypeField("Material", TerrainMaterial::TypeName);
+            type->AddPrimitiveField<std::string>("Category", "");
+        }
+
+        TerrainMaterial GetMaterial() const { return TerrainMaterial(ValuePtr->GetTypeFieldValue(0)); }
+        
+        const std::string& GetCategory() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(1); }
+        void SetCategory(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(1, value); }
+        void ResetCategory() { Value->ResetFieldToDefault(1); }
+    };
+
     class TerrainInfo : public TypeWraper
     {
     public:

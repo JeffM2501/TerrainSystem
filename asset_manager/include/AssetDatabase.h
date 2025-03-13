@@ -18,7 +18,6 @@ namespace AssetSystem
 
         const AssetFileRecord* GetAsset(const Hashes::GUID& guid);
         const AssetFileRecord* GetAsset(std::string_view path);
-        const AssetFileRecord* GetAsset(uint64_t pathHash);
 
         void AddAsset(const Hashes::GUID& guid, std::string_view path, uint64_t assetTypeId);
 
