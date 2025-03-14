@@ -15,34 +15,19 @@ namespace AssetSystem
 			size_t RefCount = 0;
 		};
 
-		static std::unordered_map<Hashes::GUID, AssetFileRecord> OpenedAssets;
-		static std::unordered_map<std::string, Hashes::GUID> OpenedAssetsByPath;
+		static std::unordered_map<std::string, AssetFileRecord> OpenedAssets;
 
 		TypeDatabase TypeDB;
 
 		AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath)
 		{
-			auto existingAsset = OpenedAssetsByPath.find(assetFilePath);
-			if (existingAsset != OpenedAssetsByPath.end())
-			{
-				auto& info = OpenedAssets[existingAsset->second];
-				info.RefCount++;
-				return static_cast<AssetTypes::Asset*>(info.AssetPtr.get());
-			}
-			return nullptr;
-		}
-
-		AssetTypes::Asset* FindExistingAsset(const Hashes::GUID& assetGUID)
-		{
-			auto existingAsset = OpenedAssets.find(assetGUID);
+			auto existingAsset = OpenedAssets.find(assetFilePath);
 			if (existingAsset != OpenedAssets.end())
 			{
 				auto& info = existingAsset->second;
 				info.RefCount++;
-
 				return static_cast<AssetTypes::Asset*>(info.AssetPtr.get());
 			}
-
 			return nullptr;
 		}
 
@@ -50,8 +35,7 @@ namespace AssetSystem
 		{
 			AssetTypes::Asset* asset = static_cast<AssetTypes::Asset*>(assetData.get());
 
-			OpenedAssets[asset->GetMeta().GetGUID()] = AssetFileRecord{ assetData, assetFilePath, 1 };
-			OpenedAssetsByPath[assetFilePath] = asset->GetMeta().GetGUID();
+			OpenedAssets[assetFilePath] = AssetFileRecord{ assetData, assetFilePath, 1 };
 		}
 
 		void CloseAsset(AssetTypes::Asset* asset)

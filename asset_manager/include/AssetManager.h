@@ -16,11 +16,10 @@ namespace AssetSystem
         extern TypeDatabase TypeDB;
 
         AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
-        AssetTypes::Asset* FindExistingAsset(const Hashes::GUID& assetGUID);
-
-        void StoreAsset(const std::string& assetFilePath, std::shared_ptr<TypeWraper> assetData);
 
         void CloseAsset(AssetTypes::Asset* asset);
+
+        void StoreAsset(const std::string& assetFilePath, std::shared_ptr<TypeWraper> assetData);
 
         template <class T>
         T* OpenAsset(const std::string& assetFilePath)
@@ -35,35 +34,20 @@ namespace AssetSystem
             }
             
             std::shared_ptr<T> asset = std::make_shared<T>();
+            // todo make the path relative to asset root not working dir
             asset->ReadAs<T>(assetFilePath, TypeDB, true);
-
-            auto asset = OpenAsset(assetFilePath);
             if(!asset->IsValid())
             {
                 return nullptr;
             }
 
+            // set the current path in the asset
+            // TODO, see if the path is different?
+            asset->SetPath(assetFilePath);
+
             StoreAsset(assetFilePath, asset);
 
             return asset.get();
-        }
-
-        template <class T>
-        T* OpenAssetRef(const Hashes::GUID& assetGUID)
-        {
-            auto asset = OpenAssetRef(assetGUID);
-            if (asset)
-            {
-                if (asset->TypeName != T::TypeName)
-                {
-                    CloseAsset(asset);
-                    return nullptr;
-                }
-
-                return static_pointer_cast<T>(asset);
-            }
-
-            return nullptr;
         }
     }
 }
