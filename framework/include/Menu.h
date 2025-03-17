@@ -27,31 +27,31 @@ namespace EditorFramework
 		float BarHeight = 0;
 	};
 
-	class WindowStateMenuCommand : public CommandItem
+	class StateMenuCommand : public CommandItem
 	{
     private:
         std::string Icon;
         std::string WindowName;
 
     public:
-        WindowStateMenuCommand(std::string_view icon, std::string_view name, std::function<void()> toggle, std::function<bool()> check)
+        StateMenuCommand(std::string_view icon, std::string_view name, std::function<void()> execute, std::function<bool()> check)
             : CommandItem(0)
             , Icon(icon)
             , WindowName(name)
-            , OnToggle(toggle)
+            , OnExecute(execute)
             , OnChecked(check)
         {
         }
 
         ItemType GetItemType() const override{ return ItemType::Toggle; }
 
-        std::function<void()> OnToggle;
+        std::function<void()> OnExecute;
         std::function<bool()> OnChecked;
 
         void Execute(float value = 0) override
         {
-            if (OnToggle)
-                OnToggle();
+            if (OnExecute)
+                OnExecute();
         }
 
         bool IsChecked() const override

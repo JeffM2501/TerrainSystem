@@ -9,7 +9,11 @@
 #include "Command.h"
 #include "StandardActions.h"
 
+#include "asset_types.h"
+#include "AssetManager.h"
+
 #include "TerrainDocument.h"
+#include "TerrainMaterialDocument.h"
 #include "TerrainInfoPanel.h"
 #include "TerrainGenerationPanel.h"
 
@@ -17,7 +21,7 @@
 
 using namespace EditorFramework;
 
-class TerrainEditorApp : public SingleDocumentTypeApp<TerrainDocument>
+class TerrainEditorApp : public Application
 {
 public:
 protected:
@@ -25,6 +29,12 @@ protected:
     {
         RegisterPanel<TerrainInfoPanel>();
         RegisterPanel<TerrainGenerationPanel>();
+    }
+
+    void OnRegisterDocuments() override 
+    {
+        RegisterDocumentType<TerrainDocument>();
+        RegisterDocumentType<TerrainMaterialDocument>();
     }
 
     void OnSetupInitalState() override
@@ -45,6 +55,7 @@ protected:
 
 int main(int argc, char* argv[])
 {
+    Types::RegisterTypes(AssetSystem::AssetManager::TypeDB);
     TerrainEditorApp app;
     app.SetCommandLine(argv, argc);
 

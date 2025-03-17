@@ -88,21 +88,28 @@ namespace EditorFramework
 		if (CurrentTime > TotalTime)
 			CurrentTime = TotalTime;
 
-        camera.GetCamera()->position = Vector3Lerp(camera.GetCamera()->position, DesiredCameraPosition, CurrentTime / TotalTime);
-        camera.GetCamera()->target = Vector3Lerp(camera.GetCamera()->target, DesiredCameraTarget, CurrentTime / TotalTime);
+		float param = CurrentTime / TotalTime;
+
+        camera.GetCamera()->position = Vector3Lerp(StartCameraPosition, DesiredCameraPosition, param);
+        camera.GetCamera()->target = Vector3Lerp(StartCameraTarget, DesiredCameraTarget, param);
 
 		return true;
     }
 
     void FocusCameraController::SetFocusPoint(EditorCamera& camera, const Vector3& point, float time /*= 1.0f*/, float distance /*= 10.0f*/, bool focusFirst /*= true*/)
     {
-		Vector3 forward = Vector3Normalize(GetCameraForward(camera.GetCamera()));
+		//Vector3 forward = Vector3Normalize(GetCameraForward(camera.GetCamera()));
+       
+		StartCameraPosition = camera.GetCamera()->position;
+        StartCameraTarget = camera.GetCamera()->target;
+        if (focusFirst)
+            StartCameraTarget = DesiredCameraPosition;
+
+		Vector3 forward = Vector3Normalize(StartCameraTarget - StartCameraPosition);
 
         DesiredCameraPosition = point + Vector3Scale(forward, -distance);
 		DesiredCameraTarget = point;
-		if (focusFirst)
-			camera.GetCamera()->target = DesiredCameraPosition;
-
+	
 		CurrentTime = 0;
 		TotalTime = time;
     }

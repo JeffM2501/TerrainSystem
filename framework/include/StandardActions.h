@@ -23,7 +23,6 @@ namespace EditorFramework
     static constexpr char PreferencesAction[] = "Preferences...";
     static constexpr char ShortcutKeysAction[] = "Shortcut Keys...";
 
-
     // camera movement actions
     static constexpr char OrbitModeAction[] = "Orbit Camera";
 	static constexpr char FPSModeAction[] = "FPS Camera";

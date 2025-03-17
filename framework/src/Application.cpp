@@ -147,6 +147,18 @@ namespace EditorFramework
 		OnStartup();
 
 		OnRegisterDocuments();
+
+		// cache the document extensions
+		if (FileExtensions.empty())
+        {
+            for (auto& [id, factory] : DocumentFactories)
+            {
+                if (!factory.Extension.empty())
+                    FileExtensions.push_back(factory.Filter.c_str());
+            }
+            FileExtensions.push_back("*.*");
+        }
+
 		OnRegisterPanels();
 
 		RegisterDefaultPanels();
@@ -497,7 +509,21 @@ namespace EditorFramework
 		auto& fileMenu = MainMenu.AddSubItem("File","", 10);
 
 		auto& openGroup = fileMenu.AddGroup("Open", ICON_FA_FOLDER_OPEN, 10);
-		openGroup.AddItem<ActionCommandItem>(0, OpenAction, [this](float) { OpenAssetDocument(); });
+
+		auto& newAsset = openGroup.AddSubItem("New Asset", ICON_FA_FILE_CIRCLE_PLUS,0);
+		
+		int index = 0;
+		for (auto& [typeId, factory] : DocumentFactories)
+		{
+            index++;
+			newAsset.AddItem<StateMenuCommand>(index,
+                "",
+                factory.Name,
+				[&typeId, this]() { OpenDocument(typeId); },
+                nullptr );
+		}
+
+		openGroup.AddItem<ActionCommandItem>(10, OpenAction, [this](float) { OpenAssetDocument(); });
 
         auto& closeGroup = fileMenu.AddGroup("Close", ICON_FA_WINDOW_MAXIMIZE, 20);
 		closeGroup.AddItem<ActionCommandItem>(0,
@@ -556,18 +582,18 @@ namespace EditorFramework
         auto& panelMenu = MainMenu.AddSubItem("Panels", "", 600);
 		auto& panelsGroup = panelMenu.AddGroup("Panels", ICON_FA_WINDOW_RESTORE, 10);
 
-		int index = 1;
+		index = 0;
 		for (auto& panel : Panels)
 		{
 			index++;
-			panelsGroup.AddItem<WindowStateMenuCommand>(index,
+			panelsGroup.AddItem<StateMenuCommand>(index,
 				panel->GetIcon(),
 				panel->GetName(),
 				[&panel]() { if (panel->IsOpen()) panel->Close(); else panel->Open(); },
 				[&panel]() { return panel->IsOpen(); });
 		}
 
-		auto& panelManagementGroup = panelMenu.AddGroup("Management", ICON_FA_TABLE_COLUMNS, 20);
+		auto& panelManagementGroup = panelMenu.AddGroup("Management", ICON_FA_TABLE_COLUMNS, Panels.size() + 10);
 
 		panelManagementGroup.AddItem<ActionCommandItem>(0, ResetLayoutAction, [this](float) { ResetLayouts = true; });
 
@@ -584,7 +610,7 @@ namespace EditorFramework
 
         for (auto& [id, doc] : OpenDocuments)
         {
-			WindowMenu->AddItem<WindowStateMenuCommand>(id,
+			WindowMenu->AddItem<StateMenuCommand>(id,
                 "",
                 doc->GetDocumentName(),
                 [&id, this]() { FocusNextDocument = id; },
@@ -592,7 +618,7 @@ namespace EditorFramework
         }
 	}
 
-	size_t Application::OpenDocument(size_t documentTypeID)
+	size_t Application::OpenDocument(size_t documentTypeID, const std::string& assetPath)
 	{
 		auto factoryItr = DocumentFactories.find(documentTypeID);
 		if (factoryItr == DocumentFactories.end())
@@ -611,8 +637,12 @@ namespace EditorFramework
 			}, GetLifetimeToken());
 
 		OpenDocuments[LastDocumentId].get()->HostApp = this;
+        OpenDocuments[LastDocumentId].get()->Created(LastDocumentId);
 
-		OpenDocuments[LastDocumentId].get()->Created(LastDocumentId);
+		if (assetPath.empty())
+			OpenDocuments[LastDocumentId].get()->CreateAsset();
+		else
+			OpenDocuments[LastDocumentId].get()->OpenAsset(assetPath);
 
 		SetActiveDocument(LastDocumentId);
 
@@ -704,16 +734,6 @@ namespace EditorFramework
 
 	void Application::OpenAssetDocument()
 	{
-		if (FileExtensions.empty())
-		{
-			for (auto& [id, factory] : DocumentFactories)
-			{
-				if (!factory.Extension.empty())
-					FileExtensions.push_back(factory.Filter.c_str());
-			}
-			FileExtensions.push_back("*.*");
-		}
-
 		auto fileToOpen = tinyfd_openFileDialog("Open file...", nullptr, int(FileExtensions.size()), &FileExtensions[0], nullptr, false);
 
 		if (!fileToOpen)
@@ -737,8 +757,7 @@ namespace EditorFramework
 
 		if (idToUse != 0)
 		{
-            auto documentId = OpenDocument(idToUse);
-            OpenDocuments[documentId]->OpenAsset(fileToOpen);
+            auto documentId = OpenDocument(idToUse, fileToOpen);
 		}
 	}
 

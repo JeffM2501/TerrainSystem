@@ -71,6 +71,14 @@ namespace Types
             ValuePtr = value;
         }
 
+        inline int GetParentFieldCount() const
+        { 
+            if (!TypePtr || !TypePtr->ParentType)
+                return 0;
+
+            return TypePtr->ParentType->GetFieldCount();
+        }
+
         virtual void OnCreate() {}
     };
 

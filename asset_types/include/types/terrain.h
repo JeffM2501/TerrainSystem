@@ -66,16 +66,16 @@ namespace AssetTypes
 
         static void Register(TypeDatabase& typeDB)
         {
-            auto* type = typeDB.CreateType(TypeName);
+            auto* type = typeDB.CreateType(TypeName, Asset::TypeName);
             type->AddTypeField("Material", TerrainMaterial::TypeName);
             type->AddPrimitiveField<std::string>("Category", "");
         }
 
-        TerrainMaterial GetMaterial() const { return TerrainMaterial(ValuePtr->GetTypeFieldValue(0)); }
+        TerrainMaterial GetMaterial() const { return TerrainMaterial(ValuePtr->GetTypeFieldValue(1)); }
         
-        const std::string& GetCategory() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(1); }
-        void SetCategory(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(1, value); }
-        void ResetCategory() { Value->ResetFieldToDefault(1); }
+        const std::string& GetCategory() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(2); }
+        void SetCategory(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(2, value); }
+        void ResetCategory() { Value->ResetFieldToDefault(2); }
     };
 
     class TerrainInfo : public TypeWraper
@@ -92,7 +92,7 @@ namespace AssetTypes
             type->AddPrimitiveField<float>("MaxZ", 100);
         }
 
-        const uint8_t& GetGridSize() const { return ValuePtr->GetFieldPrimitiveValue<uint8_t>(0); }
+        const uint8_t& GetGridSize() const { return ValuePtr->GetFieldPrimitiveValue<uint8_t>( 0); }
         void SetGridSize(const uint8_t& value) { ValuePtr->SetFieldPrimitiveValue<uint8_t>(0, value); }
         void ResetGridSize() { ValuePtr->ResetFieldToDefault(0); }
 
@@ -100,13 +100,13 @@ namespace AssetTypes
         void SetTileSize(const float& value) { ValuePtr->SetFieldPrimitiveValue<float>(1, value); }
         void ResetTileSize() { Value->ResetFieldToDefault(1); }
 
-		const float& GetMinZ() const { return ValuePtr->GetFieldPrimitiveValue<float>(2); }
+		const float& GetMinZ() const { return ValuePtr->GetFieldPrimitiveValue<float>( 2); }
 		void SetTMinZ(const float& value) { ValuePtr->SetFieldPrimitiveValue<float>(2, value); }
 		void ResetMinZ() { Value->ResetFieldToDefault(2); }
 
 		const float& GetMaxZ() const { return ValuePtr->GetFieldPrimitiveValue<float>(3); }
 		void SetMaxZ(const float& value) { ValuePtr->SetFieldPrimitiveValue<float>(3, value); }
-		void ResetMaxZ() { Value->ResetFieldToDefault(3); }
+		void ResetMaxZ() { Value->ResetFieldToDefault(GetParentFieldCount() + 3); }
     };
 
 	class TerrainSplatmap : public TypeWraper
@@ -117,6 +117,7 @@ namespace AssetTypes
 		static void Register(TypeDatabase& typeDB)
 		{
 			auto* type = typeDB.CreateType(TypeName);
+
 			type->AddPrimitiveField<uint16_t>("Material", 128);
             type->AddPrimitiveListField("Values", Types::PrimitiveType::UInt8);
 		}
@@ -154,14 +155,14 @@ namespace AssetTypes
 
         static void Register(TypeDatabase& typeDB)
         {
-            auto* type = typeDB.CreateType(TypeName);
+            auto* type = typeDB.CreateType(TypeName, Asset::TypeName);
             type->AddTypeField("Info", TerrainInfo::TypeName);
             type->AddTypeListField("Materials", TerrainMaterial::TypeName);
             type->AddTypeListField("Tiles", TerrainTile::TypeName);
         }
 
-        TerrainInfo GetInfo() const { return TerrainInfo(ValuePtr->GetTypeFieldValue(0)); }
-        TypeListWrapper<TerrainMaterial> GetMaterials() const { return TypeListWrapper<TerrainMaterial>(ValuePtr->GetTypeListFieldValue(1)); }
-        TypeListWrapper<TerrainTile> GetTiles() const { return TypeListWrapper<TerrainTile>(ValuePtr->GetTypeListFieldValue(2)); }
+        TerrainInfo GetInfo() const { return TerrainInfo(ValuePtr->GetTypeFieldValue(1)); }
+        TypeListWrapper<TerrainMaterial> GetMaterials() const { return TypeListWrapper<TerrainMaterial>(ValuePtr->GetTypeListFieldValue(2)); }
+        TypeListWrapper<TerrainTile> GetTiles() const { return TypeListWrapper<TerrainTile>(ValuePtr->GetTypeListFieldValue(3)); }
     };
 }

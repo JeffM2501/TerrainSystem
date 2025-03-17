@@ -18,7 +18,6 @@ namespace Types
 
         AssetTypes::ResourceReference::Register(typeDB);
         AssetTypes::AssetReference::Register(typeDB);
-        AssetTypes::AssetMetaInfo::Register(typeDB);
         AssetTypes::Asset::Register(typeDB);
 
 		AssetTypes::TerrainPosition::Register(typeDB);

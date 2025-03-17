@@ -128,7 +128,7 @@ void TerrainDocument::OnCreated()
     LoadMaterial("Grid", "resources/grid.png");
 
     auto& visGroup = MainToolbar.AddGroup("TerrainVis");
-    auto splatCommand = visGroup.AddItem<WindowStateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this]() {ShowSplat = !ShowSplat; }, [this]() {return ShowSplat; });
+    auto splatCommand = visGroup.AddItem<StateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this]() {ShowSplat = !ShowSplat; }, [this]() {return ShowSplat; });
 
     auto& cameraGroup = MainToolbar.AddGroup("Cameras");
 

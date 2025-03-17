@@ -1,5 +1,7 @@
 #pragma once
 
+
+#include <string>
 #include <memory>
 #include <functional>
 #include <cstdint>
@@ -15,11 +17,13 @@ namespace AssetSystem
     {
         extern TypeDatabase TypeDB;
 
+        extern std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
+
         AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
 
         void CloseAsset(AssetTypes::Asset* asset);
 
-        void StoreAsset(const std::string& assetFilePath, std::shared_ptr<TypeWraper> assetData);
+        void StoreAsset(const std::string& assetFilePath, std::unique_ptr<TypeWraper> assetData);
 
         template <class T>
         T* OpenAsset(const std::string& assetFilePath)
@@ -32,11 +36,10 @@ namespace AssetSystem
                     return nullptr;
                 return static_cast<T*>(existing);
             }
-            
-            std::shared_ptr<T> asset = std::make_shared<T>();
             // todo make the path relative to asset root not working dir
-            asset->ReadAs<T>(assetFilePath, TypeDB, true);
-            if(!asset->IsValid())
+            std::unique_ptr<T> asset = T::ReadAs<T>(assetFilePath, TypeDB, true);
+
+            if (!asset->IsValid())
             {
                 return nullptr;
             }
@@ -45,9 +48,49 @@ namespace AssetSystem
             // TODO, see if the path is different?
             asset->SetPath(assetFilePath);
 
-            StoreAsset(assetFilePath, asset);
+            T* ptr = asset.get();
+            StoreAsset(assetFilePath, std::move(asset));
 
-            return asset.get();
+            return ptr;
+        }
+
+        template <class T>
+        T* CreateTempAsset()
+        {
+            std::unique_ptr<T> asset = std::make_unique<T>(TypeDB);
+            T* ptr = asset.get();
+
+            TempAssets[reinterpret_cast<size_t>(ptr)] = std::move(asset);
+
+            return ptr;
+        }
+
+        template <class T>
+        T* CreateAsset(const std::string& assetFilePath)
+        {
+            auto existing = FindExistingAsset(assetFilePath);
+
+            if (existing)
+            {
+                if (existing->TypeName != T::TypeName)
+                    return nullptr;
+                return existing;
+            }
+
+            std::unique_ptr<T> asset = std::unique_ptr<T>(TypeDB);
+            T* ptr = asset.get();
+
+            if (!asset->IsValid())
+            {
+                return nullptr;
+            }
+
+            // set the current path in the asset
+            asset->SetPath(assetFilePath);
+
+            StoreAsset(assetFilePath, std::move(asset));
+
+            return aptrset;
         }
     }
 }

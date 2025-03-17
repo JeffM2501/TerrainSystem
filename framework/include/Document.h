@@ -40,9 +40,10 @@ namespace EditorFramework
 		virtual bool UsesAsset() { return false; }
 
 		virtual std::string_view GetAssetPath() const { return AssetPath; }
-		virtual void OpenAsset(std::string_view assetPath) { AssetPath = assetPath; }
+		virtual void CreateAsset() { AssetPath.clear(); SetDirty(); }
+		virtual void OpenAsset(const std::string& assetPath) { AssetPath = assetPath; }
 		virtual void SaveAsset() { SetClean(); };
-		virtual void SaveAsAsset(std::string_view assetPath) { AssetPath = assetPath; }
+		virtual void SaveAsAsset(const std::string& assetPath) { AssetPath = assetPath; }
 
 		virtual bool IsDirty() const { return Dirty; }
 

@@ -138,7 +138,7 @@ void TerrainInfoPanel::OnShow()
                                         Vector3{float(x * tile.Info.TerrainGridSize),
                                                 float(y * tile.Info.TerrainGridSize) ,
                                                 float(tile.Info.TerrainMaxZ - tile.Info.TerrainMinZ + tile.Info.TerrainMinZ) },
-                                        10.0f, 
+                                        0.25f,
                                         tile.Info.TerrainGridSize,
                                         false);
                                 }

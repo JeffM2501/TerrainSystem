@@ -19,7 +19,7 @@ namespace AssetTypes
         static void Register(TypeDatabase& typeDB)
         {
             auto* type = typeDB.CreateType(TypeName);
-            type->AddPrimitiveField<std::string>("Path", 0);
+            type->AddPrimitiveField<std::string>("Path", std::string());
         }
 
         const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
@@ -31,11 +31,11 @@ namespace AssetTypes
     {
     public:
         DEFINE_TYPE(AssetReference);
-
+        
         static void Register(TypeDatabase& typeDB)
         {
             auto* type = typeDB.CreateType(TypeName);
-            type->AddPrimitiveField<std::string>("Path", 0);
+            type->AddPrimitiveField<std::string>("Path", std::string());
         }
 
 		const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
@@ -50,7 +50,7 @@ namespace AssetTypes
 
         static void Register(TypeDatabase& typeDB)
         {
-            auto* type = typeDB.CreateType(TypeName);
+            auto* type = typeDB.CreateType(TypeName, AssetReference::TypeName);
         }
     };
 }

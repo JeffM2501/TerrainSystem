@@ -16,9 +16,10 @@ namespace AssetSystem
 		};
 
 		static std::unordered_map<std::string, AssetFileRecord> OpenedAssets;
+        std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
 
 		TypeDatabase TypeDB;
-
+	
 		AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath)
 		{
 			auto existingAsset = OpenedAssets.find(assetFilePath);
@@ -31,28 +32,24 @@ namespace AssetSystem
 			return nullptr;
 		}
 
-		void StoreAsset(const std::string& assetFilePath, std::shared_ptr<TypeWraper> assetData)
+		void StoreAsset(const std::string& assetFilePath, std::unique_ptr<TypeWraper> assetData)
 		{
-			AssetTypes::Asset* asset = static_cast<AssetTypes::Asset*>(assetData.get());
-
-			OpenedAssets[assetFilePath] = AssetFileRecord{ assetData, assetFilePath, 1 };
+			OpenedAssets[assetFilePath] = AssetFileRecord{ std::move(assetData), assetFilePath, 1 };
 		}
 
 		void CloseAsset(AssetTypes::Asset* asset)
 		{
-			auto guid = asset->GetMeta().GetGUID();
+			auto& path = asset->GetPath();
 
-			auto itr = OpenedAssets.find(guid);
+			auto itr = OpenedAssets.find(path);
 			if (itr != OpenedAssets.end())
 				return;
 
 			itr->second.RefCount--;
 			if (itr->second.RefCount == 0)
 			{
-				OpenedAssetsByPath.erase(OpenedAssetsByPath.find(itr->second.Path));
 				OpenedAssets.erase(itr);
 			}
 		}
-
 	}
 }

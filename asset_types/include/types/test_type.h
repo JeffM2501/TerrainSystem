@@ -94,9 +94,6 @@ class TestDerivedType : TestTypeWithEmbed
             auto* type = typeDB.CreateType(TypeName, TestTypeWithEmbed::TypeName);
             type->AddPrimitiveField<std::string>("DerivedString", "Default1");
         }
-
-        TestType GetTestField() const { return TestType(ValuePtr->GetTypeFieldValue(0)); }
-
         const std::string& GetDerivedString() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(2); }
         void SetDerivedString(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(2, value); }
         void ResetDerivedString() { ValuePtr->ResetFieldToDefault(2); }
