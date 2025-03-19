@@ -7,26 +7,8 @@
 
 namespace EditorFramework
 {
-	void MenuBar::SetPendingCommand(CommandItem* item, float pendingValue)
-	{
-		// TODO, assert if pending command is not null
-		PendingCommand = item;
-		PendingValue = pendingValue;
-	}
-
-	void MenuBar::ExecutePendingCommand()
-	{
-		if (!PendingCommand)
-			return;
-
-		PendingCommand->Execute(PendingValue);
-	}
-
 	void MenuBar::Show(bool isMain)
 	{	
-		PendingCommand = nullptr;
-		PendingValue = 0;
-
 		bool show = false;
 		if (isMain)
 			show = ImGui::BeginMainMenuBar();
@@ -44,15 +26,10 @@ namespace EditorFramework
 			else
 				ImGui::EndMenuBar();
 		}
-
-		ExecutePendingCommand();
 	}
 
 	bool MenuBar::ProcessShortcuts(CommandContainer* container)
 	{
-		PendingCommand = nullptr;
-		PendingValue = 0;
-
 		if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
 			return true;
 
@@ -71,19 +48,16 @@ namespace EditorFramework
             {
 				CommandItem* command = static_cast<CommandItem*>(item.get());
 
+				if (!command->IsEnabled(CommandContext))
+					continue;
+
 				if (ActionRegistry::IsActionTriggered(command->GetActionHash()))
 				{
-					SetPendingCommand(command);
-					break;
+					command->Execute(1, CommandContext);
+					return true;
 				}
             }
         }
-
-		if (PendingCommand)
-		{
-			ExecutePendingCommand();
-			return true;
-		}
 		return false;
 	}
 
@@ -176,34 +150,38 @@ namespace EditorFramework
 		switch (item->GetItemType())
 		{
 			case CommandItem::ItemType::Toggle:
-			selected = item->IsChecked();
+			selected = item->IsChecked(CommandContext);
 			[[fallthrough]];
 			case CommandItem::ItemType::Button:
-                if (ImGui::MenuItem(menuText.c_str(), shortcutName, selected, item->IsEnabled()))
+                if (ImGui::MenuItem(menuText.c_str(), shortcutName, selected, item->IsEnabled(CommandContext)))
                 {
-					SetPendingCommand(item, 1);
+					item->Execute(1, CommandContext);
                 }
 			break;
 
 			case CommandItem::ItemType::ValueInt:
 			{
+				ImGui::BeginDisabled(!item->IsEnabled(CommandContext));
 				ImGui::TextUnformatted(menuText.c_str());
 				ImGui::SameLine();
 				menuText = "###" + menuText;
 				int valueI = int(item->GetValue());
 				if (ImGui::InputInt(menuText.c_str(), &valueI))
-					SetPendingCommand(item, float(valueI));
+					item->Execute(float(valueI), CommandContext);
+				ImGui::EndDisabled();
 			}
             break;
 
 			case CommandItem::ItemType::ValueFloat:
 			{
+				ImGui::BeginDisabled(!item->IsEnabled(CommandContext));
 				ImGui::TextUnformatted(menuText.c_str());
 				ImGui::SameLine();
 				menuText = "###" + menuText;
 				float valueF = item->GetValue();
 				if (ImGui::InputFloat(menuText.c_str(), &valueF))
-					SetPendingCommand(item, valueF);
+					item->Execute(valueF, CommandContext);
+				ImGui::EndDisabled();
 			}
             break;
 		}

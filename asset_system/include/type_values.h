@@ -241,6 +241,46 @@ namespace Types
         TypeListValue& GetTypeListFieldValue(int fieldIndex);
 
         bool IsDefault() const { return Values.empty(); }
+
+        template<class T>
+        bool FieldHasAttribute(int fieldIndex) const
+        {
+            const auto* fieldInfo = Type->GetField(index);
+
+            if (!fieldInfo)
+                return false;
+
+            if (fieldInfo->HasAttribute<T>())
+                return true;
+
+            if (fieldInfo->GetType() == FieldType::Type || fieldInfo->GetType() == FieldType::TypeList)
+            {
+                const TypeFieldInfo* typeFieldInfo = static_cast<const TypeFieldInfo*>(fieldInfo);
+                return typeFieldInfo->TypePtr->HasAttribute<T>();
+            }
+
+            return false;
+        }
+
+        template<class T>
+        const T* GetFieldAttribute(int fieldIndex) const
+        {
+            const FieldInfo* fieldInfo = Type->GetField(fieldIndex);
+
+            if (!fieldInfo)
+                return nullptr;
+
+            if (fieldInfo->HasAttribute<T>())
+                return fieldInfo->GetAttribute<T>();
+
+            if (fieldInfo->GetType() == FieldType::Type || fieldInfo->GetType() == FieldType::TypeList)
+            {
+                const TypeFieldInfo* typeFieldInfo = static_cast<const TypeFieldInfo*>(fieldInfo);
+                return typeFieldInfo->TypePtr->GetAttribute<T>();
+            }
+
+            return nullptr;
+        }
     };
 
     using TypeValueList = std::vector<TypeValue::Ptr>;

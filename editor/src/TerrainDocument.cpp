@@ -128,13 +128,13 @@ void TerrainDocument::OnCreated()
     LoadMaterial("Grid", "resources/grid.png");
 
     auto& visGroup = MainToolbar.AddGroup("TerrainVis");
-    auto splatCommand = visGroup.AddItem<StateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this]() {ShowSplat = !ShowSplat; }, [this]() {return ShowSplat; });
+    auto splatCommand = visGroup.AddItem<StateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this](CommandContextSet*) {ShowSplat = !ShowSplat; }, [this](CommandContextSet*) {return ShowSplat; });
 
     auto& cameraGroup = MainToolbar.AddGroup("Cameras");
 
-    auto& viewMenu = GetApp()->GetMenuBar().AddSubItem("View", "", 20);
-    auto& showGroup = viewMenu.AddGroup("Show", ICON_FA_EYE);
-    showGroup.AddItem(0, splatCommand);
+//     auto& viewMenu = GetApp()->GetMenuBar().AddSubItem("View", "", 20);
+//     auto& showGroup = viewMenu.AddGroup("Show", ICON_FA_EYE);
+//     showGroup.AddItem(0, splatCommand);
 }
 
 TerrainTile& TerrainDocument::GetTile(int x, int y)

@@ -83,20 +83,20 @@ namespace EditorFramework
 
         bool selected = false;
 
-        ImGui::BeginDisabled(!item.IsEnabled());
+        ImGui::BeginDisabled(!item.IsEnabled(CommandContext));
 
         switch (item.GetItemType())
         {
         case CommandItem::ItemType::Toggle:
         {
-            bool state = item.IsChecked();
+            bool state = item.IsChecked(CommandContext);
 
             if (state)
                 ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
 
             if (ImGui::Button(imGuiName))
             {
-                item.Execute(state ? 0.0f : 1.0f);
+                item.Execute(state ? 0.0f : 1.0f, CommandContext);
             }
 
             if (state)
@@ -116,7 +116,7 @@ namespace EditorFramework
         {
             int valueI = int(item.GetValue());
             if (ImGui::InputInt(item.GetName().data(), &valueI))
-                item.Execute(float(valueI));
+                item.Execute(float(valueI), CommandContext);
         }
         break;
 
@@ -124,7 +124,7 @@ namespace EditorFramework
         {
             float valueF = item.GetValue();
             if (ImGui::InputFloat(item.GetName().data(), &valueF))
-                item.Execute(valueF);
+                item.Execute(valueF, CommandContext);
         }
         break;
         }

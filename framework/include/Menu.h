@@ -15,20 +15,15 @@ namespace EditorFramework
 
 		float GetHeight() const { return BarHeight; }
 
-	protected:
+        CommandContextSet* CommandContext = nullptr;
 
+	protected:
 		void ShowContents(CommandContainer* container);
 
 		void ShowSubMenu(CommandContainer* container);
 		void ShowGroup(CommandContainer* container);
 
 		void ShowItem(CommandItem* item);
-
-        void SetPendingCommand(CommandItem* item, float value = 0);
-        void ExecutePendingCommand();
-
-        CommandItem* PendingCommand = nullptr;
-        float PendingValue = 0;
 
 		float BarHeight = 0;
 	};
@@ -40,7 +35,7 @@ namespace EditorFramework
         std::string WindowName;
 
     public:
-        StateMenuCommand(std::string_view icon, std::string_view name, std::function<void()> execute, std::function<bool()> check)
+        StateMenuCommand(std::string_view icon, std::string_view name, std::function<void(CommandContextSet*)> execute, std::function<bool(CommandContextSet*)> check)
             : CommandItem(0)
             , Icon(icon)
             , WindowName(name)
@@ -51,19 +46,19 @@ namespace EditorFramework
 
         ItemType GetItemType() const override{ return ItemType::Toggle; }
 
-        std::function<void()> OnExecute;
-        std::function<bool()> OnChecked;
+        std::function<void(CommandContextSet*)> OnExecute;
+        std::function<bool(CommandContextSet*)> OnChecked;
 
-        void Execute(float value = 0) override
+        void Execute(float value = 0, CommandContextSet* context = nullptr) override
         {
             if (OnExecute)
-                OnExecute();
+                OnExecute(context);
         }
 
-        bool IsChecked() const override
+        bool IsChecked(CommandContextSet* context = nullptr) const override
         {
             if (OnChecked)
-                return OnChecked();
+                return OnChecked(context);
 
             return false;
         }

@@ -2,6 +2,8 @@
 
 #include "CRC64.h"
 
+#include <string>
+
 namespace AttributeTypes
 {
 #define DEFINE_ATTRIBUTE(T) \
@@ -14,11 +16,28 @@ namespace AttributeTypes
 		virtual uint64_t GetAttributeId() = 0;
 	};
 
-	class ReadOnly : public Attribute
+	class ReadOnlyAttribute : public Attribute
 	{
 	public:
-		DEFINE_ATTRIBUTE(ReadOnly)
+		DEFINE_ATTRIBUTE(ReadOnlyAttribute)
 	};
+
+    class HiddenAttribute : public Attribute
+    {
+    public:
+        DEFINE_ATTRIBUTE(HiddenAttribute)
+    };
+
+
+    class CustomEditorAttribute : public Attribute
+    {
+    public:
+		DEFINE_ATTRIBUTE(CustomEditorAttribute);
+
+		CustomEditorAttribute(std::string_view editorName) : EditorName(EditorName) {}
+
+		std::string EditorName;
+    };
 
 	class AttributeContainer
 	{
