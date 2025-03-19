@@ -5,6 +5,7 @@
 #include "Toolbar.h"
 #include "Camera.h"
 #include "CRC64.h"
+#include "Menu.h"
 
 #include <functional>
 #include <memory>
@@ -26,6 +27,8 @@ namespace EditorFramework
 		virtual std::string_view GetFileExtension() { return ""; }
 
 		virtual void OnCreated() {};
+		virtual void OnSetupMenu() {};
+
 		virtual void OnActivated() {};
 		virtual void OnDeactivated() {};
 
@@ -50,6 +53,8 @@ namespace EditorFramework
 		virtual void SetClean() { Dirty = false; }
 
 		virtual Toolbar* GetToolbar() { return &MainToolbar; }
+		virtual MenuBar& GetDocumentMenu() { return DocumentMenuBar; }
+        virtual CommandContextSet* GetDocumentCommandContext() { return &DocumentCommandContext; }
 
 		Events::EventSource<Document> OnDirty;
 
@@ -64,6 +69,9 @@ namespace EditorFramework
 		std::string AssetPath;
 
 		Toolbar MainToolbar;
+		MenuBar DocumentMenuBar;
+
+		CommandContextSet DocumentCommandContext;
 
 		bool Dirty = false;
 

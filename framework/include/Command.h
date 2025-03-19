@@ -221,29 +221,47 @@ namespace EditorFramework
             return ptr;
         }
 
-        CommandContainer& AddGroup(std::string_view name, std::string_view icon = "", size_t insertLocation = 0)
+        std::shared_ptr<CommandContainer> AddGroup(std::string_view name, std::string_view icon = "", size_t insertLocation = 0)
 		{
             for (auto& item : Contents)
             {
                 if (item->IsContainer())
                 {
-                    CommandContainer* container = static_cast<CommandContainer*>(item.get());
+                    auto container = std::static_pointer_cast<CommandContainer>(item);
 
                     if (container->Name == name)
-                        return *container;
+                        return container;
                 }
             }
 
-            CommandContainer& container = *AddItem<CommandContainer>(insertLocation, name, icon).get();
+            auto container = AddItem<CommandContainer>(insertLocation, name, icon);
             return container;
 		}
 
-		CommandContainer& AddSubItem(std::string_view name, std::string_view icon = "", size_t insertLocation = 0)
+        std::shared_ptr<CommandContainer> AddSubItem(std::string_view name, std::string_view icon = "", size_t insertLocation = 0)
 		{
-            CommandContainer& container = AddGroup(name, icon, insertLocation);
-            container.SubItem = true;
+            auto container = AddGroup(name, icon, insertLocation);
+            container->SubItem = true;
             return container;
 		}
+
+        std::shared_ptr<CommandContainer> InsertContainer(size_t insertLocation, std::shared_ptr<CommandContainer> ptr)
+        {
+            auto itr = Contents.begin();
+            ptr->Parent = this;
+            while (itr != Contents.end())
+            {
+                if ((*itr)->SortIndex > insertLocation)
+                {
+                    Contents.insert(itr, ptr);
+                    return ptr;
+                }
+                itr++;
+            }
+            ptr->SortIndex = insertLocation;
+            Contents.push_back(ptr);
+            return ptr;
+        }
 
         std::shared_ptr<CommandItem> FindItemByAction(size_t actionHash)
         {

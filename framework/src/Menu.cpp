@@ -82,6 +82,8 @@ namespace EditorFramework
 
 	void MenuBar::ShowSubMenu(CommandContainer* container)
 	{
+        ImGui::Dummy(ImGui::GetStyle().FramePadding);
+        ImGui::SameLine(0, 0);
         std::string menuText;
         if (!container->GetIcon().empty())
         {

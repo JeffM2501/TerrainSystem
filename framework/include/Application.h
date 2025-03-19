@@ -83,7 +83,6 @@ namespace EditorFramework
 
 		void Quit();
 
-        MenuBar& GetMenuBar() { return MainMenu; }
 		Tokens::LifetimeTokenPtr GetLifetimeToken() const { return LifeToken.GetToken(); }
 
 		bool MouseIsInDocument();
@@ -125,7 +124,7 @@ namespace EditorFramework
 		void Update();
 		void Shutdown();
 
-		void RegisterDefaultMenus();
+		void RegisterDefaultMenus(MenuBar& menu);
 		void RegisterDefaultPanels();
 
 		void LoadSettings();
@@ -153,7 +152,7 @@ namespace EditorFramework
 		std::unordered_map<uint64_t, std::unique_ptr<Panel>> Panels;
 		std::deque<std::unique_ptr<Dialog>> ModalDialogs;
 
-		CommandContainer* WindowMenu = nullptr;
+		std::shared_ptr<CommandContainer> WindowMenu;
 
 		void RebuildWindowMenu();
 
