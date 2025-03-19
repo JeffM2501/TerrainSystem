@@ -16,6 +16,7 @@
 #include "TerrainMaterialDocument.h"
 #include "TerrainInfoPanel.h"
 #include "TerrainGenerationPanel.h"
+#include "PropertiesPanel.h"
 
 #include "extras/IconsFontAwesome6.h"
 
@@ -27,6 +28,7 @@ public:
 protected:
     void OnRegisterPanels() override
     {
+        RegisterPanel<PropertiesPanel>();
         RegisterPanel<TerrainInfoPanel>();
         RegisterPanel<TerrainGenerationPanel>();
     }
@@ -39,7 +41,7 @@ protected:
 
     void OnSetupInitalState() override
     { 
-        OpenDocument<TerrainDocument>();
+        OpenDocument<TerrainMaterialDocument>();
     }
 
 	std::string_view GetWindowTitle() override

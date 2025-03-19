@@ -7,8 +7,26 @@
 
 namespace EditorFramework
 {
-	void MenuBar::Show(bool isMain)
+	void MenuBar::SetPendingCommand(CommandItem* item, float pendingValue)
 	{
+		// TODO, assert if pending command is not null
+		PendingCommand = item;
+		PendingValue = pendingValue;
+	}
+
+	void MenuBar::ExecutePendingCommand()
+	{
+		if (!PendingCommand)
+			return;
+
+		PendingCommand->Execute(PendingValue);
+	}
+
+	void MenuBar::Show(bool isMain)
+	{	
+		PendingCommand = nullptr;
+		PendingValue = 0;
+
 		bool show = false;
 		if (isMain)
 			show = ImGui::BeginMainMenuBar();
@@ -19,17 +37,22 @@ namespace EditorFramework
 
 		if (show)
 		{
-			ShowContents(*this);
+			ShowContents(this);
 
 			if (isMain)
 				ImGui::EndMainMenuBar();
 			else
 				ImGui::EndMenuBar();
 		}
+
+		ExecutePendingCommand();
 	}
 
 	bool MenuBar::ProcessShortcuts(CommandContainer* container)
 	{
+		PendingCommand = nullptr;
+		PendingValue = 0;
+
 		if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
 			return true;
 
@@ -40,52 +63,58 @@ namespace EditorFramework
         {
             if (item->IsContainer())
             {
-                CommandContainer& subContainer = (CommandContainer&)(*item);
-				if (ProcessShortcuts(&subContainer))
-					return true;
+                CommandContainer* subContainer = static_cast<CommandContainer*>(item.get());
+				if (ProcessShortcuts(subContainer))
+					break;
             }
             else
             {
-				CommandItem& command = (CommandItem&)(*item);
+				CommandItem* command = static_cast<CommandItem*>(item.get());
 
-				if (ActionRegistry::IsActionTriggered(command.GetActionHash()))
+				if (ActionRegistry::IsActionTriggered(command->GetActionHash()))
 				{
-					command.Execute();
-					return true;
+					SetPendingCommand(command);
+					break;
 				}
             }
         }
+
+		if (PendingCommand)
+		{
+			ExecutePendingCommand();
+			return true;
+		}
 		return false;
 	}
 
-	void MenuBar::ShowContents(CommandContainer& container)
+	void MenuBar::ShowContents(CommandContainer* container)
 	{
-		for (auto& item : container.Contents)
+		for (auto& item : container->Contents)
 		{
 			if (item->IsContainer())
 			{
-				CommandContainer& subContainer = (CommandContainer&)(*item);
-				if (subContainer.IsSubItem())
+				CommandContainer* subContainer = static_cast<CommandContainer*>(item.get());
+				if (subContainer->IsSubItem())
 					ShowSubMenu(subContainer);
 				else
 					ShowGroup(subContainer);
 			}
 			else
 			{
-				ShowItem((CommandItem&)(*item));
+				ShowItem(static_cast<CommandItem*>(item.get()));
 			}
 		}
 	}
 
-	void MenuBar::ShowSubMenu(CommandContainer& container)
+	void MenuBar::ShowSubMenu(CommandContainer* container)
 	{
         std::string menuText;
-        if (!container.GetIcon().empty())
+        if (!container->GetIcon().empty())
         {
-            menuText += container.GetIcon().data();
+            menuText += container->GetIcon().data();
             menuText += " ";
         }
-        menuText += container.GetName().data();
+        menuText += container->GetName().data();
 
 		if (ImGui::BeginMenu(menuText.c_str()))
 		{
@@ -94,19 +123,19 @@ namespace EditorFramework
 		}
 	}
 
-	void MenuBar::ShowGroup(CommandContainer& container)
+	void MenuBar::ShowGroup(CommandContainer* container)
 	{
-		if (container.Contents.empty())
+		if (container->Contents.empty())
 			return;
 
 		std::string menuText;
-		if (!container.GetIcon().empty())
+		if (!container->GetIcon().empty())
 		{
-			menuText += container.GetIcon().data();
+			menuText += container->GetIcon().data();
 			menuText += " ";
 		}
 
-		if (container.GetName().empty() || container.GetName().data()[0] == '#')
+		if (container->GetName().empty() || container->GetName().data()[0] == '#')
 		{
 			ShowContents(container);
 			return;
@@ -115,7 +144,7 @@ namespace EditorFramework
 		auto color = ImGui::GetStyle().Colors[ImGuiCol_Header];
 		ImGui::PushID(this);
 
-			ImGui::TextColored(color, container.GetName().data());
+			ImGui::TextColored(color, container->GetName().data());
 			ImGui::SameLine();
 			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() / 2));
 			ImGui::Separator();
@@ -123,36 +152,36 @@ namespace EditorFramework
 		ShowContents(container);
 	}
 
-	void MenuBar::ShowItem(CommandItem& item)
+	void MenuBar::ShowItem(CommandItem* item)
 	{
 		ImGui::Dummy(ImGui::GetStyle().FramePadding);
 		ImGui::SameLine(0,0);
 
 		std::string menuText;
-		if (!item.GetIcon().empty())
+		if (!item->GetIcon().empty())
 		{
-			menuText += item.GetIcon();
+			menuText += item->GetIcon();
 			menuText += " ";
 		}
-		menuText += item.GetName();
+		menuText += item->GetName();
 
 		bool selected = false;
-		if (item.GetItemType() == CommandItem::ItemType::Toggle)
-			selected = item.IsChecked();
+		if (item->GetItemType() == CommandItem::ItemType::Toggle)
+			selected = item->IsChecked();
 
 		const char* shortcutName = nullptr;
-		if (item.GetShortcut() != ImGuiKey_None)
-			shortcutName = ImGui::GetKeyChordName(item.GetShortcut());
+		if (item->GetShortcut() != ImGuiKey_None)
+			shortcutName = ImGui::GetKeyChordName(item->GetShortcut());
 
-		switch (item.GetItemType())
+		switch (item->GetItemType())
 		{
 			case CommandItem::ItemType::Toggle:
-			selected = item.IsChecked();
+			selected = item->IsChecked();
 			[[fallthrough]];
 			case CommandItem::ItemType::Button:
-                if (ImGui::MenuItem(menuText.c_str(), shortcutName, selected, item.IsEnabled()))
+                if (ImGui::MenuItem(menuText.c_str(), shortcutName, selected, item->IsEnabled()))
                 {
-                    item.Execute(1);
+					SetPendingCommand(item, 1);
                 }
 			break;
 
@@ -161,9 +190,9 @@ namespace EditorFramework
 				ImGui::TextUnformatted(menuText.c_str());
 				ImGui::SameLine();
 				menuText = "###" + menuText;
-				int valueI = int(item.GetValue());
+				int valueI = int(item->GetValue());
 				if (ImGui::InputInt(menuText.c_str(), &valueI))
-					item.Execute(float(valueI));
+					SetPendingCommand(item, float(valueI));
 			}
             break;
 
@@ -172,9 +201,9 @@ namespace EditorFramework
 				ImGui::TextUnformatted(menuText.c_str());
 				ImGui::SameLine();
 				menuText = "###" + menuText;
-				float valueF = item.GetValue();
+				float valueF = item->GetValue();
 				if (ImGui::InputFloat(menuText.c_str(), &valueF))
-					item.Execute(valueF);
+					SetPendingCommand(item, valueF);
 			}
             break;
 		}

@@ -7,6 +7,8 @@
 class TerrainGenerationPanel : public EditorFramework::Panel
 {
 public:
+    DEFINE_PANEL(TerrainGenerationPanel);
+
     TerrainGenerationPanel();
 
 protected:

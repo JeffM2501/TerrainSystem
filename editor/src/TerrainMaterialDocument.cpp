@@ -1,6 +1,8 @@
 #include "TerrainMaterialDocument.h"
 
+#include <PropertiesPanel.h>
 #include "AssetManager.h"
+#include "Application.h"
 
 using namespace AssetSystem;
 
@@ -39,4 +41,24 @@ void TerrainMaterialDocument::SaveAsAsset(const std::string& assetPath)
 void TerrainMaterialDocument::OnShowScene(const Vector2& renderSize)
 {
 
+}
+
+void TerrainMaterialDocument::OnCreated()
+{
+    ClearColor = BLACK;
+}
+
+void TerrainMaterialDocument::OnActivated()
+{
+    auto* properties = GetApp()->GetPanel<PropertiesPanel>();
+    if (properties && AssetData)
+        properties->SetObject(AssetData->ValuePtr);
+
+}
+
+void TerrainMaterialDocument::OnDeactivated()
+{
+	auto* properties = GetApp()->GetPanel<PropertiesPanel>();
+	if (properties)
+		properties->SetObject(nullptr);
 }

@@ -9,12 +9,13 @@
 #include "raylib.h"
 #include "CRC64.h"
 #include "GUID.h"
+#include "attributes.h"
 
 namespace Types
 {
     class TypeDatabase;
 
-    class TypeInfo
+    class TypeInfo : public AttributeTypes::AttributeContainer
     {
     private:
         template<class T>

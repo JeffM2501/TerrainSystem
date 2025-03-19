@@ -17,12 +17,18 @@ namespace EditorFramework
 
 	protected:
 
-		void ShowContents(CommandContainer& container);
+		void ShowContents(CommandContainer* container);
 
-		void ShowSubMenu(CommandContainer& container);
-		void ShowGroup(CommandContainer& container);
+		void ShowSubMenu(CommandContainer* container);
+		void ShowGroup(CommandContainer* container);
 
-		void ShowItem(CommandItem& item);
+		void ShowItem(CommandItem* item);
+
+        void SetPendingCommand(CommandItem* item, float value = 0);
+        void ExecutePendingCommand();
+
+        CommandItem* PendingCommand = nullptr;
+        float PendingValue = 0;
 
 		float BarHeight = 0;
 	};

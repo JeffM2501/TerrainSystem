@@ -9,7 +9,6 @@
 
 namespace EditorFramework
 {
-
     class CommandContainerItem
     {
     public:
@@ -18,6 +17,15 @@ namespace EditorFramework
          inline virtual bool IsContainer() const { return false; }
 
          size_t SortIndex = 0;
+		 class CommandContainerItem* Parent = nullptr;
+
+         class CommandContainerItem* GetRoot()
+         {
+             if (Parent)
+                 return Parent->GetRoot();
+
+             return this;
+         }
     };
 
 	class CommandItem : public CommandContainerItem
@@ -121,7 +129,7 @@ namespace EditorFramework
 
         inline bool IsContainer() const override { return true; }
 		inline virtual bool IsSubItem() const { return SubItem; }
-
+       
         std::vector<std::shared_ptr<CommandContainerItem>> Contents;
 
         template<class T, class... Args>
@@ -129,6 +137,7 @@ namespace EditorFramework
         {
             auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
             ptr->SortIndex = insertLocation;
+            ptr->Parent = this;
 
             auto itr = Contents.begin();
 
@@ -148,7 +157,7 @@ namespace EditorFramework
         std::shared_ptr<CommandItem> AddItem(size_t insertLocation, std::shared_ptr<CommandItem> ptr)
         {
             auto itr = Contents.begin();
-
+            ptr->Parent = this;
             while (itr != Contents.end())
             {
                 if ((*itr)->SortIndex > insertLocation)

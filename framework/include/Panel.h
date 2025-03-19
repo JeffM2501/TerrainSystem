@@ -3,6 +3,7 @@
 #include "raylib.h"
 
 #include "imgui.h"
+#include "CRC64.h"
 
 #include <string>
 #include <string_view>
@@ -20,9 +21,15 @@ namespace EditorFramework
         Max
     };
 
+#define DEFINE_PANEL(T)\
+    static uint64_t PanelID() {return Hashes::CRC64Str(#T);}\
+	uint64_t GetPanelID() override {  return Hashes::CRC64Str(#T); }
+
     class Panel
     {
     public:
+        virtual uint64_t GetPanelID() = 0;
+
         void Update();
 
         void Open() { Shown = true; }

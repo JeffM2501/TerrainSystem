@@ -210,6 +210,8 @@ namespace EditorFramework
 		MainMenu.Show(true);
 		MainMenu.ProcessShortcuts();
 
+		RebuildWindowMenu();
+
 		float menuOffset = MainMenu.GetHeight() + ImGui::GetStyle().FrameBorderSize;
 		{
 			ImGui::SetNextWindowPos(ImVec2(0, menuOffset));
@@ -352,7 +354,7 @@ namespace EditorFramework
             }
 		}
 
-		for (auto& panel : Panels)
+		for (auto& [id,panel] : Panels)
 		{
 			if (ResetLayouts)
 				panel->ForceDockSpace(PanelLayoutDockingLocations[int(panel->Location)]);
@@ -583,7 +585,7 @@ namespace EditorFramework
 		auto& panelsGroup = panelMenu.AddGroup("Panels", ICON_FA_WINDOW_RESTORE, 10);
 
 		index = 0;
-		for (auto& panel : Panels)
+		for (auto& [id,panel] : Panels)
 		{
 			index++;
 			panelsGroup.AddItem<StateMenuCommand>(index,
@@ -603,9 +605,10 @@ namespace EditorFramework
 
 	void Application::RebuildWindowMenu()
 	{
-		if (!WindowMenu)
+		if (!WindowMenu || !WindowMenuDirty)
 			return;
 
+		WindowMenuDirty = false;
 		WindowMenu->Contents.clear();
 
         for (auto& [id, doc] : OpenDocuments)
@@ -646,7 +649,7 @@ namespace EditorFramework
 
 		SetActiveDocument(LastDocumentId);
 
-		RebuildWindowMenu();
+		WindowMenuDirty = true;
 
 		return LastDocumentId;
 	}
@@ -681,7 +684,7 @@ namespace EditorFramework
 			else
 				SetActiveDocument(0);
 		}
-		RebuildWindowMenu();
+		WindowMenuDirty = true;
 
 		return true;
 	}
@@ -709,7 +712,7 @@ namespace EditorFramework
 			else
 				SetActiveDocument(0);
         }
-		RebuildWindowMenu();
+		WindowMenuDirty = true;
 
 		if (PendingQuit)
 		{
@@ -827,7 +830,7 @@ namespace EditorFramework
 		else
 			SetWindowTitle(GetWindowTitle().data());
 
-		for (auto& panel : Panels)
+		for (auto& [id, panel] : Panels)
 		{
 			panel->DocumentChanged(ActiveDocument);
 		}

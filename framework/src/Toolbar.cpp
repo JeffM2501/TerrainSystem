@@ -8,9 +8,11 @@
 
 namespace EditorFramework
 {
-
     void Toolbar::Show()
     {
+        if (Contents.empty())
+            return;
+
         const char* name = TextFormat("###Toolbar%p", this);
 
         BarHeight = ImGui::GetTextLineHeight() + (ImGui::GetStyle().FramePadding.y*4);

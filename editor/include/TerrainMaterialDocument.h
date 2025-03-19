@@ -22,6 +22,10 @@ public:
     void SaveAsset() override;
     void SaveAsAsset(const std::string& assetPath) override;
 
+	void OnCreated() override;
+	void OnActivated() override;
+	void OnDeactivated() override;
+
 protected:
    void OnShowScene(const Vector2& renderSize) override;
 

@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <map>
 
+#include "attributes.h"
+
 namespace Types
 {
     enum class FieldType
@@ -17,7 +19,7 @@ namespace Types
         TypeList,
     };
 
-    class FieldInfo
+    class FieldInfo : public AttributeTypes::AttributeContainer
     {
     protected:
         FieldType Type = FieldType::Type;
@@ -25,6 +27,7 @@ namespace Types
         std::string Name;
 
         // todo, attributes
+        std::unordered_map<uint64_t, std::unique_ptr<AttributeTypes::Attribute>> Attributes;
 
     public:
         FieldInfo(const std::string& name)

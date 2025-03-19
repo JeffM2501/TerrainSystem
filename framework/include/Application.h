@@ -58,11 +58,21 @@ namespace EditorFramework
 		void SaveDocumentAs(size_t documentID);
 
         template <class T>
-        size_t RegisterPanel()
+        uint64_t RegisterPanel()
         {
-			Panels.emplace_back(std::make_unique<T>());
-			return Panels.size() - 1;
+			Panels.try_emplace(T::PanelID(), std::make_unique<T>());
+			return T::PanelID();
         }
+
+		template<class T>
+		T* GetPanel()
+		{
+			auto itr = Panels.find(T::PanelID());
+			if (itr == Panels.end())
+				return nullptr;
+
+			return static_cast<T*>(itr->second.get());
+		}
 
 		template <class T, typename ...Args>
 		void ShowDialogBox(Args&&... args)
@@ -140,7 +150,7 @@ namespace EditorFramework
 		};
 		std::unordered_map<uint64_t, DocumentFactoryRecord> DocumentFactories;
 		std::map<uint64_t, DocumentPtr> OpenDocuments;
-		std::vector<std::unique_ptr<Panel>> Panels;
+		std::unordered_map<uint64_t, std::unique_ptr<Panel>> Panels;
 		std::deque<std::unique_ptr<Dialog>> ModalDialogs;
 
 		CommandContainer* WindowMenu = nullptr;
@@ -168,6 +178,8 @@ namespace EditorFramework
 		bool ShowMetricsWindow = false;
 
 		Rectangle ContentRectangle = { 0,0,0,0 };
+
+		bool WindowMenuDirty = false;
 	};
 
 	template<class T>
