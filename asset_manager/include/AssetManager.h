@@ -13,84 +13,82 @@
 
 namespace AssetSystem
 {
-    namespace AssetManager
-    {
-        extern TypeDatabase TypeDB;
+	namespace AssetManager
+	{
+		extern std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
 
-        extern std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
+		AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
 
-        AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
+		void CloseAsset(AssetTypes::Asset* asset);
 
-        void CloseAsset(AssetTypes::Asset* asset);
+		void StoreAsset(const std::string& assetFilePath, std::unique_ptr<TypeWraper> assetData);
 
-        void StoreAsset(const std::string& assetFilePath, std::unique_ptr<TypeWraper> assetData);
+		template <class T>
+		T* OpenAsset(const std::string& assetFilePath)
+		{
+			auto existing = FindExistingAsset(assetFilePath);
 
-        template <class T>
-        T* OpenAsset(const std::string& assetFilePath)
-        {
-            auto existing = FindExistingAsset(assetFilePath);
+			if (existing)
+			{
+				if (existing->TypeName != T::TypeName)
+					return nullptr;
+				return static_cast<T*>(existing);
+			}
+			// todo make the path relative to asset root not working dir
+			std::unique_ptr<T> asset = T::ReadAs<T>(assetFilePath, true);
 
-            if (existing)
-            {
-                if (existing->TypeName != T::TypeName)
-                    return nullptr;
-                return static_cast<T*>(existing);
-            }
-            // todo make the path relative to asset root not working dir
-            std::unique_ptr<T> asset = T::ReadAs<T>(assetFilePath, TypeDB, true);
+			if (!asset->IsValid())
+			{
+				return nullptr;
+			}
 
-            if (!asset->IsValid())
-            {
-                return nullptr;
-            }
+			// set the current path in the asset
+			// TODO, see if the path is different?
+			asset->SetPath(assetFilePath);
 
-            // set the current path in the asset
-            // TODO, see if the path is different?
-            asset->SetPath(assetFilePath);
+			T* ptr = asset.get();
+			StoreAsset(assetFilePath, std::move(asset));
 
-            T* ptr = asset.get();
-            StoreAsset(assetFilePath, std::move(asset));
+			return ptr;
+		}
 
-            return ptr;
-        }
+		template <class T>
+		T* CreateTempAsset()
+		{
+			std::unique_ptr<T> asset = std::make_unique<T>();
+			T* ptr = asset.get();
 
-        template <class T>
-        T* CreateTempAsset()
-        {
-            std::unique_ptr<T> asset = std::make_unique<T>(TypeDB);
-            T* ptr = asset.get();
+			TempAssets[reinterpret_cast<size_t>(ptr)] = std::move(asset);
 
-            TempAssets[reinterpret_cast<size_t>(ptr)] = std::move(asset);
+			return ptr;
+		}
 
-            return ptr;
-        }
+		template <class T>
+		T* CreateAsset(const std::string& assetFilePath)
+		{
+			auto existing = FindExistingAsset(assetFilePath);
 
-        template <class T>
-        T* CreateAsset(const std::string& assetFilePath)
-        {
-            auto existing = FindExistingAsset(assetFilePath);
+			if (existing)
+			{
+				if (existing->TypeName != T::TypeName)
+					return nullptr;
+				return existing;
+			}
 
-            if (existing)
-            {
-                if (existing->TypeName != T::TypeName)
-                    return nullptr;
-                return existing;
-            }
+			std::unique_ptr<T> asset = std::unique_ptr<T>();
+			T* ptr = asset.get();
 
-            std::unique_ptr<T> asset = std::unique_ptr<T>(TypeDB);
-            T* ptr = asset.get();
+			if (!asset->IsValid())
+			{
+				return nullptr;
+			}
 
-            if (!asset->IsValid())
-            {
-                return nullptr;
-            }
+			// set the current path in the asset
+			asset->SetPath(assetFilePath);
 
-            // set the current path in the asset
-            asset->SetPath(assetFilePath);
+			StoreAsset(assetFilePath, std::move(asset));
 
-            StoreAsset(assetFilePath, std::move(asset));
-
-            return aptrset;
-        }
-    }
+			return ptr;
+		}
+	}
 }

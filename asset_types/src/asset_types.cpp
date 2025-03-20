@@ -6,26 +6,26 @@
 
 namespace Types
 {
-    void RegisterTypes(TypeDatabase& typeDB)
-    {
-        AssetTypes::TestType::Register(typeDB);
-        AssetTypes::TestTypeWithEmbed::Register(typeDB);
-        AssetTypes::TestDerivedType::Register(typeDB);
-        AssetTypes::TestContainerType::Register(typeDB);
-        AssetTypes::TestTypeWithPointer::Register(typeDB);
-        AssetTypes::TestTypeWithTypeList::Register(typeDB);
-        AssetTypes::TestTypeWithPtrTypeList::Register(typeDB);
+	void RegisterTypes()
+	{
+		AssetTypes::TestType::Register();
+		AssetTypes::TestTypeWithEmbed::Register();
+		AssetTypes::TestDerivedType::Register();
+		AssetTypes::TestContainerType::Register();
+		AssetTypes::TestTypeWithPointer::Register();
+		AssetTypes::TestTypeWithTypeList::Register();
+		AssetTypes::TestTypeWithPtrTypeList::Register();
 
-        AssetTypes::ResourceReference::Register(typeDB);
-        AssetTypes::AssetReference::Register(typeDB);
-        AssetTypes::Asset::Register(typeDB);
+		AssetTypes::ResourceReference::Register();
+		AssetTypes::AssetReference::Register();
+		AssetTypes::Asset::Register();
 
-		AssetTypes::TerrainPosition::Register(typeDB);
-		AssetTypes::TerrainMaterial::Register(typeDB);
-        AssetTypes::TerrainMaterialAsset::Register(typeDB);
-		AssetTypes::TerrainInfo::Register(typeDB);
-		AssetTypes::TerrainSplatmap::Register(typeDB);
-        AssetTypes::TerrainTile::Register(typeDB);
-        AssetTypes::TerrainAsset::Register(typeDB);
-    }
+		AssetTypes::TerrainPosition::Register();
+		AssetTypes::TerrainMaterial::Register();
+		AssetTypes::TerrainMaterialAsset::Register();
+		AssetTypes::TerrainInfo::Register();
+		AssetTypes::TerrainSplatmap::Register();
+		AssetTypes::TerrainTile::Register();
+		AssetTypes::TerrainAsset::Register();
+	}
 }

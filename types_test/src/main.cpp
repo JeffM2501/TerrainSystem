@@ -14,17 +14,15 @@ using namespace AssetTypes;
 
 int main(int argc, char* argv[])
 {
-    Types::RegisterTypes(AssetSystem::AssetManager::TypeDB);
+	Types::RegisterTypes();
 
-    auto& db = AssetSystem::AssetManager::TypeDB;
-
-    TestDerivedType test3 = db.CreateTypeValue<AssetTypes::TestDerivedType>();
-    auto strDefault = test3.GetDerivedString();// test3.SetDerivedString("I was also set");
+	TestDerivedType test3 = TypeDatabase::Get().CreateTypeValue<AssetTypes::TestDerivedType>();
+	auto strDefault = test3.GetDerivedString();// test3.SetDerivedString("I was also set");
 
 
-    auto matAsset = db.CreateTypeValue<AssetTypes::TerrainMaterialAsset>();
+	auto matAsset = TypeDatabase::Get().CreateTypeValue<AssetTypes::TerrainMaterialAsset>();
 
-    auto path = matAsset.GetPath();
+	auto path = matAsset.GetPath();
 
-    return 0;
+	return 0;
 }

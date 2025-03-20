@@ -16,10 +16,8 @@ namespace AssetSystem
 		};
 
 		static std::unordered_map<std::string, AssetFileRecord> OpenedAssets;
-        std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
+		std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
 
-		TypeDatabase TypeDB;
-	
 		AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath)
 		{
 			auto existingAsset = OpenedAssets.find(assetFilePath);

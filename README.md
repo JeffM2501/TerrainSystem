@@ -10,6 +10,7 @@
 
 
 ## TODO
+### Terrain
 * Heightmap as floats (float16?)
 * Way to read heightmaps from mega image.
 * Materials to shader
@@ -20,3 +21,9 @@
 * brush overlay in shader
 * folliage
 * stamps
+
+### Asset System
+* Static Type DB (done)
+* Pointers in property grid
+	* Cache must run from value, not Type
+	* Must handle derived types in containers

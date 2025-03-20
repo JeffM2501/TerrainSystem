@@ -10,53 +10,71 @@
 
 namespace Properties
 {
-    class TypeEditorCache;
+	class TypeEditorCache;
 
-    using PropertyEditor = std::function<bool(Types::TypeValue* value, int fieldIndex, bool expanded)>;
+	using PropertyEditor = std::function<bool(Types::TypeValue* value, int fieldIndex, bool expanded)>;
 
-    class EditorSet : public std::unordered_map<std::string, PropertyEditor>
-    {
-    public:
-    };
+	class EditorSet : public std::unordered_map<std::string, PropertyEditor>
+	{
+	public:
+	};
 
-    class EditorRegistry
-    {
-    public:
-        EditorRegistry();
+	class EditorRegistry
+	{
+	public:
+		EditorRegistry();
 
-        EditorSet& PushSet();
-        void PopSet();
+		EditorSet& PushSet();
+		void PopSet();
 
-        PropertyEditor GetEditorForField(const Types::TypeInfo* type, int fieldIndex);
+		PropertyEditor GetEditorForType(const Types::TypeInfo* type, int fieldIndex) const;
 
-        void BuildCacheForType(const Types::TypeInfo* type, TypeEditorCache* cache);
+		void BuildCacheForType(Types::TypeValue* type, TypeEditorCache* cache) const;
 
-    private:
-        EditorSet BaseSet;
-        std::vector<EditorSet> SetStack;
+	private:
+		EditorSet BaseSet;
+		std::vector<EditorSet> SetStack;
 
-    private:
-        PropertyEditor FindEditorByName(const std::string& name);
-    };
+	private:
+		PropertyEditor FindEditorByName(const std::string& name) const;
+	};
 
-    class TypeEditorCache
-    {
-    public:
-        std::string TypeDisplayName;
-        std::map<int, PropertyEditor> FieldEditors;
-        std::map<int, TypeEditorCache> TypeEditors;
+	class TypeEditorCache
+	{
+	public:
+		std::string TypeDisplayName;
 
-        void Clear()
-        {
-            TypeDisplayName.clear();
-            FieldEditors.clear();
-            TypeEditors.clear();
-        }
-    };
+		class PrimitiveFieldCacheInfo
+		{
+		public:
+			std::string DisplayName;
+			PropertyEditor Editor;
+		};
 
-    // Primitive Editor Names
-    static constexpr char EnumerationEditorName[] = "enum";
-    static constexpr char IntEditorName[] = "int";
-    static constexpr char FloatEditorName[] = "float";
-    static constexpr char StringEditorName[] = "string";
+		std::map<int, PrimitiveFieldCacheInfo> FieldEditors;
+
+		std::map<int, std::vector<TypeEditorCache>> TypeEditors;
+
+		void Clear()
+		{
+			TypeDisplayName.clear();
+			FieldEditors.clear();
+			TypeEditors.clear();
+		}
+	};
+
+	// Primitive Editor Names
+	static constexpr char EnumerationEditorName[] = "enum";
+	static constexpr char BoolEditorName[] = "bool";
+	static constexpr char IntEditorName[] = "int";
+	static constexpr char FloatEditorName[] = "float";
+	static constexpr char StringEditorName[] = "string";
+
+	static constexpr char Vec2EditorName[] = "vec2";
+	static constexpr char Vec3EditorName[] = "vec3";
+	static constexpr char Vec4EditorName[] = "vec4";
+	static constexpr char RectEditorName[] = "rect";
+	static constexpr char ColorEditorName[] = "color";
+	static constexpr char MatrixEditorName[] = "matrix";
+	static constexpr char GUIDEditorName[] = "GUID";
 }
