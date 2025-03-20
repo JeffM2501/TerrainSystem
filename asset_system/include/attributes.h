@@ -28,15 +28,24 @@ namespace AttributeTypes
         DEFINE_ATTRIBUTE(HiddenAttribute)
     };
 
-
     class CustomEditorAttribute : public Attribute
     {
     public:
 		DEFINE_ATTRIBUTE(CustomEditorAttribute);
 
-		CustomEditorAttribute(std::string_view editorName) : EditorName(EditorName) {}
+		CustomEditorAttribute(std::string_view editorName) : EditorName(editorName) {}
 
 		std::string EditorName;
+    };
+
+    class DisplayNameAttribute : public Attribute
+    {
+    public:
+        DEFINE_ATTRIBUTE(DisplayNameAttribute);
+
+		DisplayNameAttribute(std::string_view name) : Name(name) {}
+
+        std::string Name;
     };
 
 	class AttributeContainer

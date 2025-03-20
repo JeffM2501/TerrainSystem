@@ -25,7 +25,7 @@ void PropertiesPanel::OnShow()
 		return;
 	}
 
-	if (ImGui::CollapsingHeader(ObjectPointer->GetType()->TypeName.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader(TypeCache.TypeDisplayName.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
 
 	}
@@ -34,4 +34,6 @@ void PropertiesPanel::OnShow()
 void PropertiesPanel::SetObject(Types::TypeValue* value)
 {
 	ObjectPointer = value;
+	TypeCache.Clear();
+	Registry.BuildCacheForType(value->GetType(), &TypeCache);
 }

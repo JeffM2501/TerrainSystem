@@ -45,6 +45,13 @@ namespace Properties
         std::string TypeDisplayName;
         std::map<int, PropertyEditor> FieldEditors;
         std::map<int, TypeEditorCache> TypeEditors;
+
+        void Clear()
+        {
+            TypeDisplayName.clear();
+            FieldEditors.clear();
+            TypeEditors.clear();
+        }
     };
 
     // Primitive Editor Names

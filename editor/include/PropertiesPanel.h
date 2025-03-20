@@ -3,6 +3,7 @@
 #include "Panel.h"
 
 #include "type_values.h"
+#include "PropertyEditor.h"
 
 class PropertiesPanel : public EditorFramework::Panel
 {
@@ -17,4 +18,8 @@ protected:
 	void OnShow() override;
 
 	Types::TypeValue* ObjectPointer = nullptr;
+
+	Properties::TypeEditorCache TypeCache;
+
+	Properties::EditorRegistry Registry;
 };

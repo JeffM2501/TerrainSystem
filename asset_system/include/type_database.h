@@ -229,7 +229,7 @@ namespace Types
         template<class T>
         bool FieldHasAttribute(int fieldIndex) const
         {
-            const auto* fieldInfo = GetField(index);
+            const auto* fieldInfo = GetField(fieldIndex);
 
             if (!fieldInfo)
                 return false;

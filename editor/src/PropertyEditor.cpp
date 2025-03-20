@@ -151,14 +151,27 @@ namespace Properties
                 return editor;
         }
 
-        return FindEditorByName(GetNameForField(fieldInfo));
+        const char* fieldEditorName = GetNameForField(fieldInfo);
+        if (fieldEditorName == nullptr)
+            return nullptr;
+
+        return FindEditorByName(fieldEditorName);
     }
 
     void EditorRegistry::BuildCacheForType(const Types::TypeInfo* type, TypeEditorCache* cache)
     {
+        cache->TypeDisplayName = type->TypeName;
+        if (type->HasAttribute<DisplayNameAttribute>())
+            cache->TypeDisplayName = type->GetAttribute<DisplayNameAttribute>()->Name;
+
+        if(type)
         for (int i = 0; i < type->GetFieldCount(); i++)
         {
             auto fieldInfo = type->GetField(i);
+
+            if (type->FieldHasAttribute<HiddenAttribute>(i))
+                continue;
+
             if (fieldInfo->IsPrimtive() || fieldInfo->IsEnum())
             {
                 cache->FieldEditors[i] = GetEditorForField(type, i);
