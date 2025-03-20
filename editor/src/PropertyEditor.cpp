@@ -138,11 +138,11 @@ namespace Properties
         return nullptr;
     }
 
-    PropertyEditor EditorRegistry::GetEditorForField(Types::TypeValue* value, int fieldIndex)
+    PropertyEditor EditorRegistry::GetEditorForField(const Types::TypeInfo* type, int fieldIndex)
     {
-        const Types::FieldInfo* fieldInfo = value->GetType()->GetField(fieldIndex);
+        const Types::FieldInfo* fieldInfo = type->GetField(fieldIndex);
 
-        const auto* customEditor = value->GetFieldAttribute<CustomEditorAttribute>(fieldIndex);
+        const auto* customEditor = type->GetFieldAttribute<CustomEditorAttribute>(fieldIndex);
 
         if (customEditor)
         {
@@ -152,5 +152,22 @@ namespace Properties
         }
 
         return FindEditorByName(GetNameForField(fieldInfo));
+    }
+
+    void EditorRegistry::BuildCacheForType(const Types::TypeInfo* type, TypeEditorCache* cache)
+    {
+        for (int i = 0; i < type->GetFieldCount(); i++)
+        {
+            auto fieldInfo = type->GetField(i);
+            if (fieldInfo->IsPrimtive() || fieldInfo->IsEnum())
+            {
+                cache->FieldEditors[i] = GetEditorForField(type, i);
+            }
+            else if (fieldInfo->IsType())
+            {
+                cache->TypeEditors.try_emplace(i);
+                BuildCacheForType(static_cast<const TypeFieldInfo*>(fieldInfo)->TypePtr, &cache->TypeEditors[i]);
+            }
+        }
     }
 }

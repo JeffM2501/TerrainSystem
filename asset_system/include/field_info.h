@@ -38,6 +38,10 @@ namespace Types
 
         inline FieldType GetType() const { return Type; }
         inline const std::string& GetName() const { return Name; }
+
+        bool IsPrimtive() const { return Type == FieldType::Primitive || Type == FieldType::PrimitiveList; }
+        bool IsEnum() const { return Type == FieldType::Enumeration; }
+        bool IsType() const { return Type == FieldType::Type || Type == FieldType::TypeList; }
     };
 
     class EnumerationFieldInfo : public FieldInfo

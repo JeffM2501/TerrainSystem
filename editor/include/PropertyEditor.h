@@ -10,6 +10,8 @@
 
 namespace Properties
 {
+    class TypeEditorCache;
+
     using PropertyEditor = std::function<bool(Types::TypeValue* value, int fieldIndex, bool expanded)>;
 
     class EditorSet : public std::unordered_map<std::string, PropertyEditor>
@@ -25,9 +27,9 @@ namespace Properties
         EditorSet& PushSet();
         void PopSet();
 
-        PropertyEditor GetEditorForField(Types::TypeValue* value, int fieldIndex);
+        PropertyEditor GetEditorForField(const Types::TypeInfo* type, int fieldIndex);
 
-     //   TypeEditorCache BuildCacheForType(Types::TypeValue* value);
+        void BuildCacheForType(const Types::TypeInfo* type, TypeEditorCache* cache);
 
     private:
         EditorSet BaseSet;
