@@ -163,6 +163,17 @@ bool TypeReader::AddPrimtiveField(TypeValue* destinationValue, int fieldIndex, P
 		destinationValue->SetFieldPrimitiveValue<Hashes::GUID>(fieldIndex, guid);
 	}
 	break;
+    case PrimitiveType::Color:
+    {
+        Color color;
+		auto& array = fieldValue.GetArray();
+		color.r = array[0].GetInt();
+        color.g = array[0].GetInt();
+        color.b = array[0].GetInt();
+        color.a = array[0].GetInt();
+        destinationValue->SetFieldPrimitiveValue<Color>(fieldIndex, color);
+    }
+    break;
 	}
 
 	return true;
@@ -378,7 +389,6 @@ bool TypeReader::AddPrimtiveListField(TypeValue* destinationValue, int fieldInde
 	}
 	break;
 
-
 	case PrimitiveType::GUID:
 	{
 		auto& list = destinationValue->GetPrimitiveListFieldValue<Hashes::GUID>(fieldIndex);
@@ -388,6 +398,24 @@ bool TypeReader::AddPrimtiveListField(TypeValue* destinationValue, int fieldInde
 		}
 	}
 	break;
+
+    case PrimitiveType::Color:
+    {
+        auto& list = destinationValue->GetPrimitiveListFieldValue<Color>(fieldIndex);
+        for (auto& i : array)
+        {
+            float matf[16] = { 0 };
+            auto& colorArray = i.GetArray();
+
+			Color color;
+			color.r = colorArray[0].GetInt();
+			color.g = colorArray[1].GetInt();
+			color.b = colorArray[2].GetInt();
+			color.a = colorArray[3].GetInt();
+            list.PushBack(color);
+        }
+    }
+    break;
 	}
 
 	return true;

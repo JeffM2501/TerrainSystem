@@ -48,6 +48,8 @@ namespace PrimitiveFieldFactory
 			return std::make_unique<PrimitiveFieldValue<Matrix>>();
 		case Types::PrimitiveType::GUID:
 			return std::make_unique<PrimitiveFieldValue<Hashes::GUID>>();
+        case Types::PrimitiveType::Color:
+            return std::make_unique<PrimitiveFieldValue<Color>>();
 		}
 	}
 }
@@ -95,6 +97,8 @@ std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveTy
 		return std::make_unique<PrimitiveListFieldValue<Matrix>>();
 	case Types::PrimitiveType::GUID:
 		return std::make_unique<PrimitiveListFieldValue<Hashes::GUID>>();
+    case Types::PrimitiveType::Color:
+        return std::make_unique<PrimitiveListFieldValue<Color>>();
 	}
 }
 

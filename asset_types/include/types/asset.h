@@ -24,6 +24,14 @@ namespace AssetTypes
 		DEFINE_ATTRIBUTE(AssetRefEditorAttribute)
 	};
 
+    class FileExtensionFilterAttribute : public AttributeTypes::Attribute
+    {
+    public:
+		DEFINE_ATTRIBUTE(FileExtensionFilterAttribute)
+
+		std::vector<std::string> Filters;
+    };
+
 	// types
 	class ResourceReference : public TypeWraper
 	{
@@ -72,6 +80,7 @@ namespace AssetTypes
 
 			auto path = type->AddPrimitiveField<std::string>("Path", std::string());
 			path->AddAttribute<AssetPathAttribute>();
+			path->AddAttribute<AttributeTypes::ReadOnlyAttribute>();
 		}
 
 		const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }

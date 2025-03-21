@@ -53,7 +53,14 @@ namespace Properties
 
 		std::map<int, PrimitiveFieldCacheInfo> FieldEditors;
 
-		std::map<int, std::vector<TypeEditorCache>> TypeEditors;
+        class TypeFieldCacheInfo
+        {
+        public:
+            std::string DisplayName;
+			std::vector<TypeEditorCache> Editors;
+        };
+
+		std::map<int, TypeFieldCacheInfo> TypeEditors;
 
 		void Clear()
 		{

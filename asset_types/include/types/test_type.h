@@ -17,6 +17,27 @@ class TestType
 */
 namespace AssetTypes
 {
+	class TestEnum
+	{
+	public:
+		DEFINE_ENUM(TestEnum);
+
+		enum Values
+		{
+			TestValue1 = 0,
+			TestValue2 = 1,
+			TestValue3 = 4
+		};
+
+        static void Register()
+        {
+            auto* enumType = TypeDatabase::Get().CreateEnumeration(TypeName);
+			enumType->Values.insert_or_assign(0, "TestValue1");
+			enumType->Values.insert_or_assign(1, "TestValue2");
+			enumType->Values.insert_or_assign(4, "TestValue3");
+        }
+	};
+
 	class TestType : public TypeWraper
 	{
 	public:

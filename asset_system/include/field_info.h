@@ -114,7 +114,8 @@ namespace Types
         Vector4,
         Rectangle,
         Matrix, 
-        GUID
+        GUID,
+        Color
     };
 
     class PrimitiveFieldInfo : public FieldInfo

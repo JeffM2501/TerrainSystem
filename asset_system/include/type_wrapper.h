@@ -82,6 +82,10 @@ namespace Types
 		virtual void OnCreate() {}
 	};
 
+#define DEFINE_ENUM(T) \
+public : \
+    static constexpr char TypeName[] = #T;
+
 #define DEFINE_TYPE(T) \
 protected:  \
     T(const std::string& typeName): TypeWraper(typeName) {} \

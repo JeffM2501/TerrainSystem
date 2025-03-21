@@ -73,7 +73,7 @@ TypeInfo::FieldIterator TypeInfo::end() const
 
 const EnumerationFieldInfo* TypeInfo::AddEnumerationField(const std::string& name, const std::string& enumName, int32_t defaultValue)
 {
-	std::unique_ptr<EnumerationFieldInfo> field = std::make_unique<EnumerationFieldInfo>(name, TypeDatabase::Get().FindEnumeratione(enumName), defaultValue);
+	std::unique_ptr<EnumerationFieldInfo> field = std::make_unique<EnumerationFieldInfo>(name, TypeDatabase::Get().FindEnumeration(enumName), defaultValue);
 
 	EnumerationFieldInfo* ptr = field.get();
 	Fields.push_back(std::move(field));
@@ -126,7 +126,7 @@ TypeInfo* TypeDatabase::CreateType(const std::string& typeName, const std::strin
 	return CreateType(typeName, GetTypeId(parentTypeName));
 }
 
-TypeInfo* TypeDatabase::CreateType(const std::string& typeName, size_t parentTypeID)
+TypeInfo* TypeDatabase::CreateType(const std::string& typeName, uint64_t parentTypeID)
 {
 	size_t hash = GetTypeId(typeName);
 	auto itr = Types.find(hash);
@@ -153,7 +153,7 @@ TypeInfo* TypeDatabase::FindType(const std::string& typeName)
 	return FindType(GetTypeId(typeName));
 }
 
-TypeInfo* TypeDatabase::FindType(size_t typeId)
+TypeInfo* TypeDatabase::FindType(uint64_t typeId)
 {
 	auto itr = Types.find(typeId);
 	if (itr != Types.end())
@@ -163,7 +163,7 @@ TypeInfo* TypeDatabase::FindType(size_t typeId)
 
 EnumerationInfo* TypeDatabase::CreateEnumeration(const std::string& typeName)
 {
-	size_t hash = GetTypeId(typeName);
+	uint64_t hash = GetTypeId(typeName);
 	auto itr = Enumerations.find(hash);
 	if (itr != Enumerations.end())
 		return itr->second.get();
@@ -179,12 +179,12 @@ EnumerationInfo* TypeDatabase::CreateEnumeration(const std::string& typeName)
 	return ptr;
 }
 
-EnumerationInfo* TypeDatabase::FindEnumeratione(const std::string& typeName)
+EnumerationInfo* TypeDatabase::FindEnumeration(const std::string& typeName)
 {
-	return FindEnumeratione(GetTypeId(typeName));
+	return FindEnumeration(GetTypeId(typeName));
 }
 
-EnumerationInfo* TypeDatabase::FindEnumeratione(size_t typeId)
+EnumerationInfo* TypeDatabase::FindEnumeration(uint64_t typeId)
 {
 	auto itr = Enumerations.find(typeId);
 	if (itr != Enumerations.end())
@@ -197,7 +197,7 @@ bool TypeDatabase::IsBaseClassOf(const std::string testType, const std::string& 
 	return IsBaseClassOf(GetTypeId(testType), GetTypeId(possibleBase));
 }
 
-bool TypeDatabase::IsBaseClassOf(size_t testType, size_t possibleBase)
+bool TypeDatabase::IsBaseClassOf(uint64_t testType, uint64_t possibleBase)
 {
 	TypeInfo* testTypePtr = FindType(testType);
 	TypeInfo* possibleBasePtr = FindType(possibleBase);

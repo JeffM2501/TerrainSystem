@@ -21,6 +21,7 @@ namespace Types
 		AssetTypes::Asset::Register();
 
 		AssetTypes::TerrainPosition::Register();
+		AssetTypes::TerrainMaterialTypeEnum::Register();
 		AssetTypes::TerrainMaterial::Register();
 		AssetTypes::TerrainMaterialAsset::Register();
 		AssetTypes::TerrainInfo::Register();

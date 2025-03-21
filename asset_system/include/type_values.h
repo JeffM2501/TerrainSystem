@@ -20,7 +20,6 @@ namespace Types
 		}
 	};
 
-
 	class EnumerationFieldValue : public FieldValue
 	{
 	protected:
@@ -188,7 +187,7 @@ namespace Types
 			}
 
 			const EnumerationFieldInfo* fieldPtr = Type->GetField<EnumerationFieldInfo>(fieldIndex);
-			return T(FieldPtr->DefaultValue());
+			return T(fieldPtr->DefaultValue);
 		}
 
 		template<typename T>

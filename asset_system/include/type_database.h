@@ -220,8 +220,14 @@ namespace Types
 		template<>
 		inline PrimitiveTypeFieldInfo<Hashes::GUID>* AddPrimitiveField(const std::string& name, const Hashes::GUID& defaultValue)
 		{
-			return AddPrimitiveField<Hashes::GUID>(name, defaultValue, PrimitiveType::Matrix);
+			return AddPrimitiveField<Hashes::GUID>(name, defaultValue, PrimitiveType::GUID);
 		}
+
+        template<>
+        inline PrimitiveTypeFieldInfo<Color>* AddPrimitiveField(const std::string& name, const Color& defaultValue)
+        {
+            return AddPrimitiveField<Color>(name, defaultValue, PrimitiveType::Color);
+        }
 
 		template<class T>
 		bool FieldHasAttribute(int fieldIndex) const
@@ -276,8 +282,8 @@ namespace Types
 	class TypeDatabase
 	{
 	private:
-		std::unordered_map<size_t, std::unique_ptr<TypeInfo>> Types;
-		std::unordered_map<size_t, std::unique_ptr<EnumerationInfo>> Enumerations;
+		std::unordered_map<uint64_t, std::unique_ptr<TypeInfo>> Types;
+		std::unordered_map<uint64_t, std::unique_ptr<EnumerationInfo>> Enumerations;
 
 	public:
 		static TypeDatabase& Get();
@@ -286,18 +292,18 @@ namespace Types
 
 		TypeInfo* CreateType(const std::string& typeName);
 		TypeInfo* CreateType(const std::string& typeName, const std::string& parentTypeName);
-		TypeInfo* CreateType(const std::string& typeName, size_t parentTypeID);
+		TypeInfo* CreateType(const std::string& typeName, uint64_t parentTypeID);
 
 		EnumerationInfo* CreateEnumeration(const std::string& typeName);
 
 		TypeInfo* FindType(const std::string& typeName);
-		TypeInfo* FindType(size_t typeId);
+		TypeInfo* FindType(uint64_t typeId);
 
-		EnumerationInfo* FindEnumeratione(const std::string& typeName);
-		EnumerationInfo* FindEnumeratione(size_t typeId);
+		EnumerationInfo* FindEnumeration(const std::string& typeName);
+		EnumerationInfo* FindEnumeration(uint64_t typeId);
 
 		bool IsBaseClassOf(const std::string testType, const std::string& possibleBase);
-		bool IsBaseClassOf(size_t testType, size_t possibleBase);
+		bool IsBaseClassOf(uint64_t testType, uint64_t possibleBase);
 
 		template <class T>
 		inline T CreateTypeValue()

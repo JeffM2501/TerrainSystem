@@ -4,6 +4,7 @@
 
 #include "types/asset.h"
 #include "raylib.h"
+#include "raymath.h"
 
 #include <memory>
 
@@ -32,6 +33,27 @@ namespace AssetTypes
 		void ResetY() { Value->ResetFieldToDefault(1); }
 	};
 
+    class TerrainMaterialTypeEnum
+    {
+    public:
+		DEFINE_ENUM(TerrainMaterialTypeEnum);
+
+        enum class Values
+        {
+            DiffuseOnly = 0,
+            Tintable = 1,
+            DiffuseAndNomal = 2
+        };
+
+        static void Register()
+        {
+            auto* enumType = TypeDatabase::Get().CreateEnumeration(TypeName);
+            enumType->Values.insert_or_assign(0, "DiffuseOnly");
+            enumType->Values.insert_or_assign(1, "Tintable");
+            enumType->Values.insert_or_assign(2, "DiffuseAndNomal");
+        }
+    };
+
 	class TerrainMaterial : public TypeWraper
 	{
 	public:
@@ -42,8 +64,19 @@ namespace AssetTypes
 			auto* type = TypeDatabase::Get().CreateType(TypeName);
 			type->AddPrimitiveField<std::string>("Name", "");
 			type->AddTypeField("DiffuseTexture", ResourceReference::TypeName);
-			type->AddPrimitiveField<Vector4>("DiffuseColor", Vector4{ 1,1,1,1 });
+			type->AddPrimitiveField<Color>("DiffuseColor", Color{ 255,255,255,255 });
 			type->AddTypeField("NormalMap", ResourceReference::TypeName);
+
+			type->AddEnumerationField("MaterialType", TerrainMaterialTypeEnum::TypeName, int(TerrainMaterialTypeEnum::Values::DiffuseOnly));
+
+			type->AddPrimitiveField<Vector2>("Vec2", Vector2Zeros);
+			type->AddPrimitiveField<Vector3>("Vec3", Vector3Zeros);
+			type->AddPrimitiveField<Vector4>("Vec4", Vector4Zeros);
+			type->AddPrimitiveField<Rectangle>("Rect", Rectangle{0,0,100,100});
+
+			type->AddPrimitiveField<Matrix>("Matrix", MatrixIdentity());
+			type->AddPrimitiveField<Color>("Color", RED);
+			type->AddPrimitiveField<Hashes::GUID>("GUID", Hashes::GUID::Invalid());
 		}
 
 		const std::string& GetName() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
@@ -52,11 +85,15 @@ namespace AssetTypes
 
 		ResourceReference GetDiffuseTexture() const { return ResourceReference(ValuePtr->GetTypeFieldValue(1)); }
 
-		const Vector4& GetDiffuseColor() const { return ValuePtr->GetFieldPrimitiveValue<Vector4>(2); }
-		void SetDiffuseColor(const Vector4& value) { ValuePtr->SetFieldPrimitiveValue<Vector4>(2, value); }
+		const Color& GetDiffuseColor() const { return ValuePtr->GetFieldPrimitiveValue<Color>(2); }
+		void SetDiffuseColor(const Color& value) { ValuePtr->SetFieldPrimitiveValue<Color>(2, value); }
 		void ResetDiffuseColor() { Value->ResetFieldToDefault(2); }
 
 		ResourceReference GetNormalMap() const { return ResourceReference(ValuePtr->GetTypeFieldValue(3)); }
+
+		TerrainMaterialTypeEnum::Values GetMaterialType() const { return ValuePtr->GetFieldEnumerationValue<TerrainMaterialTypeEnum::Values>(4); }
+		void SetMaterialType(const TerrainMaterialTypeEnum::Values& value) { ValuePtr->SetFieldEnumerationValue(4, value); }
+        void ResetMaterialType() { Value->ResetFieldToDefault(4); }
 	};
 
 	class TerrainMaterialAsset : public Asset

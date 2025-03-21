@@ -13,11 +13,9 @@ using namespace TypeIO;
 using namespace rapidjson;
 
 
-
 //--------------------------------------------------------------
 //   File IO
 //--------------------------------------------------------------
-
 
 void WriteFileText(const std::string& fileName, const char* data, size_t size)
 {
@@ -189,9 +187,32 @@ bool TypeWriter::SetPrimitiveFieldJson(PrimitiveType primType, const FieldValue*
         }
     }
     break;
+
     case PrimitiveType::GUID:
         fieldType.SetString("GUID");
         returnValue.SetString(StringRef(static_cast<const PrimitiveFieldValue<Hashes::GUID>*>(value)->GetValue().ToString().c_str()));
+    break;
+
+    case PrimitiveType::Color:
+    {
+        fieldType.SetString("color");
+        returnValue.SetArray();
+
+        Color color = static_cast<const PrimitiveFieldValue<Color>*>(value)->GetValue();
+
+        Value colorValue;
+        colorValue.SetInt(color.r);
+        returnValue.PushBack(colorValue, RootDocument->GetAllocator());
+
+        colorValue.SetInt(color.g);
+        returnValue.PushBack(colorValue, RootDocument->GetAllocator());
+
+        colorValue.SetInt(color.b);
+        returnValue.PushBack(colorValue, RootDocument->GetAllocator());
+
+        colorValue.SetInt(color.a);
+        returnValue.PushBack(colorValue, RootDocument->GetAllocator());
+    }
     break;
     }
 
@@ -448,7 +469,35 @@ bool TypeWriter::SetPrimitiveFieldListJson(PrimitiveType primType, const FieldVa
             v.SetString(StringRef(value.ToString().c_str()));
             returnValue.PushBack(v, RootDocument->GetAllocator());
         }
-        break;
+    break; 
+    
+    case PrimitiveType::Color:
+    {
+        fieldType.SetString("color[]");
+
+        for (auto& vec : *static_cast<const PrimitiveListFieldValue<Color>*>(value))
+        {
+            Value v;
+            v.SetArray();
+            Color color = static_cast<const PrimitiveFieldValue<Color>*>(value)->GetValue();
+
+            Value colorValue;
+            colorValue.SetInt(color.r);
+            v.PushBack(colorValue, RootDocument->GetAllocator());
+
+            colorValue.SetInt(color.g);
+            v.PushBack(colorValue, RootDocument->GetAllocator());
+
+            colorValue.SetInt(color.b);
+            v.PushBack(colorValue, RootDocument->GetAllocator());
+
+            colorValue.SetInt(color.a);
+            v.PushBack(colorValue, RootDocument->GetAllocator());
+
+            returnValue.PushBack(v, RootDocument->GetAllocator());
+        }
+    }
+    break;
     }
 
     return true;
