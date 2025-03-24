@@ -13,42 +13,72 @@ namespace Types
 	class FieldPath
 	{
 	public:
-        enum class ElementType
-        {
-            Unknown,
-            Field,
-            Index
-        };
-		class Element
+		enum class ElementType
 		{
-            ElementType Type = ElementType::Unknown;
+			Unknown,
+			Field,
+			Index
+		};
+
+		struct Element
+		{
+			ElementType Type = ElementType::Unknown;
 			int Index = 0;
 		};
 
-        std::vector<ElementType> Elements;
+		static Element Field(int index) { return Element{ ElementType::Field, index }; }
+		static Element Index(int index) { return Element{ ElementType::Index, index }; }
+
+		std::vector<Element> Elements;
+
+
+		void PushFront(const FieldPath& path)
+		{
+			Elements.insert(Elements.begin(), path.Elements.begin(), path.Elements.end());
+		}
+
+		void PushBack(const FieldPath& path)
+		{
+			Elements.insert(Elements.end(), path.Elements.begin(), path.Elements.end());
+		}
 	};
 
 	class ValueChangedEvent
 	{
-    public:
-        TypeValue* Value = nullptr;
-        FieldPath Path;
+	public:
+		TypeValue* Value = nullptr;
+		FieldPath Path;
+
+		virtual ~ValueChangedEvent() = default;
+	};
+
+	class PrimitiveValueChangedEvent : public ValueChangedEvent
+	{
+	public:
+		void* OldValue = nullptr;
+		bool IsDefault = false;
+
+		~PrimitiveValueChangedEvent()
+		{
+			if (OldValue)
+				delete OldValue;
+		}
+
 	};
 
 	class FieldValue
 	{
 	protected:
 		TypeValue* ParentValue = nullptr;
-        int FieldIndex = 0;
+		int FieldIndex = 0;
 
 	public:
-		FieldValue(TypeValue* parentValue = nullptr, int index = 0) 
+		FieldValue(TypeValue* parentValue = nullptr, int index = 0)
 			: ParentValue(parentValue)
 			, FieldIndex(index)
-		{}
+		{
+		}
 		virtual ~FieldValue() = default;
-
-        Events::EventSource<ValueChangedEvent> ValueChanged;
 
 		template<typename T>
 		inline T* GetAs()
@@ -81,12 +111,24 @@ namespace Types
 	{
 	protected:
 		T Value;
-     
+
 	public:
-        PrimitiveFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue,index) {}
+		PrimitiveFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
 		virtual ~PrimitiveFieldValue() = default;
 		const T& GetValue() const { return Value; }
 		void SetValue(const T& newValue) { Value = newValue; }
+
+		void ToChangeEvent(PrimitiveValueChangedEvent& event)
+		{
+			event.OldValue = new T(Value);
+			*(T*)(event.OldValue) = Value;
+			event.IsDefault = false;
+		}
+
+		void FromChangeEvent(PrimitiveValueChangedEvent& event)
+		{
+			Value = *(T*)(event.OldValue);
+		}
 	};
 
 	class ListFieldValue : public FieldValue
@@ -122,12 +164,33 @@ namespace Types
 		PrimitiveListFieldValue(const PrimitiveListFieldValue&) = delete;
 		PrimitiveListFieldValue& operator = (const PrimitiveListFieldValue&) = delete;
 
+		Events::EventSource<PrimitiveValueChangedEvent> OnPrimitiveValueChanged;
+
+		void CallPrimitiveValueChanged(PrimitiveValueChangedEvent& eventRecord)
+		{
+			eventRecord.Value = this;
+			OnPrimitiveValueChanged.Invoke(eventRecord);
+
+			if (ParentValue)
+			{
+				eventRecord.Path.Elements.push_back(FieldPath::Field(FieldIndex));
+				ParentValue->CallPrimitiveValueChanged(eventRecord);
+			}
+		}
+
 		std::vector<T>& GetValues() { return Values; }
 		const std::vector<T>& GetValues() const { return Values; }
 		void SetValues(const std::vector<T>& newValues) { Values = newValues; }
 
 		const T& GetValue(size_t index = 0) const { return Values[index]; }
-		void SetValue(const T& newValue, size_t index = 0) { Values[index] = newValue; }
+		void SetValue(const T& newValue, size_t index = 0)
+		{
+			PrimitiveValueChangedEvent eventRecord;
+			eventRecord.Path.Elements.push_back(FieldPath::Index(index));
+			eventRecord.OldValue = new T(Values[index]);
+			Values[index] = newValue;
+			CallPrimitiveValueChanged(eventRecord);
+		}
 
 		typename std::vector<T>::iterator begin() { return Values.begin(); }
 		typename std::vector<T>::const_iterator begin() const { return Values.cbegin(); }
@@ -176,6 +239,20 @@ namespace Types
 		TypeValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
 		TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) { SetType(t); }
 
+		Events::EventSource<PrimitiveValueChangedEvent> OnPrimitiveValueChanged;
+
+		void CallPrimitiveValueChanged(PrimitiveValueChangedEvent& eventRecord)
+		{
+			eventRecord.Value = this;
+			OnPrimitiveValueChanged.Invoke(eventRecord);
+
+			if (ParentValue)
+			{
+				eventRecord.Path.Elements.push_back(FieldPath::Field(FieldIndex));
+				ParentValue->CallPrimitiveValueChanged(eventRecord);
+			}
+		}
+
 		void SetType(const TypeInfo* type);
 
 		const TypeInfo* GetType() const { return Type; }
@@ -208,7 +285,13 @@ namespace Types
 				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<PrimitiveFieldValue<T>>(this, fieldIndex))).first;
 
 			PrimitiveFieldValue<T>* valueItr = reinterpret_cast<PrimitiveFieldValue<T>*>(itr->second.get());
+
+			PrimitiveValueChangedEvent eventRecord;
+			valueItr->ToChangeEvent(eventRecord);
 			valueItr->SetValue(value);
+
+			eventRecord.Path.Elements.push_back(FieldPath::Field(fieldIndex));
+			CallPrimitiveValueChanged(eventRecord);
 		}
 
 		template<typename T>
