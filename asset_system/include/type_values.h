@@ -39,9 +39,13 @@ namespace Types
 	{
 	protected:
 		TypeValue* ParentValue = nullptr;
+        int FieldIndex = 0;
 
 	public:
-		FieldValue(TypeValue* parentValue = nullptr) : ParentValue(parentValue) {}
+		FieldValue(TypeValue* parentValue = nullptr, int index = 0) 
+			: ParentValue(parentValue)
+			, FieldIndex(index)
+		{}
 		virtual ~FieldValue() = default;
 
         Events::EventSource<ValueChangedEvent> ValueChanged;
@@ -59,7 +63,7 @@ namespace Types
 		int32_t Value = 0;
 
 	public:
-		EnumerationFieldValue(TypeValue* parentValue = nullptr) : FieldValue(parentValue) {}
+		EnumerationFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
 		virtual ~EnumerationFieldValue() = default;
 		int32_t GetValue() const { return Value; }
 
@@ -79,7 +83,7 @@ namespace Types
 		T Value;
      
 	public:
-        PrimitiveFieldValue(TypeValue* parentValue = nullptr) : FieldValue(parentValue) {}
+        PrimitiveFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue,index) {}
 		virtual ~PrimitiveFieldValue() = default;
 		const T& GetValue() const { return Value; }
 		void SetValue(const T& newValue) { Value = newValue; }
@@ -88,7 +92,7 @@ namespace Types
 	class ListFieldValue : public FieldValue
 	{
 	public:
-		ListFieldValue(TypeValue* parentValue = nullptr) : FieldValue(parentValue) {}
+		ListFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
 		virtual ~ListFieldValue() = default;
 
 		virtual void Clear() = 0;
@@ -102,7 +106,7 @@ namespace Types
 
 		virtual void Delete(size_t index) = 0;
 
-		static std::unique_ptr<ListFieldValue> Create(PrimitiveType primitiveType, TypeValue* parentValue = nullptr);
+		static std::unique_ptr<ListFieldValue> Create(PrimitiveType primitiveType, TypeValue* parentValue = nullptr, int index = 0);
 	};
 
 	template<typename T>
@@ -112,7 +116,7 @@ namespace Types
 		std::vector<T> Values;
 
 	public:
-		PrimitiveListFieldValue(TypeValue* parentValue = nullptr) : ListFieldValue(parentValue) {}
+		PrimitiveListFieldValue(TypeValue* parentValue = nullptr, int index = 0) : ListFieldValue(parentValue, index) {}
 		virtual ~PrimitiveListFieldValue() = default;
 		PrimitiveListFieldValue() = default;
 		PrimitiveListFieldValue(const PrimitiveListFieldValue&) = delete;
@@ -169,8 +173,8 @@ namespace Types
 
 		using Ptr = std::unique_ptr<TypeValue>;
 
-		TypeValue(TypeValue* parentValue = nullptr) : FieldValue(parentValue) {}
-		TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr) : FieldValue(parentValue) { SetType(t); }
+		TypeValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
+		TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) { SetType(t); }
 
 		void SetType(const TypeInfo* type);
 
@@ -201,7 +205,7 @@ namespace Types
 		{
 			auto itr = Values.find(fieldIndex);
 			if (itr == Values.end())
-				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<PrimitiveFieldValue<T>>(this))).first;
+				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<PrimitiveFieldValue<T>>(this, fieldIndex))).first;
 
 			PrimitiveFieldValue<T>* valueItr = reinterpret_cast<PrimitiveFieldValue<T>*>(itr->second.get());
 			valueItr->SetValue(value);
@@ -226,7 +230,7 @@ namespace Types
 		{
 			auto itr = Values.find(fieldIndex);
 			if (itr == Values.end())
-				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<EnumerationFieldValue>(this))).first;
+				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<EnumerationFieldValue>(this, fieldIndex))).first;
 
 			EnumerationFieldValue* valueItr = reinterpret_cast<EnumerationFieldValue*>(itr->second.get());
 			valueItr->SetValueAs(value);
@@ -247,7 +251,7 @@ namespace Types
 			{
 				const PrimitiveFieldInfo* fieldPtr = Type->GetField<PrimitiveFieldInfo>(fieldIndex);
 
-				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this);
+				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, fieldIndex);
 				itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 			}
 
@@ -261,7 +265,7 @@ namespace Types
 			{
 				const PrimitiveFieldInfo* fieldPtr = Type->GetField<PrimitiveFieldInfo>(fieldIndex);
 
-				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this);
+				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, fieldIndex);
 				itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 			}
 
@@ -281,8 +285,8 @@ namespace Types
 		const TypeInfo* Type = nullptr;
 		TypeValueList Values;
 	public:
-		TypeListValue(TypeValue* parentValue = nullptr) : FieldValue(parentValue) {}
-		TypeListValue(const TypeInfo* t, TypeValue* parentValue = nullptr) : FieldValue(parentValue) { Type = t; }
+		TypeListValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
+		TypeListValue(const TypeInfo* t, TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) { Type = t; }
 
 		virtual ~TypeListValue() = default;
 
