@@ -58,6 +58,7 @@ namespace Properties
         public:
             std::string DisplayName;
 			std::vector<TypeEditorCache> Editors;
+			PropertyEditor CustomEditor = nullptr;
         };
 
 		std::map<int, TypeFieldCacheInfo> TypeEditors;

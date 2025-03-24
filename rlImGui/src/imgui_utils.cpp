@@ -177,4 +177,50 @@ namespace ImGuiUtils
             ImGui::TextUnformatted(elipsisText);
         }
     }
+
+    ImVec2 GetButtonSize(std::string_view label)
+    {
+        ImVec2 result = ImGui::CalcTextSize(label.data());
+        result.x += (ImGui::GetStyle().FramePadding.x + ImGui::GetStyle().FramePadding.x);
+        return result;
+    }
+
+    ImVec2 GetButtonsSize(std::string_view l1, std::string_view l2, std::string_view l3)
+    {
+        ImVec2 results(0, ImGui::GetTextLineHeight());
+
+        int count = 0;
+        if (!l1.empty())
+        {
+            count++;
+            results.x += GetButtonSize(l1).x;
+        }
+
+        if (!l2.empty())
+        {
+            count++;
+            results.x += GetButtonSize(l2).x;
+        }
+
+        if (!l3.empty())
+        {
+            count++;
+            results.x += GetButtonSize(l3).x;
+        }
+
+        if (count > 1)
+            results.x += ImGui::GetStyle().ItemInnerSpacing.x * (count - 1);
+
+        return results;
+    }
+
+    void RightJustify(float width)
+    {
+        ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - ImGui::GetWindowContentRegionMin().x - width);
+    }
+
+    void BottomJustify(float height)
+    {
+        ImGui::SetCursorPosY(ImGui::GetContentRegionAvail().y - (height + ImGui::GetStyle().WindowPadding.y));
+    }
 }

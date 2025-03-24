@@ -93,13 +93,13 @@ namespace Types
 		FieldIterator begin() const;
 		FieldIterator end() const;
 
-		const EnumerationFieldInfo* AddEnumerationField(const std::string& name, const std::string& enumName, int32_t defaultValue = 0);
+		EnumerationFieldInfo* AddEnumerationField(const std::string& name, const std::string& enumName, int32_t defaultValue = 0);
 
-		const TypeFieldInfo* AddTypeField(const std::string& name, const std::string& typeName, bool isPointer = false, const std::string& ptrTypeName = std::string());
+		TypeFieldInfo* AddTypeField(const std::string& name, const std::string& typeName, bool isPointer = false, const std::string& ptrTypeName = std::string());
 
-		const TypeListFieldInfo* AddTypeListField(const std::string& name, const std::string& typeName, bool isPointer = false);
+        TypeListFieldInfo* AddTypeListField(const std::string& name, const std::string& typeName, bool isPointer = false);
 
-		const PrimitiveFieldInfo* AddPrimitiveListField(const std::string& name, PrimitiveType primType)
+		PrimitiveFieldInfo* AddPrimitiveListField(const std::string& name, PrimitiveType primType)
 		{
 			std::unique_ptr<PrimitiveFieldInfo> field = std::make_unique<PrimitiveFieldInfo>(name, primType, true);
 

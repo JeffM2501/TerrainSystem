@@ -18,18 +18,22 @@ namespace AssetTypes
 		DEFINE_ATTRIBUTE(AssetPathAttribute)
 	};
 
-	class AssetRefEditorAttribute : public AttributeTypes::Attribute
-	{
-	public:
-		DEFINE_ATTRIBUTE(AssetRefEditorAttribute)
-	};
-
     class FileExtensionFilterAttribute : public AttributeTypes::Attribute
     {
     public:
 		DEFINE_ATTRIBUTE(FileExtensionFilterAttribute)
 
 		std::vector<std::string> Filters;
+    };
+
+    class FileExtensionAttribute : public AttributeTypes::Attribute
+    {
+    public:
+		DEFINE_ATTRIBUTE(FileExtensionFilterAttribute)
+
+		FileExtensionAttribute(std::string_view ext) : Extension(ext) {}
+
+		std::string Extension;
     };
 
 	// types
@@ -41,7 +45,7 @@ namespace AssetTypes
 		static void Register()
 		{
 			auto* type = TypeDatabase::Get().CreateType(TypeName);
-			type->AddAttribute<AssetRefEditorAttribute>();
+			type->AddAttribute<AttributeTypes::CustomEditorAttribute>("ResourceReferenceEditor");
 
 			type->AddPrimitiveField<std::string>("Path", std::string());
 		}
@@ -59,7 +63,7 @@ namespace AssetTypes
 		static void Register()
 		{
 			auto* type = TypeDatabase::Get().CreateType(TypeName);
-			type->AddAttribute<AssetRefEditorAttribute>();
+			type->AddAttribute<AttributeTypes::CustomEditorAttribute>("ResourceReferenceEditor");
 
 			type->AddPrimitiveField<std::string>("Path", std::string());
 		}

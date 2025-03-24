@@ -3,6 +3,7 @@
 #include "DisplayScale.h"
 #include "Dialog.h"
 
+#include "imgui_utils.h"
 #include "extras/IconsFontAwesome6.h"
 
 #include "raylib.h"
@@ -83,7 +84,7 @@ void TerrainDocument::OnShowScene(const Vector2& renderSize)
 
 void TerrainDocument::OnShowUI()
 {
-    auto size = GetButtonSize(ICON_FA_BOX);
+    auto size = ImGuiUtils::GetButtonSize(ICON_FA_BOX);
 
     //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
     ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());

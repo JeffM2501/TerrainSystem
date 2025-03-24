@@ -1,16 +1,21 @@
 #include "PropertyEditor.h"
 #include "attributes.h"
+#include "types/asset.h"
 
 #include "imgui.h"
 #include "imgui_utils.h"
 
+#include "extras/IconsFontAwesome6.h"
+
+#include "tinyfiledialogs.h"
+
 using namespace Types;
 using namespace AttributeTypes;
+using namespace AssetTypes;
 using namespace Hashes;
 
 namespace Properties
 {
-
 	bool BoolPropertyEditor(Types::TypeValue* value, int fieldIndex, bool expanded)
 	{
 		bool fieldValue = value->GetFieldPrimitiveValue<bool>(fieldIndex);
@@ -337,6 +342,53 @@ namespace Properties
         return false;
 	}
 
+	const char* AssetRefPickerDialog(Types::TypeValue* value, int fieldIndex)
+	{
+        const char* filters[1] = { nullptr };
+
+        if (auto* extAttr = value->GetType()->GetFieldAttribute<AssetTypes::FileExtensionAttribute>(fieldIndex))
+        {
+            filters[0] = TextFormat("*.%s", extAttr->Extension.c_str());
+        }
+        else
+        {
+            filters[0] = "*.*";
+        }
+        return tinyfd_openFileDialog("Select file...", nullptr, 1, filters, nullptr, false);
+	}
+
+    bool ResourceReferenceEditor(Types::TypeValue* value, int fieldIndex, bool expanded)
+    {
+        AssetTypes::ResourceReference ref(value->GetTypeFieldValue(fieldIndex));
+        const char* label = TextFormat("###%s", value->GetType()->GetField(fieldIndex)->GetName().c_str());
+        char buffer[256] = { 0 };
+        strcpy(buffer, ref.GetPath().c_str());
+
+		auto buttonSize = ImGuiUtils::GetButtonsSize(ICON_FA_ELLIPSIS, ICON_FA_FOLDER_OPEN, "");
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - buttonSize.x - ImGui::GetStyle().ItemInnerSpacing.x);
+
+		if (ImGui::InputText(label, buffer, 256))
+			ref.SetPath(buffer);
+
+        ImGui::SameLine();
+		if (ImGui::Button(ICON_FA_ELLIPSIS))
+		{
+            auto fileToOpen = AssetRefPickerDialog(value, fieldIndex);
+            if (fileToOpen)
+				ref.SetPath(fileToOpen);
+        }   
+
+		ImGui::SameLine();
+		ImGui::BeginDisabled(ref.GetPath().empty());
+        if (ImGui::Button(ICON_FA_FOLDER_OPEN))
+        {
+			OpenURL(TextFormat("file://%s", buffer));
+        }
+        ImGui::EndDisabled();
+			
+        return false;
+    }
+
 	EditorRegistry::EditorRegistry()
 	{
 		BaseSet[BoolEditorName] = BoolPropertyEditor;
@@ -354,6 +406,8 @@ namespace Properties
 		BaseSet[GUIDEditorName] = GuidPropertyEditor;
 
 		BaseSet[ColorEditorName] = ColorPropertyEditor;
+
+        BaseSet["ResourceReferenceEditor"] = ResourceReferenceEditor;
 	}
 
 	const char* GetPrimitveEditorName(PrimitiveType primType)
@@ -502,6 +556,9 @@ namespace Properties
 
 	void EditorRegistry::BuildCacheForType(Types::TypeValue* value, TypeEditorCache* cache) const
 	{
+		if (value == nullptr)
+			return;
+
 		auto* type = value->GetType();
 
 		if (!type)
@@ -538,9 +595,20 @@ namespace Properties
 			}
 			else if (fieldInfo->IsType())
 			{
-				auto& typeCache = cache->TypeEditors.try_emplace(i).first->second;
-				typeCache.DisplayName = fieldInfo->GetName();
-				typeCache.DisplayName = GetDisplayName(typeCache.DisplayName);
+                auto& typeCache = cache->TypeEditors.try_emplace(i).first->second;
+                typeCache.DisplayName = fieldInfo->GetName();
+                typeCache.DisplayName = GetDisplayName(typeCache.DisplayName);
+
+				if (type->FieldHasAttribute<AttributeTypes::CustomEditorAttribute>(i))
+				{
+                    auto customEditor = type->GetFieldAttribute<AttributeTypes::CustomEditorAttribute>(i)->EditorName;
+					auto editor = FindEditorByName(customEditor);
+                    if (editor)
+                    {
+                        typeCache.CustomEditor = editor;
+                        continue;
+                    }
+				}
 
 				if (fieldInfo->GetType() == Types::FieldType::TypeList)
 				{

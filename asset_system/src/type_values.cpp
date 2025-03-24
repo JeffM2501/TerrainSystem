@@ -3,58 +3,7 @@
 using namespace Types;
 
 
-namespace PrimitiveFieldFactory
-{
-	std::unique_ptr<FieldValue> Create(PrimitiveType primitiveType)
-	{
-		switch (primitiveType)
-		{
-		default:
-		case Types::PrimitiveType::Unknown:
-			return nullptr;
-		case Types::PrimitiveType::Bool:
-			return std::make_unique<PrimitiveFieldValue<bool>>();
-		case Types::PrimitiveType::Char:
-			return std::make_unique<PrimitiveFieldValue<char>>();
-		case Types::PrimitiveType::UInt8:
-			return std::make_unique<PrimitiveFieldValue<uint8_t>>();
-		case Types::PrimitiveType::UInt16:
-			return std::make_unique<PrimitiveFieldValue<uint16_t>>();
-		case Types::PrimitiveType::Int16:
-			return std::make_unique<PrimitiveFieldValue<int16_t>>();
-		case Types::PrimitiveType::UInt32:
-			return std::make_unique<PrimitiveFieldValue<uint32_t>>();
-		case Types::PrimitiveType::Int32:
-			return std::make_unique<PrimitiveFieldValue<int32_t>>();
-		case Types::PrimitiveType::UInt64:
-			return std::make_unique<PrimitiveFieldValue<uint64_t>>();
-		case Types::PrimitiveType::Int64:
-			return std::make_unique<PrimitiveFieldValue<int64_t>>();
-		case Types::PrimitiveType::Float32:
-			return std::make_unique<PrimitiveFieldValue<float>>();
-		case Types::PrimitiveType::Double64:
-			return std::make_unique<PrimitiveFieldValue<double>>();
-		case Types::PrimitiveType::String:
-			return std::make_unique<PrimitiveFieldValue<std::string>>();
-		case Types::PrimitiveType::Vector2:
-			return std::make_unique<PrimitiveFieldValue<Vector2>>();
-		case Types::PrimitiveType::Vector3:
-			return std::make_unique<PrimitiveFieldValue<Vector3>>();
-		case Types::PrimitiveType::Vector4:
-			return std::make_unique<PrimitiveFieldValue<Vector4>>();
-		case Types::PrimitiveType::Rectangle:
-			return std::make_unique<PrimitiveFieldValue<Rectangle>>();
-		case Types::PrimitiveType::Matrix:
-			return std::make_unique<PrimitiveFieldValue<Matrix>>();
-		case Types::PrimitiveType::GUID:
-			return std::make_unique<PrimitiveFieldValue<Hashes::GUID>>();
-        case Types::PrimitiveType::Color:
-            return std::make_unique<PrimitiveFieldValue<Color>>();
-		}
-	}
-}
-
-std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveType)
+std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveType, TypeValue* parentValue)
 {
 	switch (primitiveType)
 	{
@@ -62,43 +11,43 @@ std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveTy
 	case Types::PrimitiveType::Unknown:
 		return nullptr;
 	case Types::PrimitiveType::Bool:
-		return std::make_unique<PrimitiveListFieldValue<bool>>();
+		return std::make_unique<PrimitiveListFieldValue<bool>>(parentValue);
 	case Types::PrimitiveType::Char:
-		return std::make_unique<PrimitiveListFieldValue<char>>();
+		return std::make_unique<PrimitiveListFieldValue<char>>(parentValue);
 	case Types::PrimitiveType::UInt8:
-		return std::make_unique<PrimitiveListFieldValue<uint8_t>>();
+		return std::make_unique<PrimitiveListFieldValue<uint8_t>>(parentValue);
 	case Types::PrimitiveType::UInt16:
-		return std::make_unique<PrimitiveListFieldValue<uint16_t>>();
+		return std::make_unique<PrimitiveListFieldValue<uint16_t>>(parentValue);
 	case Types::PrimitiveType::Int16:
-		return std::make_unique<PrimitiveListFieldValue<int16_t>>();
+		return std::make_unique<PrimitiveListFieldValue<int16_t>>(parentValue);
 	case Types::PrimitiveType::UInt32:
-		return std::make_unique<PrimitiveListFieldValue<uint32_t>>();
+		return std::make_unique<PrimitiveListFieldValue<uint32_t>>(parentValue);
 	case Types::PrimitiveType::Int32:
-		return std::make_unique<PrimitiveListFieldValue<int32_t>>();
+		return std::make_unique<PrimitiveListFieldValue<int32_t>>(parentValue);
 	case Types::PrimitiveType::UInt64:
-		return std::make_unique<PrimitiveListFieldValue<uint64_t>>();
+		return std::make_unique<PrimitiveListFieldValue<uint64_t>>(parentValue);
 	case Types::PrimitiveType::Int64:
-		return std::make_unique<PrimitiveListFieldValue<int64_t>>();
+		return std::make_unique<PrimitiveListFieldValue<int64_t>>(parentValue);
 	case Types::PrimitiveType::Float32:
-		return std::make_unique<PrimitiveListFieldValue<float>>();
+		return std::make_unique<PrimitiveListFieldValue<float>>(parentValue);
 	case Types::PrimitiveType::Double64:
-		return std::make_unique<PrimitiveListFieldValue<double>>();
+		return std::make_unique<PrimitiveListFieldValue<double>>(parentValue);
 	case Types::PrimitiveType::String:
-		return std::make_unique<PrimitiveListFieldValue<std::string>>();
+		return std::make_unique<PrimitiveListFieldValue<std::string>>(parentValue);
 	case Types::PrimitiveType::Vector2:
-		return std::make_unique<PrimitiveListFieldValue<Vector2>>();
+		return std::make_unique<PrimitiveListFieldValue<Vector2>>(parentValue);
 	case Types::PrimitiveType::Vector3:
-		return std::make_unique<PrimitiveListFieldValue<Vector3>>();
+		return std::make_unique<PrimitiveListFieldValue<Vector3>>(parentValue);
 	case Types::PrimitiveType::Vector4:
-		return std::make_unique<PrimitiveListFieldValue<Vector4>>();
+		return std::make_unique<PrimitiveListFieldValue<Vector4>>(parentValue);
 	case Types::PrimitiveType::Rectangle:
-		return std::make_unique<PrimitiveListFieldValue<Rectangle>>();
+		return std::make_unique<PrimitiveListFieldValue<Rectangle>>(parentValue);
 	case Types::PrimitiveType::Matrix:
-		return std::make_unique<PrimitiveListFieldValue<Matrix>>();
+		return std::make_unique<PrimitiveListFieldValue<Matrix>>(parentValue);
 	case Types::PrimitiveType::GUID:
-		return std::make_unique<PrimitiveListFieldValue<Hashes::GUID>>();
+		return std::make_unique<PrimitiveListFieldValue<Hashes::GUID>>(parentValue);
     case Types::PrimitiveType::Color:
-        return std::make_unique<PrimitiveListFieldValue<Color>>();
+        return std::make_unique<PrimitiveListFieldValue<Color>>(parentValue);
 	}
 }
 
@@ -119,7 +68,7 @@ TypeValue* TypeValue::GetTypeFieldValue(int fieldIndex)
 		if (fieldPtr->IsPointer)
 			return nullptr;
 
-		std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(fieldPtr->TypePtr);
+		std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(fieldPtr->TypePtr, this);
 
 		itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 	}
@@ -134,7 +83,7 @@ TypeListValue& TypeValue::GetTypeListFieldValue(int fieldIndex)
 	{
 		const TypeListFieldInfo* fieldPtr = Type->GetField<TypeListFieldInfo>(fieldIndex);
 
-		std::unique_ptr<TypeListValue> value = std::make_unique<TypeListValue>(fieldPtr->TypePtr);
+		std::unique_ptr<TypeListValue> value = std::make_unique<TypeListValue>(fieldPtr->TypePtr, this);
 
 		itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 	}
@@ -154,7 +103,7 @@ TypeValue* TypeValue::SetTypeFieldPointer(const TypeInfo* type, int fieldIndex)
 		Values.erase(itr);
 	}
 
-	std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(type);
+	std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(type, this);
 	itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 
 	return (TypeValue*)itr->second.get();
@@ -179,7 +128,7 @@ void TypeValue::SetType(const TypeInfo* type)
 				const TypeFieldInfo* field = Type->GetField<TypeFieldInfo>(index);
 				if (field->IsPointer && field->DefaultPtrType)
 				{
-					std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(field->DefaultPtrType);
+					std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(field->DefaultPtrType, this);
 					Values.insert_or_assign(index, std::move(value)).first;
 				}
 			}

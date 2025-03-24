@@ -49,6 +49,25 @@ void ShowType(int indentLevel, TypeEditorCache& cache, Types::TypeValue* value)
 
 	for (auto& [index, editor] : cache.TypeEditors)
 	{
+        if (editor.CustomEditor)
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+
+            ImGui::Dummy(ImVec2(indentLevel * ScaleToDPI(IndentOffset), 1));
+            ImGui::SameLine(0, 0);
+
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(editor.DisplayName.c_str());
+
+            ImGui::TableNextColumn();
+            ImGui::BeginDisabled(value->GetType()->FieldHasAttribute<ReadOnlyAttribute>(index));
+            ImGui::PushID(editor.DisplayName.c_str());
+			editor.CustomEditor(value, index, true);
+            ImGui::PopID();
+            ImGui::EndDisabled();
+			continue;
+        }
 		auto& editorList = editor.Editors;
     
         ImGui::TableNextRow();

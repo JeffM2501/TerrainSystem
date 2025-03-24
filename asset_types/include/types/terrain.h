@@ -62,21 +62,16 @@ namespace AssetTypes
 		static void Register()
 		{
 			auto* type = TypeDatabase::Get().CreateType(TypeName);
+
 			type->AddPrimitiveField<std::string>("Name", "");
-			type->AddTypeField("DiffuseTexture", ResourceReference::TypeName);
+			auto* diffuseTexture = type->AddTypeField("DiffuseTexture", ResourceReference::TypeName);
+			diffuseTexture->AddAttribute<FileExtensionAttribute>("png");
+
 			type->AddPrimitiveField<Color>("DiffuseColor", Color{ 255,255,255,255 });
-			type->AddTypeField("NormalMap", ResourceReference::TypeName);
+			auto* normalMap = type->AddTypeField("NormalMap", ResourceReference::TypeName);
+			normalMap->AddAttribute<FileExtensionAttribute>("png");
 
 			type->AddEnumerationField("MaterialType", TerrainMaterialTypeEnum::TypeName, int(TerrainMaterialTypeEnum::Values::DiffuseOnly));
-
-			type->AddPrimitiveField<Vector2>("Vec2", Vector2Zeros);
-			type->AddPrimitiveField<Vector3>("Vec3", Vector3Zeros);
-			type->AddPrimitiveField<Vector4>("Vec4", Vector4Zeros);
-			type->AddPrimitiveField<Rectangle>("Rect", Rectangle{0,0,100,100});
-
-			type->AddPrimitiveField<Matrix>("Matrix", MatrixIdentity());
-			type->AddPrimitiveField<Color>("Color", RED);
-			type->AddPrimitiveField<Hashes::GUID>("GUID", Hashes::GUID::Invalid());
 		}
 
 		const std::string& GetName() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
@@ -104,6 +99,9 @@ namespace AssetTypes
 		static void Register()
 		{
 			auto* type = TypeDatabase::Get().CreateType(TypeName, Asset::TypeName);
+			type->AddAttribute<FileExtensionAttribute>("tmat");
+            type->AddAttribute<AttributeTypes::DisplayNameAttribute>("Terrain Material");
+
 			type->AddTypeField("Material", TerrainMaterial::TypeName);
 			type->AddPrimitiveField<std::string>("Category", "");
 		}
@@ -193,6 +191,9 @@ namespace AssetTypes
 		static void Register()
 		{
 			auto* type = TypeDatabase::Get().CreateType(TypeName, Asset::TypeName);
+            type->AddAttribute<FileExtensionAttribute>("terrain");
+            type->AddAttribute<AttributeTypes::DisplayNameAttribute>("Terrain");
+
 			type->AddTypeField("Info", TerrainInfo::TypeName);
 			type->AddTypeListField("Materials", TerrainMaterial::TypeName);
 			type->AddTypeListField("Tiles", TerrainTile::TypeName);

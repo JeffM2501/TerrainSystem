@@ -71,7 +71,7 @@ TypeInfo::FieldIterator TypeInfo::end() const
 	return FieldIterator(this, GetFieldCount());
 }
 
-const EnumerationFieldInfo* TypeInfo::AddEnumerationField(const std::string& name, const std::string& enumName, int32_t defaultValue)
+EnumerationFieldInfo* TypeInfo::AddEnumerationField(const std::string& name, const std::string& enumName, int32_t defaultValue)
 {
 	std::unique_ptr<EnumerationFieldInfo> field = std::make_unique<EnumerationFieldInfo>(name, TypeDatabase::Get().FindEnumeration(enumName), defaultValue);
 
@@ -80,7 +80,7 @@ const EnumerationFieldInfo* TypeInfo::AddEnumerationField(const std::string& nam
 	return ptr;
 }
 
-const TypeFieldInfo* TypeInfo::AddTypeField(const std::string& name, const std::string& typeName, bool isPointer, const std::string& ptrTypeName)
+TypeFieldInfo* TypeInfo::AddTypeField(const std::string& name, const std::string& typeName, bool isPointer, const std::string& ptrTypeName)
 {
 	std::unique_ptr<TypeFieldInfo> field = std::make_unique<TypeFieldInfo>(name, TypeDatabase::Get().FindType(typeName), isPointer, TypeDatabase::Get().FindType(ptrTypeName));
 
@@ -89,7 +89,7 @@ const TypeFieldInfo* TypeInfo::AddTypeField(const std::string& name, const std::
 	return ptr;
 }
 
-const TypeListFieldInfo* TypeInfo::AddTypeListField(const std::string& name, const std::string& typeName, bool isPointer)
+TypeListFieldInfo* TypeInfo::AddTypeListField(const std::string& name, const std::string& typeName, bool isPointer)
 {
 	std::unique_ptr<TypeListFieldInfo> field = std::make_unique<TypeListFieldInfo>(name, TypeDatabase::Get().FindType(typeName), isPointer);
 
