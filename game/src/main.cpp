@@ -35,6 +35,7 @@ Use this as a starting point or replace it with your code.
 #else
 void IGNORE(const char*){}
 #define _wassert (F, M) F IGNORE(M);
+#define _ASSERT (F, M) F IGNORE(M);
 #endif
 
 
@@ -168,7 +169,7 @@ void GameInit()
     
     TerrainShader = LoadShader("resources/base.vs", "resources/base.fs");
 
-    _ASSERT(IsShaderValid(TerrainShader));
+  //  _ASSERT(IsShaderValid(TerrainShader));
 
     SunVectorLoc = GetShaderLocation(TerrainShader, "sunVector");
 

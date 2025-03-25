@@ -146,7 +146,7 @@ bool TypeReader::AddPrimtiveField(TypeValue* destinationValue, int fieldIndex, P
 	case PrimitiveType::Matrix:
 	{
 		float matf[16] = { 0 };
-		auto& array = fieldValue.GetArray();
+		const auto& array = fieldValue.GetArray();
 
 		for (int i = 0; i < 16; i++)
 		{
@@ -166,7 +166,7 @@ bool TypeReader::AddPrimtiveField(TypeValue* destinationValue, int fieldIndex, P
     case PrimitiveType::Color:
     {
         Color color;
-		auto& array = fieldValue.GetArray();
+		const auto& array = fieldValue.GetArray();
 		color.r = array[0].GetInt();
         color.g = array[0].GetInt();
         color.b = array[0].GetInt();
@@ -190,7 +190,7 @@ bool TypeReader::AddPrimtiveListField(TypeValue* destinationValue, int fieldInde
 	if (!fieldValue.IsArray())
 		return false;
 
-	auto& array = fieldValue.GetArray();
+	const auto& array = fieldValue.GetArray();
 
 	switch (fieldInfo->GetPrimitiveType())
 	{
@@ -377,7 +377,7 @@ bool TypeReader::AddPrimtiveListField(TypeValue* destinationValue, int fieldInde
 		for (auto& i : array)
 		{
 			float matf[16] = { 0 };
-			auto& matArray = i.GetArray();
+			const auto& matArray = i.GetArray();
 
 			for (int m = 0; m < 16; m++)
 			{
@@ -405,7 +405,7 @@ bool TypeReader::AddPrimtiveListField(TypeValue* destinationValue, int fieldInde
         for (auto& i : array)
         {
             float matf[16] = { 0 };
-            auto& colorArray = i.GetArray();
+			const auto& colorArray = i.GetArray();
 
 			Color color;
 			color.r = colorArray[0].GetInt();
@@ -434,7 +434,7 @@ bool TypeReader::ReadTypeListValue(TypeListValue& listValue, rapidjson::Value& j
 	{
 		auto& fieldValue = jsonValue[ValueName];
 
-		auto& array = fieldValue.GetArray();
+		const auto& array = fieldValue.GetArray();
 
 		for (auto& i : array)
 		{

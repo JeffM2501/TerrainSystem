@@ -3,7 +3,7 @@
 using namespace Types;
 
 
-std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveType, TypeValue* parentValue, int index)
+std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveType, TypeValue* parentValue, const FieldPath& path)
 {
 	switch (primitiveType)
 	{
@@ -11,43 +11,43 @@ std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveTy
 	case Types::PrimitiveType::Unknown:
 		return nullptr;
 	case Types::PrimitiveType::Bool:
-		return std::make_unique<PrimitiveListFieldValue<bool>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<bool>>(parentValue, path);
 	case Types::PrimitiveType::Char:
-		return std::make_unique<PrimitiveListFieldValue<char>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<char>>(parentValue, path);
 	case Types::PrimitiveType::UInt8:
-		return std::make_unique<PrimitiveListFieldValue<uint8_t>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<uint8_t>>(parentValue, path);
 	case Types::PrimitiveType::UInt16:
-		return std::make_unique<PrimitiveListFieldValue<uint16_t>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<uint16_t>>(parentValue, path);
 	case Types::PrimitiveType::Int16:
-		return std::make_unique<PrimitiveListFieldValue<int16_t>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<int16_t>>(parentValue, path);
 	case Types::PrimitiveType::UInt32:
-		return std::make_unique<PrimitiveListFieldValue<uint32_t>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<uint32_t>>(parentValue, path);
 	case Types::PrimitiveType::Int32:
-		return std::make_unique<PrimitiveListFieldValue<int32_t>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<int32_t>>(parentValue, path);
 	case Types::PrimitiveType::UInt64:
-		return std::make_unique<PrimitiveListFieldValue<uint64_t>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<uint64_t>>(parentValue, path);
 	case Types::PrimitiveType::Int64:
-		return std::make_unique<PrimitiveListFieldValue<int64_t>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<int64_t>>(parentValue, path);
 	case Types::PrimitiveType::Float32:
-		return std::make_unique<PrimitiveListFieldValue<float>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<float>>(parentValue, path);
 	case Types::PrimitiveType::Double64:
-		return std::make_unique<PrimitiveListFieldValue<double>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<double>>(parentValue, path);
 	case Types::PrimitiveType::String:
-		return std::make_unique<PrimitiveListFieldValue<std::string>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<std::string>>(parentValue, path);
 	case Types::PrimitiveType::Vector2:
-		return std::make_unique<PrimitiveListFieldValue<Vector2>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<Vector2>>(parentValue, path);
 	case Types::PrimitiveType::Vector3:
-		return std::make_unique<PrimitiveListFieldValue<Vector3>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<Vector3>>(parentValue, path);
 	case Types::PrimitiveType::Vector4:
-		return std::make_unique<PrimitiveListFieldValue<Vector4>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<Vector4>>(parentValue, path);
 	case Types::PrimitiveType::Rectangle:
-		return std::make_unique<PrimitiveListFieldValue<Rectangle>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<Rectangle>>(parentValue, path);
 	case Types::PrimitiveType::Matrix:
-		return std::make_unique<PrimitiveListFieldValue<Matrix>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<Matrix>>(parentValue, path);
 	case Types::PrimitiveType::GUID:
-		return std::make_unique<PrimitiveListFieldValue<Hashes::GUID>>(parentValue, index);
+		return std::make_unique<PrimitiveListFieldValue<Hashes::GUID>>(parentValue, path);
     case Types::PrimitiveType::Color:
-        return std::make_unique<PrimitiveListFieldValue<Color>>(parentValue, index);
+        return std::make_unique<PrimitiveListFieldValue<Color>>(parentValue, path);
 	}
 }
 
@@ -68,7 +68,7 @@ TypeValue* TypeValue::GetTypeFieldValue(int fieldIndex)
 		if (fieldPtr->IsPointer)
 			return nullptr;
 
-		std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(fieldPtr->TypePtr, this, fieldIndex);
+		std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(fieldPtr->TypePtr, this, FieldPath::Field(fieldIndex));
 
 		itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 	}
@@ -83,7 +83,7 @@ TypeListValue& TypeValue::GetTypeListFieldValue(int fieldIndex)
 	{
 		const TypeListFieldInfo* fieldPtr = Type->GetField<TypeListFieldInfo>(fieldIndex);
 
-		std::unique_ptr<TypeListValue> value = std::make_unique<TypeListValue>(fieldPtr->TypePtr, this, fieldIndex);
+		std::unique_ptr<TypeListValue> value = std::make_unique<TypeListValue>(fieldPtr->TypePtr, this, FieldPath::Field(fieldIndex));
 
 		itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 	}
@@ -103,7 +103,8 @@ TypeValue* TypeValue::SetTypeFieldPointer(const TypeInfo* type, int fieldIndex)
 		Values.erase(itr);
 	}
 
-	std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(type, this, fieldIndex);
+	FieldPath path(FieldPath::Field(fieldIndex));
+	std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(type, this, path);
 	itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 
 	return (TypeValue*)itr->second.get();
@@ -128,7 +129,7 @@ void TypeValue::SetType(const TypeInfo* type)
 				const TypeFieldInfo* field = Type->GetField<TypeFieldInfo>(index);
 				if (field->IsPointer && field->DefaultPtrType)
 				{
-					std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(field->DefaultPtrType, this, index);
+					std::unique_ptr<TypeValue> value = std::make_unique<TypeValue>(field->DefaultPtrType, this, FieldPath::Field(index));
 					Values.insert_or_assign(index, std::move(value)).first;
 				}
 			}

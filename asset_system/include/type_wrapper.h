@@ -119,7 +119,7 @@ public : \
 	public:
 		TypeListWrapper(TypeListValue& valueList) : ValueList(valueList) {}
 
-		// TODO, make this an internal itterator that returns the type wrapper so it can be de-referenced
+		// TODO, make this an internal iterator that returns the type wrapper so it can be de-referenced
 		typename TypeValueList::iterator begin() { return ValueList.begin(); }
 		typename TypeValueList::const_iterator begin() const { return ValueList.cbegin(); }
 

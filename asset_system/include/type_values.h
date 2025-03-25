@@ -41,6 +41,40 @@ namespace Types
 		{
 			Elements.insert(Elements.end(), path.Elements.begin(), path.Elements.end());
 		}
+
+        FieldPath() = default;
+
+        FieldPath(const FieldPath& path) { Elements = path.Elements; }
+		FieldPath(const FieldPath& path, const Element& element) noexcept { Elements = path.Elements; Elements.push_back(element); }
+        FieldPath(const Element& element) { Elements.push_back(element); }
+		FieldPath(ElementType elementType, int index) { Elements.push_back(Element{ elementType, index }); }
+
+
+		FieldPath operator+ (const FieldPath& rhs) const
+		{
+			FieldPath path(*this);
+			path.PushBack(rhs);
+            return path;
+        }
+
+        FieldPath operator+ (const FieldPath::Element& rhs) const
+        {
+            FieldPath path(*this);
+            path.Elements.push_back(rhs);
+            return path;
+        }
+
+		FieldPath& operator+= (const FieldPath& rhs)
+		{
+			PushBack(rhs);
+			return *this;
+		}
+
+        FieldPath& operator+= (const FieldPath::Element& rhs)
+        {
+			Elements.push_back(rhs);
+            return *this;
+        }
 	};
 
 	class ValueChangedEvent
@@ -63,19 +97,18 @@ namespace Types
 			if (OldValue)
 				delete OldValue;
 		}
-
 	};
 
 	class FieldValue
 	{
 	protected:
 		TypeValue* ParentValue = nullptr;
-		int FieldIndex = 0;
+		FieldPath SubPath;
 
 	public:
-		FieldValue(TypeValue* parentValue = nullptr, int index = 0)
+		FieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath())
 			: ParentValue(parentValue)
-			, FieldIndex(index)
+			, SubPath(path)
 		{
 		}
 		virtual ~FieldValue() = default;
@@ -93,7 +126,7 @@ namespace Types
 		int32_t Value = 0;
 
 	public:
-		EnumerationFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
+		EnumerationFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
 		virtual ~EnumerationFieldValue() = default;
 		int32_t GetValue() const { return Value; }
 
@@ -113,7 +146,7 @@ namespace Types
 		T Value;
 
 	public:
-		PrimitiveFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
+		PrimitiveFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
 		virtual ~PrimitiveFieldValue() = default;
 		const T& GetValue() const { return Value; }
 		void SetValue(const T& newValue) { Value = newValue; }
@@ -134,7 +167,7 @@ namespace Types
 	class ListFieldValue : public FieldValue
 	{
 	public:
-		ListFieldValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
+		ListFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
 		virtual ~ListFieldValue() = default;
 
 		virtual void Clear() = 0;
@@ -148,7 +181,7 @@ namespace Types
 
 		virtual void Delete(size_t index) = 0;
 
-		static std::unique_ptr<ListFieldValue> Create(PrimitiveType primitiveType, TypeValue* parentValue = nullptr, int index = 0);
+		static std::unique_ptr<ListFieldValue> Create(PrimitiveType primitiveType, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath());
 	};
 
 	template<typename T>
@@ -158,7 +191,7 @@ namespace Types
 		std::vector<T> Values;
 
 	public:
-		PrimitiveListFieldValue(TypeValue* parentValue = nullptr, int index = 0) : ListFieldValue(parentValue, index) {}
+		PrimitiveListFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : ListFieldValue(parentValue, path) {}
 		virtual ~PrimitiveListFieldValue() = default;
 		PrimitiveListFieldValue() = default;
 		PrimitiveListFieldValue(const PrimitiveListFieldValue&) = delete;
@@ -173,7 +206,7 @@ namespace Types
 
 			if (ParentValue)
 			{
-				eventRecord.Path.Elements.push_back(FieldPath::Field(FieldIndex));
+				eventRecord.Path.PushBack(path);
 				ParentValue->CallPrimitiveValueChanged(eventRecord);
 			}
 		}
@@ -186,7 +219,7 @@ namespace Types
 		void SetValue(const T& newValue, size_t index = 0)
 		{
 			PrimitiveValueChangedEvent eventRecord;
-			eventRecord.Path.Elements.push_back(FieldPath::Index(index));
+            eventRecord.Path = SubPath + FieldPath::Index(index);
 			eventRecord.OldValue = new T(Values[index]);
 			Values[index] = newValue;
 			CallPrimitiveValueChanged(eventRecord);
@@ -236,8 +269,8 @@ namespace Types
 
 		using Ptr = std::unique_ptr<TypeValue>;
 
-		TypeValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
-		TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) { SetType(t); }
+		TypeValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
+		TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) { SetType(t); }
 
 		Events::EventSource<PrimitiveValueChangedEvent> OnPrimitiveValueChanged;
 
@@ -248,7 +281,7 @@ namespace Types
 
 			if (ParentValue)
 			{
-				eventRecord.Path.Elements.push_back(FieldPath::Field(FieldIndex));
+				eventRecord.Path.PushFront(SubPath);
 				ParentValue->CallPrimitiveValueChanged(eventRecord);
 			}
 		}
@@ -282,7 +315,10 @@ namespace Types
 		{
 			auto itr = Values.find(fieldIndex);
 			if (itr == Values.end())
-				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<PrimitiveFieldValue<T>>(this, fieldIndex))).first;
+			{
+				FieldPath path(FieldPath::Field(fieldIndex));
+				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<PrimitiveFieldValue<T>>(this, path))).first;
+			}
 
 			PrimitiveFieldValue<T>* valueItr = reinterpret_cast<PrimitiveFieldValue<T>*>(itr->second.get());
 
@@ -313,7 +349,7 @@ namespace Types
 		{
 			auto itr = Values.find(fieldIndex);
 			if (itr == Values.end())
-				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<EnumerationFieldValue>(this, fieldIndex))).first;
+				itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<EnumerationFieldValue>(this, SubPath + FieldPath::Field(fieldIndex)))).first;
 
 			EnumerationFieldValue* valueItr = reinterpret_cast<EnumerationFieldValue*>(itr->second.get());
 			valueItr->SetValueAs(value);
@@ -334,7 +370,7 @@ namespace Types
 			{
 				const PrimitiveFieldInfo* fieldPtr = Type->GetField<PrimitiveFieldInfo>(fieldIndex);
 
-				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, fieldIndex);
+				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, SubPath + FieldPath::Field(fieldIndex));
 				itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 			}
 
@@ -348,7 +384,7 @@ namespace Types
 			{
 				const PrimitiveFieldInfo* fieldPtr = Type->GetField<PrimitiveFieldInfo>(fieldIndex);
 
-				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, fieldIndex);
+				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, SubPath + FieldPath::Field(fieldIndex));
 				itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 			}
 
@@ -368,8 +404,8 @@ namespace Types
 		const TypeInfo* Type = nullptr;
 		TypeValueList Values;
 	public:
-		TypeListValue(TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) {}
-		TypeListValue(const TypeInfo* t, TypeValue* parentValue = nullptr, int index = 0) : FieldValue(parentValue, index) { Type = t; }
+		TypeListValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
+		TypeListValue(const TypeInfo* t, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) { Type = t; }
 
 		virtual ~TypeListValue() = default;
 
