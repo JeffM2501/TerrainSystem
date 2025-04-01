@@ -21,11 +21,21 @@ std::string_view TerrainMaterialDocument::GetDocumentName()
 void TerrainMaterialDocument::CreateAsset()
 {
     AssetData = AssetManager::CreateTempAsset<AssetTypes::TerrainMaterialAsset>();
+    RegisterEditHandler();
 }
 
 void TerrainMaterialDocument::OpenAsset(const std::string& assetPath)
 {
     AssetData = AssetManager::OpenAsset<AssetTypes::TerrainMaterialAsset>(assetPath);
+    RegisterEditHandler();
+}
+
+void TerrainMaterialDocument::RegisterEditHandler()
+{
+    AssetData->ValuePtr->OnPrimitiveValueChanged.Add([this](const Types::PrimitiveValueChangedEvent& event)
+        {
+            SetDirty();
+        }, Token.GetToken());
 }
 
 void TerrainMaterialDocument::SaveAsset()

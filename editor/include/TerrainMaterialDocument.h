@@ -3,6 +3,7 @@
 #include "Document.h"
 
 #include "TerrainTile.h"
+#include "LifetimeToken.h"
 
 #include "types/terrain.h"
 #include "CRC64.h"
@@ -29,6 +30,9 @@ public:
 protected:
    void OnShowScene(const Vector2& renderSize) override;
 
+   void RegisterEditHandler();
+
 protected:
     AssetTypes::TerrainMaterialAsset* AssetData = nullptr;
+    Tokens::TokenSource Token;
 };

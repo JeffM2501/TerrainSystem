@@ -91,6 +91,9 @@ namespace Types
 	public:
 		void* OldValue = nullptr;
 		bool IsDefault = false;
+		PrimitiveValueChangedEvent() = default;
+		PrimitiveValueChangedEvent(const PrimitiveValueChangedEvent&) = delete;
+        PrimitiveValueChangedEvent& operator = (const PrimitiveValueChangedEvent&) = delete;
 
 		~PrimitiveValueChangedEvent()
 		{
@@ -391,6 +394,23 @@ namespace Types
 			return *(ListFieldValue*)itr->second.get();
 		}
 
+        template<typename T>
+        void PushBackPrimitiveListFieldValue(int fieldIndex, T value)
+        {
+            auto itr = Values.find(fieldIndex);
+            if (itr == Values.end())
+            {
+                const PrimitiveFieldInfo* fieldPtr = Type->GetField<PrimitiveFieldInfo>(fieldIndex);
+
+                auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, SubPath + FieldPath::Field(fieldIndex));
+                itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
+            }
+
+            (PrimitiveListFieldValue<T>*)itr->second->push_back(value);
+
+			// TODO, call add event
+        }
+
 		TypeListValue& GetTypeListFieldValue(int fieldIndex);
 
 		bool IsDefault() const { return Values.empty(); }
@@ -436,7 +456,8 @@ namespace Types
 
 		TypeValue* PushBack(const TypeInfo* type)
 		{
-			auto value = std::make_unique<TypeValue>(type);
+            FieldPath childPath = SubPath + FieldPath::Index(int(Values.size())-1);
+			auto value = std::make_unique<TypeValue>(type, ParentValue, childPath);
 			TypeValue* ret = value.get();
 			Values.emplace_back(std::move(value));
 			return ret;

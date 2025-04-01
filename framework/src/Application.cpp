@@ -825,6 +825,9 @@ namespace EditorFramework
 
 	void Application::SetActiveDocument(size_t documentID)
 	{
+		if (ActiveDocument && ActiveDocument->GetDocumentID() == documentID)
+			return;
+
 		if (ActiveDocument)
 			ActiveDocument->OnDeactivated();
 
