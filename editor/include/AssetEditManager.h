@@ -8,6 +8,7 @@
 
 #include <unordered_map>
 #include <string>
+#include <memory>
 #include <vector>
 
 class AssetEditManager;
@@ -33,6 +34,8 @@ public:
 	size_t GetMergeID() const { return MergeID; }
 
 	void PushAction(const EditAction& action);
+
+    bool IsEmpty() const { return Actions.empty(); }
 };
 
 class AssetEditManager
@@ -44,8 +47,11 @@ protected:
 
 	void RegisterEditCallbacks(Types::TypeValue* assetData);
 
-	std::vector<AssetEditEventRecord> EditEvents;
-	size_t CurrentEditEvent = 0;
+	std::vector<std::unique_ptr<AssetEditEventRecord>> EditEvents;
+	size_t CurrentEditEventIndex = 0;
+
+	std::unique_ptr<AssetEditEventRecord> CurrentEditEvent;
+
 public:
 	template <class T>
 	T* OpenAsset(const std::string& assetFilePath)
@@ -105,7 +111,7 @@ public:
 	void Redo();
 
 	const std::vector<AssetEditEventRecord>& GetEditEvents() const { return EditEvents; }
-	size_t GetCurrentEventIndex() const { return CurrentEditEvent; }
+	size_t GetCurrentEventIndex() const { return CurrentEditEventIndex; }
 
 	class AssetDirtyEvent
 	{
