@@ -23,6 +23,5 @@ int main(int argc, char* argv[])
 	auto matAsset = TypeDatabase::Get().CreateTypeValue<AssetTypes::TerrainMaterialAsset>();
 
 	auto path = matAsset.GetPath();
-
 	return 0;
 }
