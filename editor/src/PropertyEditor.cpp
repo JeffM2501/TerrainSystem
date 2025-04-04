@@ -182,15 +182,22 @@ namespace Properties
 		return false;
 	}
 
-	bool VecFloatEditor(const char* label, float& value, ImVec4 color)
+	bool VecFloatEditor(const char* label, float& value, ImVec4 color, bool showLabel = true )
 	{
         ImGui::TableNextColumn();
 
         ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(label);
-        ImGui::SameLine();
+		if (showLabel)
+		{
+			ImGui::TextUnformatted(label);
+			ImGui::SameLine();
+		}
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         bool dirty = ImGui::DragFloat(TextFormat("###%s", label), &value);
+
+		if (!showLabel)
+			ImGui::SetItemTooltip("%s", label);
+
         ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(),
             ImVec2(ImGui::GetItemRectMin().x + 3,
                 ImGui::GetItemRectMax().y),
@@ -203,17 +210,19 @@ namespace Properties
     {
         Vector2 fieldValue = value->GetFieldPrimitiveValue<Vector2>(fieldIndex);
 
+		ImGui::PushStyleVarX(ImGuiStyleVar_CellPadding, 0);
 		if (ImGui::BeginTable("Vec2Editor", 2))
 		{
 			ImGui::TableNextRow();
 
-			bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1));
-			dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1)) || dirty;
+			bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1), false);
+			dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1), false) || dirty;
 			ImGui::EndTable();
 
 			if (dirty)
 				value->SetFieldPrimitiveValue(fieldIndex, fieldValue);
 		}
+		ImGui::PopStyleVar();
 		return false;
 	}
 
@@ -221,18 +230,20 @@ namespace Properties
 	{
         Vector3 fieldValue = value->GetFieldPrimitiveValue<Vector3>(fieldIndex);
 
+		ImGui::PushStyleVarX(ImGuiStyleVar_CellPadding, 0);
         if (ImGui::BeginTable("Vec3Editor", 3))
         {
             ImGui::TableNextRow();
 
-            bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1));
-            dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1)) || dirty;
-			dirty = VecFloatEditor("Z", fieldValue.z, ImVec4(0, 0, 1, 1)) || dirty;
+            bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1), false);
+            dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1), false) || dirty;
+			dirty = VecFloatEditor("Z", fieldValue.z, ImVec4(0, 0, 1, 1), false) || dirty;
             ImGui::EndTable();
 
             if (dirty)
                 value->SetFieldPrimitiveValue(fieldIndex, fieldValue);
         }
+		ImGui::PopStyleVar();
         return false;
 	}
 
@@ -240,19 +251,21 @@ namespace Properties
 	{
         Vector4 fieldValue = value->GetFieldPrimitiveValue<Vector4>(fieldIndex);
 
+		ImGui::PushStyleVarX(ImGuiStyleVar_CellPadding, 0);
         if (ImGui::BeginTable("Vec4Editor", 4))
         {
             ImGui::TableNextRow();
 
-            bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1));
-            dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1)) || dirty;
-            dirty = VecFloatEditor("Z", fieldValue.z, ImVec4(0, 0, 1, 1)) || dirty;
-			dirty = VecFloatEditor("W", fieldValue.w, ImVec4(1, 0, 1, 1)) || dirty;
+            bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1), false);
+            dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1), false) || dirty;
+            dirty = VecFloatEditor("Z", fieldValue.z, ImVec4(0, 0, 1, 1), false) || dirty;
+			dirty = VecFloatEditor("W", fieldValue.w, ImVec4(1, 0, 1, 1), false) || dirty;
             ImGui::EndTable();
 
             if (dirty)
                 value->SetFieldPrimitiveValue(fieldIndex, fieldValue);
         }
+		ImGui::PopStyleVar();
         return false;
 	}
 
@@ -260,19 +273,21 @@ namespace Properties
 	{
         Rectangle fieldValue = value->GetFieldPrimitiveValue<Rectangle>(fieldIndex);
 
+		ImGui::PushStyleVarX(ImGuiStyleVar_CellPadding, 0);
         if (ImGui::BeginTable("RectEditor", 4))
         {
             ImGui::TableNextRow();
 
-            bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1));
-            dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1)) || dirty;
-            dirty = VecFloatEditor("W", fieldValue.width, ImVec4(1, 0.5f, 0.5f, 1)) || dirty;
-            dirty = VecFloatEditor("H", fieldValue.height, ImVec4(0.5f, 1, 0.5f, 1)) || dirty;
+            bool dirty = VecFloatEditor("X", fieldValue.x, ImVec4(1, 0, 0, 1), false);
+            dirty = VecFloatEditor("Y", fieldValue.y, ImVec4(0, 1, 0, 1), false) || dirty;
+            dirty = VecFloatEditor("Width", fieldValue.width, ImVec4(1, 0.5f, 0.5f, 1), false) || dirty;
+            dirty = VecFloatEditor("Height", fieldValue.height, ImVec4(0.5f, 1, 0.5f, 1), false) || dirty;
             ImGui::EndTable();
 
             if (dirty)
                 value->SetFieldPrimitiveValue(fieldIndex, fieldValue);
         }
+		ImGui::PopStyleVar();
         return false;
 	}
 
