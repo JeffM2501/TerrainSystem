@@ -7,20 +7,16 @@ AssetEditEventRecord::AssetEditEventRecord(std::string_view name, size_t mergeID
 
 }
 
-void AssetEditEventRecord::PushAction(const EditAction& action)
-{
-
-}
-
-
 void AssetEditManager::RegisterEditCallbacks(Types::TypeValue* assetData)
 {
     assetData->OnPrimitiveValueChanged.Add([this](const Types::PrimitiveValueChangedEvent& event)
         {
-           // CurrentEditEvent.PushAction()
-           // OnAssetDirty.Invoke()
+            OnAssetDirty.Invoke(AssetDirtyEvent{ event.Value->GetParent()->ID });
 
-
+            auto* action = CurrentEditEvent->PushAction<AssetEditEventRecord::PrimitiveFieldEditAction>();
+            action->AssetId = event.Value->GetParent()->ID;
+            action->ValuePath = event.Path;
+         //   action->PreviousValue = std::move(event);
         }, Token.GetToken());
 }
 

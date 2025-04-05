@@ -18,22 +18,37 @@ class AssetEditEventRecord
 private:
 	friend class AssetEditManager;
 
+public:
 	class EditAction
 	{
 	public:
 	};
-	std::vector<EditAction> Actions;
+
+	class PrimitiveFieldEditAction : public EditAction
+	{
+	public:
+		size_t AssetId;
+		FieldPath	ValuePath;
+
+		PrimitiveValueChangedEvent PreviousValue;
+		PrimitiveValueChangedEvent CurrentValue;
+	};
+	std::vector<std::unique_ptr<EditAction>> Actions;
 
 	size_t MergeID = 0;
 
 	AssetEditEventRecord(std::string_view name, size_t mergeID);
 
-public:
 	std::string Name;
 
 	size_t GetMergeID() const { return MergeID; }
 
-	void PushAction(const EditAction& action);
+	template<class T>
+	T* PushAction()
+	{
+		Actions.emplace_back(std::make_unique<T>());
+		return static_cast<T*>(Actions.back().get());
+	}
 
     bool IsEmpty() const { return Actions.empty(); }
 };
@@ -63,6 +78,7 @@ public:
 			if (OpenAssets.find(hash) != OpenAssets.end())
 				return asset;
 
+			asset->ValuePtr->ID = hash;
 			OpenAssets.insert_or_assign(hash, asset->ValuePtr);
 			RegisterEditCallbacks(asset->ValuePtr);
 		}
@@ -77,6 +93,7 @@ public:
 		if (asset)
 		{
 			uint64_t hash = uint64_t(asset);
+			asset->ValuePtr->ID = hash;
 			OpenAssets.insert_or_assign(hash, asset->ValuePtr);
 			RegisterEditCallbacks(asset->ValuePtr);
 		}
@@ -94,6 +111,7 @@ public:
 			if (OpenAssets.find(hash) != OpenAssets.end())
 				return asset;
 
+			asset->ValuePtr->ID = hash;
 			OpenAssets.insert_or_assign(hash, asset->ValuePtr);
 			RegisterEditCallbacks(asset->ValuePtr);
 		}
@@ -110,7 +128,7 @@ public:
 	void Undo();
 	void Redo();
 
-	const std::vector<AssetEditEventRecord>& GetEditEvents() const { return EditEvents; }
+	const std::vector<std::unique_ptr<AssetEditEventRecord>>& GetEditEvents() const { return EditEvents; }
 	size_t GetCurrentEventIndex() const { return CurrentEditEventIndex; }
 
 	class AssetDirtyEvent

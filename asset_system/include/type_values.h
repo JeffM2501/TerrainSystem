@@ -121,6 +121,10 @@ namespace Types
 		{
 			return reinterpret_cast<T*>(this);
 		}
+
+		virtual TypeValue* GetParent() { return ParentValue; }
+		virtual const TypeValue* GetParent() const { return ParentValue; }
+
 	};
 
 	class EnumerationFieldValue : public FieldValue
@@ -269,6 +273,8 @@ namespace Types
 
 		TypeValueFieldMap Values;
 	public:
+		size_t ID = 0;
+        void* UserData = nullptr;
 
 		using Ptr = std::unique_ptr<TypeValue>;
 
@@ -276,6 +282,22 @@ namespace Types
 		TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) { SetType(t); }
 
 		Events::EventSource<PrimitiveValueChangedEvent> OnPrimitiveValueChanged;
+
+        TypeValue* GetParent() override
+        {
+            if (ParentValue)
+                return ParentValue->GetParent();
+
+            return reinterpret_cast<TypeValue*>(this);
+        }
+
+        const TypeValue* GetParent() const override
+        {
+            if (ParentValue)
+                return ParentValue->GetParent();
+
+            return reinterpret_cast<const TypeValue*>(this);
+        }
 
 		void CallPrimitiveValueChanged(PrimitiveValueChangedEvent& eventRecord)
 		{
