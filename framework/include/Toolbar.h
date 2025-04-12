@@ -13,6 +13,8 @@ namespace EditorFramework
 
         float GetHeight() const { return BarHeight; }
 
+        CommandContextSet* CommandContext = nullptr;
+
     protected:
 
         void ShowContents(CommandContainer& container, int leve = 0);

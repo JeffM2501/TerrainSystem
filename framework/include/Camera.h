@@ -43,6 +43,10 @@ namespace EditorFramework
     private:
         Vector3 DesiredCameraPosition = { 0, 0, 0 };
         Vector3 DesiredCameraTarget = { 0, 0, 0 };
+
+        Vector3 StartCameraPosition = { 0, 0, 0 };
+        Vector3 StartCameraTarget = { 0, 0, 0 };
+
 		float TotalTime = 0;
         float CurrentTime = 0;
     };

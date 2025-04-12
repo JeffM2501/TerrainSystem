@@ -147,11 +147,27 @@ namespace EditorFramework
 		OnStartup();
 
 		OnRegisterDocuments();
+
+		// cache the document extensions
+		if (FileExtensions.empty())
+        {
+            for (auto& [id, factory] : DocumentFactories)
+            {
+                if (!factory.Extension.empty())
+                    FileExtensions.push_back(factory.Filter.c_str());
+            }
+            FileExtensions.push_back("*.*");
+        }
+
 		OnRegisterPanels();
 
 		RegisterDefaultPanels();
 
-		RegisterDefaultMenus();
+        RegisterStandardActions();
+
+		RegisterDefaultMenus(MainMenu);
+		WindowMenu = MainMenu.AddSubItem("Window", "", 610);
+		
 		OnRegisterMenus();
 
 		LoadKeybindings();
@@ -184,6 +200,8 @@ namespace EditorFramework
 
 	void Application::Update()
 	{
+        RebuildWindowMenu();
+
 		BeginDrawing();
 		ClearBackground(DARKGRAY);
 
@@ -195,10 +213,15 @@ namespace EditorFramework
 		rlImGuiBegin();
 
 		Rectangle contentArea{ 0,0,float(GetScreenWidth()), float(GetScreenHeight()) };
-		MainMenu.Show(true);
-		MainMenu.ProcessShortcuts();
 
-		float menuOffset = MainMenu.GetHeight() + ImGui::GetStyle().FrameBorderSize;
+		MenuBar* barToUse = &MainMenu;
+		if (ActiveDocument)
+			barToUse = &ActiveDocument->GetDocumentMenu();
+		
+        barToUse->Show(true);
+        barToUse->ProcessShortcuts();
+
+		float menuOffset = barToUse->GetHeight() + ImGui::GetStyle().FrameBorderSize;
 		{
 			ImGui::SetNextWindowPos(ImVec2(0, menuOffset));
 			auto size = ImVec2(float(GetScreenWidth()), float(GetScreenHeight()));
@@ -340,7 +363,7 @@ namespace EditorFramework
             }
 		}
 
-		for (auto& panel : Panels)
+		for (auto& [id,panel] : Panels)
 		{
 			if (ResetLayouts)
 				panel->ForceDockSpace(PanelLayoutDockingLocations[int(panel->Location)]);
@@ -489,110 +512,127 @@ namespace EditorFramework
 		RegisterPanel<LogPanel>();
 	}
 
-	void Application::RegisterDefaultMenus()
+	void Application::RegisterDefaultMenus(MenuBar& menu)
 	{
-		RegisterStandardActions();
-
 		// file menu
-		auto& fileMenu = MainMenu.AddSubItem("File","", 10);
+		auto fileMenu = menu.AddSubItem("File","", 10);
 
-		auto& openGroup = fileMenu.AddGroup("Open", ICON_FA_FOLDER_OPEN, 10);
-		openGroup.AddItem<ActionCommandItem>(0, OpenAction, [this](float) { OpenAssetDocument(); });
+		auto openGroup = fileMenu->AddGroup("Open", ICON_FA_FOLDER_OPEN, 10);
 
-        auto& closeGroup = fileMenu.AddGroup("Close", ICON_FA_WINDOW_MAXIMIZE, 20);
-		closeGroup.AddItem<ActionCommandItem>(0,
-			CloseAction, 
-			[this](float) {CloseDocument(ActiveDocument->GetDocumentID()); },
-			[this]() { return ActiveDocument != nullptr; });
-
-        closeGroup.AddItem<ActionCommandItem>(10,
-            CloseAllAction,
-            [this](float) { },
-            [this]() { return OpenDocuments.size() > 0; });
-
-        closeGroup.AddItem<ActionCommandItem>(20,
-            CloseAllButAction,
-            [this](float) {},
-            [this]() { return OpenDocuments.size() > 1; });
-
-		auto& saveGroup = fileMenu.AddGroup("Save", ICON_FA_FLOPPY_DISK, 30);
-
-		saveGroup.AddItem<ActionCommandItem>(20,
-            SaveAction,
-			[this](float) { SaveDocument(ActiveDocument->GetDocumentID()); },
-            [this]() { return ActiveDocument != nullptr && (ActiveDocument->GetAssetPath().empty() || ActiveDocument->IsDirty()); });
-
-		saveGroup.AddItem<ActionCommandItem>(20,
-            SaveAsAction,
-            [this](float) {SaveDocumentAs(ActiveDocument->GetDocumentID()); },
-            [this]() { return ActiveDocument != nullptr && (ActiveDocument->GetAssetPath().empty() || ActiveDocument->IsDirty()); });
-
-        auto& prefsGroup = fileMenu.AddGroup("Preferences", ICON_FA_LIST_CHECK, 400);
-	//	prefsGroup.AddItem<ActionCommandItem>(0, PreferencesAction, [this](float) { });
-		prefsGroup.AddItem<ActionCommandItem>(10, ShortcutKeysAction, [this](float) {ShowDialogBox<KeybindingDialog>(); });
-
-		auto& endGroup = fileMenu.AddGroup("Exit", "", 1000);
-		endGroup.AddItem<ActionCommandItem>(1000, ExitAction, [this](float) { Quit(); });
-
-		// programmer menu
-        auto& programmer = MainMenu.AddSubItem("Programmer", "", 500);
-		auto& imGuiGroup = programmer.AddGroup("ImGui", ICON_FA_PEN_RULER, 10);
-
-		imGuiGroup.AddItem<ActionCommandItem>(0, ImGuiItemPickerAction, [this](float) { ImGui::DebugStartItemPicker(); });
-
-		imGuiGroup.AddItem<ActionCommandItem>(0, ImGuiDemoAction, [this](float) { ShowDemoWindow = !ShowDemoWindow; },
-			nullptr,
-			[this] {return ShowDemoWindow; });
-
-        imGuiGroup.AddItem<ActionCommandItem>(0, ImGuiStyleAction, [this](float) { ShowStyleEditor = !ShowStyleEditor; },
-            nullptr,
-            [this] {return ShowStyleEditor; });
-
-        imGuiGroup.AddItem<ActionCommandItem>(0, ImGuiMetricsAction, [this](float) { ShowMetricsWindow = !ShowMetricsWindow; },
-            nullptr,
-            [this] {return ShowMetricsWindow; });
-
-        // Panel menu
-        auto& panelMenu = MainMenu.AddSubItem("Panels", "", 600);
-		auto& panelsGroup = panelMenu.AddGroup("Panels", ICON_FA_WINDOW_RESTORE, 10);
-
-		int index = 1;
-		for (auto& panel : Panels)
+		auto newAsset = openGroup->AddSubItem("New Asset", ICON_FA_FILE_CIRCLE_PLUS,0);
+		
+		int index = 0;
+		for (auto& [typeId, factory] : DocumentFactories)
 		{
-			index++;
-			panelsGroup.AddItem<WindowStateMenuCommand>(index,
-				panel->GetIcon(),
-				panel->GetName(),
-				[&panel]() { if (panel->IsOpen()) panel->Close(); else panel->Open(); },
-				[&panel]() { return panel->IsOpen(); });
+            index++;
+			newAsset->AddItem<StateMenuCommand>(index,
+                "",
+                factory.Name,
+				[&typeId, this](CommandContextSet*) {OpenDocument(typeId);},
+                nullptr );
 		}
 
-		auto& panelManagementGroup = panelMenu.AddGroup("Management", ICON_FA_TABLE_COLUMNS, 20);
+		openGroup->AddItem<ActionCommandItem>(10, OpenAction, [this](float, CommandContextSet*) { OpenAssetDocument(); });
+ 
+        auto closeGroup = fileMenu->AddGroup("Close", ICON_FA_WINDOW_MAXIMIZE, 20);
+        closeGroup->AddItem<ActionCommandItem>(0,
+            CloseAction,
+            [this](float, CommandContextSet*) {CloseDocument(ActiveDocument->GetDocumentID()); },
+            [this](CommandContextSet*) { return ActiveDocument != nullptr; });
 
-		panelManagementGroup.AddItem<ActionCommandItem>(0, ResetLayoutAction, [this](float) { ResetLayouts = true; });
+        closeGroup->AddItem<ActionCommandItem>(10,
+            CloseAllAction,
+            [this](float, CommandContextSet*) {},
+            [this](CommandContextSet*) { return OpenDocuments.size() > 0; });
+
+        closeGroup->AddItem<ActionCommandItem>(20,
+            CloseAllButAction,
+            [this](float, CommandContextSet*) {},
+            [this](CommandContextSet*) { return OpenDocuments.size() > 1; });
+
+		auto& saveGroup = fileMenu->AddGroup("Save", ICON_FA_FLOPPY_DISK, 30);
+
+ 		saveGroup->AddItem<ActionCommandItem>(20,
+             SaveAction,
+ 			[this](float, CommandContextSet*) { SaveDocument(ActiveDocument->GetDocumentID()); },
+             [this](CommandContextSet*) { return ActiveDocument != nullptr && (ActiveDocument->GetAssetPath().empty() || ActiveDocument->IsDirty()); });
+ 
+ 		saveGroup->AddItem<ActionCommandItem>(20,
+             SaveAsAction,
+             [this](float, CommandContextSet*) {SaveDocumentAs(ActiveDocument->GetDocumentID()); },
+             [this](CommandContextSet*) { return ActiveDocument != nullptr && (ActiveDocument->GetAssetPath().empty() || ActiveDocument->IsDirty()); });
+
+        auto prefsGroup = fileMenu->AddGroup("Preferences", ICON_FA_LIST_CHECK, 400);
+	//	prefsGroup.AddItem<ActionCommandItem>(0, PreferencesAction, [this](float) { });
+ 		prefsGroup->AddItem<ActionCommandItem>(10, ShortcutKeysAction, [this](float, CommandContextSet*) {ShowDialogBox<KeybindingDialog>(); });
+ 
+ 		auto& endGroup = fileMenu->AddGroup("Exit", "", 1000);
+ 		endGroup->AddItem<ActionCommandItem>(1000, ExitAction, [this](float, CommandContextSet*) { Quit(); });
+
+		// programmer menu
+        auto programmer = menu.AddSubItem("Programmer", "", 500);
+		auto imGuiGroup = programmer->AddGroup("ImGui", ICON_FA_PEN_RULER, 10);
+
+		imGuiGroup->AddItem<ActionCommandItem>(0, ImGuiItemPickerAction, [this](float, CommandContextSet*) { ImGui::DebugStartItemPicker(); });
+
+		imGuiGroup->AddItem<ActionCommandItem>(0, ImGuiDemoAction, [this](float, CommandContextSet*) { ShowDemoWindow = !ShowDemoWindow; },
+			nullptr,
+			[this] (CommandContextSet*){return ShowDemoWindow; });
+
+        imGuiGroup->AddItem<ActionCommandItem>(0, ImGuiStyleAction, [this](float, CommandContextSet*) { ShowStyleEditor = !ShowStyleEditor; },
+            nullptr,
+            [this] (CommandContextSet*){return ShowStyleEditor; });
+
+        imGuiGroup->AddItem<ActionCommandItem>(0, ImGuiMetricsAction, [this](float, CommandContextSet*) { ShowMetricsWindow = !ShowMetricsWindow; },
+            nullptr,
+            [this] (CommandContextSet*){return ShowMetricsWindow; });
+
+        // Panel menu
+        auto panelMenu = menu.AddSubItem("Panels", "", 600);
+		auto panelsGroup = panelMenu->AddGroup("Panels", ICON_FA_WINDOW_RESTORE, 10);
+
+		index = 0;
+		for (auto& [id,panel] : Panels)
+		{
+			index++;
+			panelsGroup->AddItem<StateMenuCommand>(index,
+				panel->GetIcon(),
+				panel->GetName(),
+				[&panel](CommandContextSet*) { if (panel->IsOpen()) panel->Close(); else panel->Open(); },
+				[&panel](CommandContextSet*) { return panel->IsOpen(); });
+		}
+
+		auto& panelManagementGroup = panelMenu->AddGroup("Management", ICON_FA_TABLE_COLUMNS, Panels.size() + 10);
+
+		panelManagementGroup->AddItem<ActionCommandItem>(0, ResetLayoutAction, [this](float, CommandContextSet*) { ResetLayouts = true; });
 
         // Window menu
-		WindowMenu = &MainMenu.AddSubItem("Window", "", 610);
+		if (WindowMenu != nullptr)
+		{
+			menu.InsertContainer(610, WindowMenu);
+		}
+	//	WindowMenu = &menu.AddSubItem("Window", "", 610);
 	}
 
 	void Application::RebuildWindowMenu()
 	{
-		if (!WindowMenu)
+		if (!WindowMenu || !WindowMenuDirty)
 			return;
 
+		WindowMenuDirty = false;
 		WindowMenu->Contents.clear();
 
         for (auto& [id, doc] : OpenDocuments)
         {
-			WindowMenu->AddItem<WindowStateMenuCommand>(id,
+			WindowMenu->AddItem<StateMenuCommand>(id,
                 "",
                 doc->GetDocumentName(),
-                [&id, this]() { FocusNextDocument = id; },
-                [&id, this]() { return ActiveDocument && ActiveDocument->GetDocumentID() == id; });
+                [&id, this](CommandContextSet*) { FocusNextDocument = id; },
+                [&id, this](CommandContextSet*) { return ActiveDocument && ActiveDocument->GetDocumentID() == id; });
         }
 	}
 
-	size_t Application::OpenDocument(size_t documentTypeID)
+	size_t Application::OpenDocument(size_t documentTypeID, const std::string& assetPath)
 	{
 		auto factoryItr = DocumentFactories.find(documentTypeID);
 		if (factoryItr == DocumentFactories.end())
@@ -601,7 +641,9 @@ namespace EditorFramework
 		LastDocumentId++;
 		OpenDocuments.try_emplace(LastDocumentId, std::move(factoryItr->second.Factory()));
 
-		OpenDocuments[LastDocumentId]->OnDirty.Add([this](const Document& doc) 
+		auto* doc = OpenDocuments[LastDocumentId].get();
+
+		doc ->OnDirty.Add([this](const Document& doc)
 			{
 				if (ActiveDocument && ActiveDocument->GetDocumentID() == doc.GetDocumentID())
 				{
@@ -610,13 +652,20 @@ namespace EditorFramework
 				}
 			}, GetLifetimeToken());
 
-		OpenDocuments[LastDocumentId].get()->HostApp = this;
+        doc->HostApp = this;
+        doc->Created(LastDocumentId);
 
-		OpenDocuments[LastDocumentId].get()->Created(LastDocumentId);
+		if (assetPath.empty())
+			doc->CreateAsset();
+		else
+			doc->OpenAsset(assetPath);
+
+		RegisterDefaultMenus(doc->GetDocumentMenu());
+		doc->OnSetupMenu();
 
 		SetActiveDocument(LastDocumentId);
 
-		RebuildWindowMenu();
+		WindowMenuDirty = true;
 
 		return LastDocumentId;
 	}
@@ -651,7 +700,7 @@ namespace EditorFramework
 			else
 				SetActiveDocument(0);
 		}
-		RebuildWindowMenu();
+		WindowMenuDirty = true;
 
 		return true;
 	}
@@ -679,7 +728,7 @@ namespace EditorFramework
 			else
 				SetActiveDocument(0);
         }
-		RebuildWindowMenu();
+		WindowMenuDirty = true;
 
 		if (PendingQuit)
 		{
@@ -704,16 +753,6 @@ namespace EditorFramework
 
 	void Application::OpenAssetDocument()
 	{
-		if (FileExtensions.empty())
-		{
-			for (auto& [id, factory] : DocumentFactories)
-			{
-				if (!factory.Extension.empty())
-					FileExtensions.push_back(factory.Filter.c_str());
-			}
-			FileExtensions.push_back("*.*");
-		}
-
 		auto fileToOpen = tinyfd_openFileDialog("Open file...", nullptr, int(FileExtensions.size()), &FileExtensions[0], nullptr, false);
 
 		if (!fileToOpen)
@@ -737,8 +776,7 @@ namespace EditorFramework
 
 		if (idToUse != 0)
 		{
-            auto documentId = OpenDocument(idToUse);
-            OpenDocuments[documentId]->OpenAsset(fileToOpen);
+            auto documentId = OpenDocument(idToUse, fileToOpen);
 		}
 	}
 
@@ -787,6 +825,9 @@ namespace EditorFramework
 
 	void Application::SetActiveDocument(size_t documentID)
 	{
+		if (ActiveDocument && ActiveDocument->GetDocumentID() == documentID)
+			return;
+
 		if (ActiveDocument)
 			ActiveDocument->OnDeactivated();
 
@@ -808,7 +849,7 @@ namespace EditorFramework
 		else
 			SetWindowTitle(GetWindowTitle().data());
 
-		for (auto& panel : Panels)
+		for (auto& [id, panel] : Panels)
 		{
 			panel->DocumentChanged(ActiveDocument);
 		}

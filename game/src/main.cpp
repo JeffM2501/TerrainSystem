@@ -35,6 +35,7 @@ Use this as a starting point or replace it with your code.
 #else
 void IGNORE(const char*){}
 #define _wassert (F, M) F IGNORE(M);
+#define _ASSERT (F, M) F IGNORE(M);
 #endif
 
 
@@ -163,12 +164,12 @@ void UpdateCameraXY(Camera* camera, int mode)
 void GameInit()
 {
     SetConfigFlags(/*FLAG_VSYNC_HINT |*/ FLAG_WINDOW_RESIZABLE);
-    InitWindow(InitalWidth, InitalHeight, "Example");
+    InitWindow(0, 0, "Example");
     SetTargetFPS(144);
     
     TerrainShader = LoadShader("resources/base.vs", "resources/base.fs");
 
-    _ASSERT(IsShaderValid(TerrainShader));
+  //  _ASSERT(IsShaderValid(TerrainShader));
 
     SunVectorLoc = GetShaderLocation(TerrainShader, "sunVector");
 

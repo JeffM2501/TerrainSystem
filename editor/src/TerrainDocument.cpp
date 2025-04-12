@@ -3,6 +3,7 @@
 #include "DisplayScale.h"
 #include "Dialog.h"
 
+#include "imgui_utils.h"
 #include "extras/IconsFontAwesome6.h"
 
 #include "raylib.h"
@@ -83,7 +84,7 @@ void TerrainDocument::OnShowScene(const Vector2& renderSize)
 
 void TerrainDocument::OnShowUI()
 {
-    auto size = GetButtonSize(ICON_FA_BOX);
+    auto size = ImGuiUtils::GetButtonSize(ICON_FA_BOX);
 
     //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
     ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());
@@ -127,14 +128,14 @@ void TerrainDocument::OnCreated()
 
     LoadMaterial("Grid", "resources/grid.png");
 
-    auto& visGroup = MainToolbar.AddGroup("TerrainVis");
-    auto splatCommand = visGroup.AddItem<WindowStateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this]() {ShowSplat = !ShowSplat; }, [this]() {return ShowSplat; });
+    auto visGroup = MainToolbar.AddGroup("TerrainVis");
+    auto splatCommand = visGroup->AddItem<StateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this](CommandContextSet*) {ShowSplat = !ShowSplat; }, [this](CommandContextSet*) {return ShowSplat; });
 
     auto& cameraGroup = MainToolbar.AddGroup("Cameras");
 
-    auto& viewMenu = GetApp()->GetMenuBar().AddSubItem("View", "", 20);
-    auto& showGroup = viewMenu.AddGroup("Show", ICON_FA_EYE);
-    showGroup.AddItem(0, splatCommand);
+    auto viewMenu = DocumentMenuBar.AddSubItem("View", "", 20);
+    auto showGroup = viewMenu->AddGroup("Show", ICON_FA_EYE);
+    showGroup->AddItem(0, splatCommand);
 }
 
 TerrainTile& TerrainDocument::GetTile(int x, int y)

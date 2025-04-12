@@ -1,26 +1,3 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
--- Copyright (c) 2020-2024 Jeffery Myers
---
---This software is provided "as-is", without any express or implied warranty. In no event
---will the authors be held liable for any damages arising from the use of this software.
-
---Permission is granted to anyone to use this software for any purpose, including commercial
---applications, and to alter it and redistribute it freely, subject to the following restrictions:
-
---  1. The origin of this software must not be misrepresented; you must not claim that you
---  wrote the original software. If you use this software in a product, an acknowledgment
---  in the product documentation would be appreciated but is not required.
---
---  2. Altered source versions must be plainly marked as such, and must not be misrepresented
---  as being the original software.
---
---  3. This notice may not be removed or altered from any source distribution.
-
-*/
 #pragma once
 
 #include "raylib.h"
@@ -60,32 +37,42 @@ namespace EditorFramework
 			record.Factory = T::Factory;
 			record.Extension = T::FileExtension();
 			record.Filter = "*." + record.Extension;
+			record.Name = T::GetDocumentTypeName();
 
 			DocumentFactories.insert_or_assign(T::DocumentTypeID(), record);
 		}
 
-		size_t OpenDocument(size_t documentTypeID);
+		size_t OpenDocument(size_t documentTypeID, const std::string& assetPath = "");
 
 		template <class T>
-		size_t OpenDocument()
+		size_t OpenDocument(const std::string& assetPath = "")
 		{
-			return OpenDocument(T::DocumentTypeID());
+			return OpenDocument(T::DocumentTypeID(), assetPath);
 		}
 
 		bool CloseDocument(size_t documentId);
 
 		Document* GetActiveDocument() { return ActiveDocument; }
-
 		void OpenAssetDocument();
 		void SaveDocument(size_t documentID);
 		void SaveDocumentAs(size_t documentID);
 
         template <class T>
-        size_t RegisterPanel()
+        uint64_t RegisterPanel()
         {
-			Panels.emplace_back(std::make_unique<T>());
-			return Panels.size() - 1;
+			Panels.try_emplace(T::PanelID(), std::make_unique<T>());
+			return T::PanelID();
         }
+
+		template<class T>
+		T* GetPanel()
+		{
+			auto itr = Panels.find(T::PanelID());
+			if (itr == Panels.end())
+				return nullptr;
+
+			return static_cast<T*>(itr->second.get());
+		}
 
 		template <class T, typename ...Args>
 		void ShowDialogBox(Args&&... args)
@@ -96,7 +83,6 @@ namespace EditorFramework
 
 		void Quit();
 
-        MenuBar& GetMenuBar() { return MainMenu; }
 		Tokens::LifetimeTokenPtr GetLifetimeToken() const { return LifeToken.GetToken(); }
 
 		bool MouseIsInDocument();
@@ -138,7 +124,7 @@ namespace EditorFramework
 		void Update();
 		void Shutdown();
 
-		void RegisterDefaultMenus();
+		void RegisterDefaultMenus(MenuBar& menu);
 		void RegisterDefaultPanels();
 
 		void LoadSettings();
@@ -159,13 +145,14 @@ namespace EditorFramework
 			DocumentFactory Factory;
 			std::string Extension;
 			std::string Filter;
+			std::string Name;
 		};
-		std::unordered_map<size_t, DocumentFactoryRecord> DocumentFactories;
-		std::map<size_t, DocumentPtr> OpenDocuments;
-		std::vector<std::unique_ptr<Panel>> Panels;
+		std::unordered_map<uint64_t, DocumentFactoryRecord> DocumentFactories;
+		std::map<uint64_t, DocumentPtr> OpenDocuments;
+		std::unordered_map<uint64_t, std::unique_ptr<Panel>> Panels;
 		std::deque<std::unique_ptr<Dialog>> ModalDialogs;
 
-		CommandContainer* WindowMenu = nullptr;
+		std::shared_ptr<CommandContainer> WindowMenu;
 
 		void RebuildWindowMenu();
 
@@ -190,6 +177,8 @@ namespace EditorFramework
 		bool ShowMetricsWindow = false;
 
 		Rectangle ContentRectangle = { 0,0,0,0 };
+
+		bool WindowMenuDirty = false;
 	};
 
 	template<class T>

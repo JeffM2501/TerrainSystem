@@ -2,8 +2,9 @@
 
 #include <cstdint>
 #include <string>
+#include <type_traits>
 
-namespace AssetSystem
+namespace Hashes
 {
     class GUID
     {
@@ -39,4 +40,15 @@ namespace AssetSystem
             return guid.Hash();
         }
     };
+
+
 }
+
+template <>
+struct std::hash<Hashes::GUID>
+{
+    std::size_t operator()(const Hashes::GUID& guid) const
+    {
+        return guid.Hash();
+    }
+};

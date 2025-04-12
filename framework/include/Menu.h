@@ -15,49 +15,50 @@ namespace EditorFramework
 
 		float GetHeight() const { return BarHeight; }
 
+        CommandContextSet* CommandContext = nullptr;
+
 	protected:
+		void ShowContents(CommandContainer* container);
 
-		void ShowContents(CommandContainer& container);
+		void ShowSubMenu(CommandContainer* container);
+		void ShowGroup(CommandContainer* container);
 
-		void ShowSubMenu(CommandContainer& container);
-		void ShowGroup(CommandContainer& container);
-
-		void ShowItem(CommandItem& item);
+		void ShowItem(CommandItem* item);
 
 		float BarHeight = 0;
 	};
 
-	class WindowStateMenuCommand : public CommandItem
+	class StateMenuCommand : public CommandItem
 	{
     private:
         std::string Icon;
         std::string WindowName;
 
     public:
-        WindowStateMenuCommand(std::string_view icon, std::string_view name, std::function<void()> toggle, std::function<bool()> check)
+        StateMenuCommand(std::string_view icon, std::string_view name, std::function<void(CommandContextSet*)> execute, std::function<bool(CommandContextSet*)> check)
             : CommandItem(0)
             , Icon(icon)
             , WindowName(name)
-            , OnToggle(toggle)
+            , OnExecute(execute)
             , OnChecked(check)
         {
         }
 
         ItemType GetItemType() const override{ return ItemType::Toggle; }
 
-        std::function<void()> OnToggle;
-        std::function<bool()> OnChecked;
+        std::function<void(CommandContextSet*)> OnExecute;
+        std::function<bool(CommandContextSet*)> OnChecked;
 
-        void Execute(float value = 0) override
+        void Execute(float value = 0, CommandContextSet* context = nullptr) override
         {
-            if (OnToggle)
-                OnToggle();
+            if (OnExecute)
+                OnExecute(context);
         }
 
-        bool IsChecked() const override
+        bool IsChecked(CommandContextSet* context = nullptr) const override
         {
             if (OnChecked)
-                return OnChecked();
+                return OnChecked(context);
 
             return false;
         }

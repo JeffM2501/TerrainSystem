@@ -33,6 +33,8 @@ namespace EditorFramework
         char FilterText[128] = { 0 };
 
     public:
+        DEFINE_PANEL(LogPanel);
+
         LogPanel();
         void OnShow() override;
     };
