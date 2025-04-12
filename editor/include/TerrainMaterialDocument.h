@@ -4,6 +4,7 @@
 
 #include "TerrainTile.h"
 #include "LifetimeToken.h"
+#include "AssetEditManager.h"
 
 #include "types/terrain.h"
 #include "CRC64.h"
@@ -23,16 +24,18 @@ public:
     void SaveAsset() override;
     void SaveAsAsset(const std::string& assetPath) override;
 
-	void OnCreated() override;
-	void OnActivated() override;
-	void OnDeactivated() override;
+    void OnCreated() override;
+    void OnActivated() override;
+    void OnDeactivated() override;
 
 protected:
-   void OnShowScene(const Vector2& renderSize) override;
+    void OnShowScene(const Vector2& renderSize) override;
 
-   void RegisterEditHandler();
+    void RegisterEditHandler();
 
 protected:
     AssetTypes::TerrainMaterialAsset* AssetData = nullptr;
     Tokens::TokenSource Token;
+
+    AssetEditManager EditManager;
 };

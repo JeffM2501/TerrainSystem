@@ -32,7 +32,8 @@ namespace Types
     public:
         FieldInfo(const std::string& name)
             : Name(name)
-        {}
+        {
+        }
 
         virtual ~FieldInfo() = default;
 
@@ -42,6 +43,7 @@ namespace Types
         bool IsPrimtive() const { return Type == FieldType::Primitive || Type == FieldType::PrimitiveList; }
         bool IsEnum() const { return Type == FieldType::Enumeration; }
         bool IsType() const { return Type == FieldType::Type || Type == FieldType::TypeList; }
+        bool IsList() const { return Type == FieldType::PrimitiveList || Type == FieldType::TypeList; }
     };
 
     class EnumerationFieldInfo : public FieldInfo
@@ -113,7 +115,7 @@ namespace Types
         Vector3,
         Vector4,
         Rectangle,
-        Matrix, 
+        Matrix,
         GUID,
         Color
     };

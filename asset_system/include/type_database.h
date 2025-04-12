@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "field_info.h"
+#include "field_path.h"
 #include "raylib.h"
 #include "CRC64.h"
 #include "GUID.h"
@@ -13,9 +14,9 @@
 
 namespace Types
 {
-	class TypeInfo : public AttributeTypes::AttributeContainer
-	{
-	private:
+    class TypeInfo : public AttributeTypes::AttributeContainer
+    {
+    private:
         template<class T>
         inline PrimitiveTypeFieldInfo<T>* AddPrimitiveField(const std::string& name, const T& defaultValue, PrimitiveType primType)
         {
@@ -26,72 +27,72 @@ namespace Types
             return ptr;
         }
 
-		std::vector<std::unique_ptr<FieldInfo>> Fields;
+        std::vector<std::unique_ptr<FieldInfo>> Fields;
 
-		int GetLocalFieldIndex(int index) const;
+        int GetLocalFieldIndex(int index) const;
 
-	public:
-		std::string TypeName;
-		uint64_t TypeId = 0;
-		TypeInfo* ParentType = nullptr;
+    public:
+        std::string TypeName;
+        uint64_t TypeId = 0;
+        TypeInfo* ParentType = nullptr;
 
-		TypeInfo() {}
+        TypeInfo() {}
 
-		FieldInfo* GetField(int index);
-		const FieldInfo* GetField(int index) const;
+        FieldInfo* GetField(int index);
+        const FieldInfo* GetField(int index) const;
 
-		template<class T>
-		inline T* GetField(int index)
-		{
-			return reinterpret_cast<T*>(GetField(index));
-		}
+        template<class T>
+        inline T* GetField(int index)
+        {
+            return reinterpret_cast<T*>(GetField(index));
+        }
 
-		template<class T>
-		inline const T* GetField(int index) const
-		{
-			return reinterpret_cast<const T*>(GetField(index));
-		}
+        template<class T>
+        inline const T* GetField(int index) const
+        {
+            return reinterpret_cast<const T*>(GetField(index));
+        }
 
-		int FindFieldIndex(const std::string& name);
+        int FindFieldIndex(const std::string& name);
 
-		int GetFieldCount() const;
+        int GetFieldCount() const;
 
-		struct FieldIterator
-		{
-			const TypeInfo* Type = nullptr;
-			int Index = 0;
+        struct FieldIterator
+        {
+            const TypeInfo* Type = nullptr;
+            int Index = 0;
 
-			FieldIterator(const TypeInfo* type, int index = 0) : Type(type), Index(index) {};
+            FieldIterator(const TypeInfo* type, int index = 0) : Type(type), Index(index) {};
 
-			inline const FieldInfo* operator * () { return Type->GetField(Index); }
-			inline const FieldInfo* Get() { return Type->GetField(Index); }
+            inline const FieldInfo* operator * () { return Type->GetField(Index); }
+            inline const FieldInfo* Get() { return Type->GetField(Index); }
 
-			inline FieldIterator operator++(int)
-			{
-				FieldIterator newItr(Type);
-				newItr.Index = Index + 1;
-				return newItr;
-			}
+            inline FieldIterator operator++(int)
+            {
+                FieldIterator newItr(Type);
+                newItr.Index = Index + 1;
+                return newItr;
+            }
 
-			inline FieldIterator& operator++()
-			{
-				Index++;
-				return *this;
-			}
+            inline FieldIterator& operator++()
+            {
+                Index++;
+                return *this;
+            }
 
-			inline bool operator == (const FieldIterator& c)
-			{
-				return Index == c.Index && Type == c.Type;
-			}
+            inline bool operator == (const FieldIterator& c)
+            {
+                return Index == c.Index && Type == c.Type;
+            }
 
-			inline bool operator != (const FieldIterator& c)
-			{
-				return Index != c.Index || Type != c.Type;
-			}
-		};
+            inline bool operator != (const FieldIterator& c)
+            {
+                return Index != c.Index || Type != c.Type;
+            }
+        };
 
-		FieldIterator begin() const;
-		FieldIterator end() const;
+        FieldIterator begin() const;
+        FieldIterator end() const;
 
         template<class T>
         inline PrimitiveTypeFieldInfo<T>* AddPrimitiveField(const std::string& name, const T& defaultValue)
@@ -99,61 +100,87 @@ namespace Types
             return AddPrimitiveField<T>(name, defaultValue, PrimitiveType::Unknown);
         }
 
-		EnumerationFieldInfo* AddEnumerationField(const std::string& name, const std::string& enumName, int32_t defaultValue = 0);
+        EnumerationFieldInfo* AddEnumerationField(const std::string& name, const std::string& enumName, int32_t defaultValue = 0);
 
-		TypeFieldInfo* AddTypeField(const std::string& name, const std::string& typeName, bool isPointer = false, const std::string& ptrTypeName = std::string());
+        TypeFieldInfo* AddTypeField(const std::string& name, const std::string& typeName, bool isPointer = false, const std::string& ptrTypeName = std::string());
 
         TypeListFieldInfo* AddTypeListField(const std::string& name, const std::string& typeName, bool isPointer = false);
 
-		PrimitiveFieldInfo* AddPrimitiveListField(const std::string& name, PrimitiveType primType)
-		{
-			std::unique_ptr<PrimitiveFieldInfo> field = std::make_unique<PrimitiveFieldInfo>(name, primType, true);
+        PrimitiveFieldInfo* AddPrimitiveListField(const std::string& name, PrimitiveType primType)
+        {
+            std::unique_ptr<PrimitiveFieldInfo> field = std::make_unique<PrimitiveFieldInfo>(name, primType, true);
 
-			PrimitiveFieldInfo* ptr = field.get();
-			Fields.emplace_back(std::move(field));
-			return ptr;
-		}
+            PrimitiveFieldInfo* ptr = field.get();
+            Fields.emplace_back(std::move(field));
+            return ptr;
+        }
 
-		template<class T>
-		bool FieldHasAttribute(int fieldIndex) const
-		{
-			const auto* fieldInfo = GetField(fieldIndex);
+        template<class T>
+        bool FieldHasAttribute(int fieldIndex) const
+        {
+            const auto* fieldInfo = GetField(fieldIndex);
 
-			if (!fieldInfo)
-				return false;
+            if (!fieldInfo)
+                return false;
 
-			if (fieldInfo->HasAttribute<T>())
-				return true;
+            if (fieldInfo->HasAttribute<T>())
+                return true;
 
-			if (fieldInfo->GetType() == FieldType::Type || fieldInfo->GetType() == FieldType::TypeList)
-			{
-				const TypeFieldInfo* typeFieldInfo = static_cast<const TypeFieldInfo*>(fieldInfo);
-				return typeFieldInfo->TypePtr->HasAttribute<T>();
-			}
+            if (fieldInfo->GetType() == FieldType::Type || fieldInfo->GetType() == FieldType::TypeList)
+            {
+                const TypeFieldInfo* typeFieldInfo = static_cast<const TypeFieldInfo*>(fieldInfo);
+                return typeFieldInfo->TypePtr->HasAttribute<T>();
+            }
 
-			return false;
-		}
+            return false;
+        }
 
-		template<class T>
-		const T* GetFieldAttribute(int fieldIndex) const
-		{
-			const FieldInfo* fieldInfo = GetField(fieldIndex);
+        template<class T>
+        const T* GetFieldAttribute(int fieldIndex) const
+        {
+            const FieldInfo* fieldInfo = GetField(fieldIndex);
 
-			if (!fieldInfo)
-				return nullptr;
+            if (!fieldInfo)
+                return nullptr;
 
-			if (fieldInfo->HasAttribute<T>())
-				return fieldInfo->GetAttribute<T>();
+            if (fieldInfo->HasAttribute<T>())
+                return fieldInfo->GetAttribute<T>();
 
-			if (fieldInfo->GetType() == FieldType::Type || fieldInfo->GetType() == FieldType::TypeList)
-			{
-				const TypeFieldInfo* typeFieldInfo = static_cast<const TypeFieldInfo*>(fieldInfo);
-				return typeFieldInfo->TypePtr->GetAttribute<T>();
-			}
+            if (fieldInfo->GetType() == FieldType::Type || fieldInfo->GetType() == FieldType::TypeList)
+            {
+                const TypeFieldInfo* typeFieldInfo = static_cast<const TypeFieldInfo*>(fieldInfo);
+                return typeFieldInfo->TypePtr->GetAttribute<T>();
+            }
 
-			return nullptr;
-		}
-	};
+            return nullptr;
+        }
+
+        std::string_view GetFieldNameFromPath(const FieldPath& path, int pathIndex = 0) const
+        {
+            auto fieldInfo = GetField(path.Elements[pathIndex].Index);
+
+            // end of the path, we know the name
+            if (pathIndex == path.Elements.size() - 1)
+                return fieldInfo->GetName();
+
+            if (fieldInfo->IsPrimtive() || fieldInfo->IsEnum())
+            {
+                // anything at the end of the path is pointless as it has no fields
+                return fieldInfo->GetName();
+            }
+            else
+            {
+                if (fieldInfo->IsList())
+                {
+                    pathIndex++;
+                }
+
+                const TypeFieldInfo* typeFieldInfo = static_cast<const TypeFieldInfo*>(fieldInfo);
+                return typeFieldInfo->TypePtr->GetFieldNameFromPath(path, pathIndex + 1);
+            }
+            return std::string_view();
+        }
+    };
 
     // specializations
     template<>
@@ -270,45 +297,45 @@ namespace Types
         return AddPrimitiveField<Color>(name, defaultValue, PrimitiveType::Color);
     }
 
-	class EnumerationInfo
-	{
-	public:
-		std::string TypeName;
-		uint64_t TypeId = 0;
+    class EnumerationInfo
+    {
+    public:
+        std::string TypeName;
+        uint64_t TypeId = 0;
 
-		std::map<int32_t, std::string> Values;
-	};
+        std::map<int32_t, std::string> Values;
+    };
 
-	class TypeDatabase
-	{
-	private:
-		std::unordered_map<uint64_t, std::unique_ptr<TypeInfo>> Types;
-		std::unordered_map<uint64_t, std::unique_ptr<EnumerationInfo>> Enumerations;
+    class TypeDatabase
+    {
+    private:
+        std::unordered_map<uint64_t, std::unique_ptr<TypeInfo>> Types;
+        std::unordered_map<uint64_t, std::unique_ptr<EnumerationInfo>> Enumerations;
 
-	public:
-		static TypeDatabase& Get();
+    public:
+        static TypeDatabase& Get();
 
-		uint64_t GetTypeId(const std::string& typeName);
+        uint64_t GetTypeId(const std::string& typeName);
 
-		TypeInfo* CreateType(const std::string& typeName);
-		TypeInfo* CreateType(const std::string& typeName, const std::string& parentTypeName);
-		TypeInfo* CreateType(const std::string& typeName, uint64_t parentTypeID);
+        TypeInfo* CreateType(const std::string& typeName);
+        TypeInfo* CreateType(const std::string& typeName, const std::string& parentTypeName);
+        TypeInfo* CreateType(const std::string& typeName, uint64_t parentTypeID);
 
-		EnumerationInfo* CreateEnumeration(const std::string& typeName);
+        EnumerationInfo* CreateEnumeration(const std::string& typeName);
 
-		TypeInfo* FindType(const std::string& typeName);
-		TypeInfo* FindType(uint64_t typeId);
+        TypeInfo* FindType(const std::string& typeName);
+        TypeInfo* FindType(uint64_t typeId);
 
-		EnumerationInfo* FindEnumeration(const std::string& typeName);
-		EnumerationInfo* FindEnumeration(uint64_t typeId);
+        EnumerationInfo* FindEnumeration(const std::string& typeName);
+        EnumerationInfo* FindEnumeration(uint64_t typeId);
 
-		bool IsBaseClassOf(const std::string testType, const std::string& possibleBase);
-		bool IsBaseClassOf(uint64_t testType, uint64_t possibleBase);
+        bool IsBaseClassOf(const std::string testType, const std::string& possibleBase);
+        bool IsBaseClassOf(uint64_t testType, uint64_t possibleBase);
 
-		template <class T>
-		inline T CreateTypeValue()
-		{
-			return T();
-		}
-	};
+        template <class T>
+        inline T CreateTypeValue()
+        {
+            return T();
+        }
+    };
 }

@@ -20,19 +20,19 @@ std::string_view TerrainMaterialDocument::GetDocumentName()
 
 void TerrainMaterialDocument::CreateAsset()
 {
-    AssetData = AssetManager::CreateTempAsset<AssetTypes::TerrainMaterialAsset>();
+    AssetData = EditManager.CreateTempAsset<AssetTypes::TerrainMaterialAsset>();
     RegisterEditHandler();
 }
 
 void TerrainMaterialDocument::OpenAsset(const std::string& assetPath)
 {
-    AssetData = AssetManager::OpenAsset<AssetTypes::TerrainMaterialAsset>(assetPath);
+    AssetData = EditManager.OpenAsset<AssetTypes::TerrainMaterialAsset >(assetPath);
     RegisterEditHandler();
 }
 
 void TerrainMaterialDocument::RegisterEditHandler()
 {
-    AssetData->ValuePtr->OnPrimitiveValueChanged.Add([this](const Types::PrimitiveValueChangedEvent& event)
+    AssetData->ValuePtr->OnPrimitiveValueChanged.Add([this](const Types::ValueChangedEvent& event)
         {
             SetDirty();
         }, Token.GetToken());
@@ -64,11 +64,14 @@ void TerrainMaterialDocument::OnActivated()
     if (properties && AssetData)
         properties->SetObject(AssetData->ValuePtr);
 
+    EditManager.Activate();
 }
 
 void TerrainMaterialDocument::OnDeactivated()
 {
-	auto* properties = GetApp()->GetPanel<PropertiesPanel>();
-	if (properties)
-		properties->SetObject(nullptr);
+    auto* properties = GetApp()->GetPanel<PropertiesPanel>();
+    if (properties)
+        properties->SetObject(nullptr);
+
+    EditManager.Deactivate();
 }

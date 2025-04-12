@@ -17,6 +17,7 @@
 #include "TerrainInfoPanel.h"
 #include "TerrainGenerationPanel.h"
 #include "PropertiesPanel.h"
+#include "HistoryPanel.h"
 
 #include "extras/IconsFontAwesome6.h"
 
@@ -26,42 +27,43 @@ class TerrainEditorApp : public Application
 {
 public:
 protected:
-	void OnRegisterPanels() override
-	{
-		RegisterPanel<PropertiesPanel>();
-		RegisterPanel<TerrainInfoPanel>();
-		RegisterPanel<TerrainGenerationPanel>();
-	}
+    void OnRegisterPanels() override
+    {
+        RegisterPanel<PropertiesPanel>();
+        RegisterPanel<TerrainInfoPanel>();
+        RegisterPanel<TerrainGenerationPanel>();
+        RegisterPanel<HistoryPanel>();
+    }
 
-	void OnRegisterDocuments() override
-	{
-		RegisterDocumentType<TerrainDocument>();
-		RegisterDocumentType<TerrainMaterialDocument>();
-	}
+    void OnRegisterDocuments() override
+    {
+        RegisterDocumentType<TerrainDocument>();
+        RegisterDocumentType<TerrainMaterialDocument>();
+    }
 
-	void OnSetupInitalState() override
-	{
-		OpenDocument<TerrainMaterialDocument>();
-	}
+    void OnSetupInitalState() override
+    {
+        OpenDocument<TerrainMaterialDocument>();
+    }
 
-	std::string_view GetWindowTitle() override
-	{
-		return "Terrain Editor";
-	}
+    std::string_view GetWindowTitle() override
+    {
+        return "Terrain Editor";
+    }
 
-	std::string_view GetApplicationFolderName() override
-	{
-		return "TerrainEditor";
-	}
+    std::string_view GetApplicationFolderName() override
+    {
+        return "TerrainEditor";
+    }
 };
 
 int main(int argc, char* argv[])
 {
-	Types::RegisterTypes();
-	TerrainEditorApp app;
-	app.SetCommandLine(argv, argc);
+    Types::RegisterTypes();
+    TerrainEditorApp app;
+    app.SetCommandLine(argv, argc);
 
-	app.Run();
+    app.Run();
 
-	return 0;
+    return 0;
 }

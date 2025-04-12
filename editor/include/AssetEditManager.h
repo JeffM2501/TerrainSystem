@@ -16,126 +16,135 @@ class AssetEditManager;
 class AssetEditEventRecord
 {
 private:
-	friend class AssetEditManager;
+    friend class AssetEditManager;
 
 public:
-	class EditAction
-	{
-	public:
-	};
+    class EditAction
+    {
+    public:
+        size_t AssetId;
+        FieldPath	ValuePath;
+    };
 
-	class PrimitiveFieldEditAction : public EditAction
-	{
-	public:
-		size_t AssetId;
-		FieldPath	ValuePath;
+    class PrimitiveFieldEditAction : public EditAction
+    {
+    public:
+        ValueChangedRecord::Ptr ValueRecord;
+    };
+    std::vector<std::unique_ptr<EditAction>> Actions;
 
-		PrimitiveValueChangedEvent PreviousValue;
-		PrimitiveValueChangedEvent CurrentValue;
-	};
-	std::vector<std::unique_ptr<EditAction>> Actions;
+    bool AllowMerge = true;
 
-	size_t MergeID = 0;
+    AssetEditEventRecord(std::string_view name, size_t mergeID);
 
-	AssetEditEventRecord(std::string_view name, size_t mergeID);
+    std::string Name;
 
-	std::string Name;
-
-	size_t GetMergeID() const { return MergeID; }
-
-	template<class T>
-	T* PushAction()
-	{
-		Actions.emplace_back(std::make_unique<T>());
-		return static_cast<T*>(Actions.back().get());
-	}
+    template<class T>
+    T* PushAction()
+    {
+        Actions.emplace_back(std::make_unique<T>());
+        return static_cast<T*>(Actions.back().get());
+    }
 
     bool IsEmpty() const { return Actions.empty(); }
+
+    void CheckMergeability();
+
+    FieldPath CommonAncestorPath;
+    std::string FieldName;
 };
 
 class AssetEditManager
 {
 protected:
-	std::unordered_map < uint64_t, Types::TypeValue*> OpenAssets;
+    std::unordered_map < uint64_t, Types::TypeValue*> OpenAssets;
 
-	Tokens::TokenSource Token;
+    Tokens::TokenSource Token;
 
-	void RegisterEditCallbacks(Types::TypeValue* assetData);
+    void RegisterEditCallbacks(Types::TypeValue* assetData);
 
-	std::vector<std::unique_ptr<AssetEditEventRecord>> EditEvents;
-	size_t CurrentEditEventIndex = 0;
+    std::vector<std::unique_ptr<AssetEditEventRecord>> EditEvents;
+    size_t CurrentEditEventIndex = 0;
 
-	std::unique_ptr<AssetEditEventRecord> CurrentEditEvent;
+    std::unique_ptr<AssetEditEventRecord> CurrentEditEvent;
+
+    static AssetEditManager* CurrentEditManager;
 
 public:
-	template <class T>
-	T* OpenAsset(const std::string& assetFilePath)
-	{
-		T* asset = AssetManager::OpenAsset<T>(assetFilePath);
-		if (asset)
-		{
-			uint64_t hash = Hashes::CRC64Str(assetFilePath);
-			if (OpenAssets.find(hash) != OpenAssets.end())
-				return asset;
 
-			asset->ValuePtr->ID = hash;
-			OpenAssets.insert_or_assign(hash, asset->ValuePtr);
-			RegisterEditCallbacks(asset->ValuePtr);
-		}
+    void Activate() { CurrentEditManager = this; }
+    void Deactivate() { CurrentEditManager = this; }
 
-		return asset;
-	}
+    static AssetEditManager* GetCurrent() { return CurrentEditManager; }
 
-	template <class T>
-	T* CreateTempAsset()
-	{
-		T* asset = AssetManager::CreateTempAsset<T>(assetFilePath);
-		if (asset)
-		{
-			uint64_t hash = uint64_t(asset);
-			asset->ValuePtr->ID = hash;
-			OpenAssets.insert_or_assign(hash, asset->ValuePtr);
-			RegisterEditCallbacks(asset->ValuePtr);
-		}
+    template <class T>
+    T* OpenAsset(const std::string& assetFilePath)
+    {
+        T* asset = AssetManager::OpenAsset<T>(assetFilePath);
+        if (asset)
+        {
+            uint64_t hash = Hashes::CRC64Str(assetFilePath);
+            if (OpenAssets.find(hash) != OpenAssets.end())
+                return asset;
 
-		return asset;
-	}
+            asset->ValuePtr->ID = hash;
+            OpenAssets.insert_or_assign(hash, asset->ValuePtr);
+            RegisterEditCallbacks(asset->ValuePtr);
+        }
 
-	template <class T>
-	T* CreateAsset(const std::string& assetFilePath)
-	{
-		T* asset = AssetManager::CreateAsset<T>(assetFilePath);
-		if (asset)
-		{
-			uint64_t hash = Hashes::CRC64Str(assetFilePath);
-			if (OpenAssets.find(hash) != OpenAssets.end())
-				return asset;
+        return asset;
+    }
 
-			asset->ValuePtr->ID = hash;
-			OpenAssets.insert_or_assign(hash, asset->ValuePtr);
-			RegisterEditCallbacks(asset->ValuePtr);
-		}
+    template <class T>
+    T* CreateTempAsset()
+    {
+        T* asset = AssetManager::CreateTempAsset<T>();
+        if (asset)
+        {
+            uint64_t hash = uint64_t(asset);
+            asset->ValuePtr->ID = hash;
+            OpenAssets.insert_or_assign(hash, asset->ValuePtr);
+            RegisterEditCallbacks(asset->ValuePtr);
+        }
 
-		return asset;
-	}
+        return asset;
+    }
 
-	void BeginEvent(std::string_view eventName, size_t mergeID = 0);
-	void FinalizeEvent();
+    template <class T>
+    T* CreateAsset(const std::string& assetFilePath)
+    {
+        T* asset = AssetManager::CreateAsset<T>(assetFilePath);
+        if (asset)
+        {
+            uint64_t hash = Hashes::CRC64Str(assetFilePath);
+            if (OpenAssets.find(hash) != OpenAssets.end())
+                return asset;
 
-	bool CanUndo() const;
-	bool CanRedo() const;
+            asset->ValuePtr->ID = hash;
+            OpenAssets.insert_or_assign(hash, asset->ValuePtr);
+            RegisterEditCallbacks(asset->ValuePtr);
+        }
 
-	void Undo();
-	void Redo();
+        return asset;
+    }
 
-	const std::vector<std::unique_ptr<AssetEditEventRecord>>& GetEditEvents() const { return EditEvents; }
-	size_t GetCurrentEventIndex() const { return CurrentEditEventIndex; }
+    void BeginEvent(std::string_view eventName, bool allowMerge = true);
+    void FinalizeEvent();
 
-	class AssetDirtyEvent
-	{
-	public:
-		uint64_t	AssetID;
-	};
+    bool CanUndo() const;
+    bool CanRedo() const;
 
-	Events::EventSource<AssetDirtyEvent> OnAssetDirty;
+    void Undo();
+    void Redo();
+
+    const std::vector<std::unique_ptr<AssetEditEventRecord>>& GetEditEvents() const { return EditEvents; }
+    size_t GetCurrentEventIndex() const { return CurrentEditEventIndex; }
+
+    class AssetDirtyEvent
+    {
+    public:
+        uint64_t	AssetID;
+    };
+
+    Events::EventSource<AssetDirtyEvent> OnAssetDirty;
 };
