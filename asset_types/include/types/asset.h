@@ -11,84 +11,88 @@ using namespace Types;
 
 namespace AssetTypes
 {
-	// attributes
-	class AssetPathAttribute : public AttributeTypes::Attribute
-	{
-	public:
-		DEFINE_ATTRIBUTE(AssetPathAttribute)
-	};
+    static constexpr std::string_view ResourceReferenceEditor = "ResourceReferenceEditor";
+    static constexpr std::string_view TextureReferenceEditor = "TextureReferenceEditor";
+
+
+    // attributes
+    class AssetPathAttribute : public AttributeTypes::Attribute
+    {
+    public:
+        DEFINE_ATTRIBUTE(AssetPathAttribute)
+    };
 
     class FileExtensionFilterAttribute : public AttributeTypes::Attribute
     {
     public:
-		DEFINE_ATTRIBUTE(FileExtensionFilterAttribute)
+        DEFINE_ATTRIBUTE(FileExtensionFilterAttribute)
 
-		std::vector<std::string> Filters;
+            std::vector<std::string> Filters;
     };
 
     class FileExtensionAttribute : public AttributeTypes::Attribute
     {
     public:
-		DEFINE_ATTRIBUTE(FileExtensionFilterAttribute)
+        DEFINE_ATTRIBUTE(FileExtensionFilterAttribute)
 
-		FileExtensionAttribute(std::string_view ext) : Extension(ext) {}
+            FileExtensionAttribute(std::string_view ext) : Extension(ext) {}
 
-		std::string Extension;
+        std::string Extension;
     };
 
-	// types
-	class ResourceReference : public TypeWraper
-	{
-	public:
-		DEFINE_TYPE(ResourceReference);
+    // types
+    class ResourceReference : public TypeWraper
+    {
+    public:
+        DEFINE_TYPE(ResourceReference);
 
-		static void Register()
-		{
-			auto* type = TypeDatabase::Get().CreateType(TypeName);
-			type->AddAttribute<AttributeTypes::CustomEditorAttribute>("ResourceReferenceEditor");
+        static void Register()
+        {
+            auto* type = TypeDatabase::Get().CreateType(TypeName);
+            type->AddAttribute<AttributeTypes::CustomEditorAttribute>(ResourceReferenceEditor);
 
-			type->AddPrimitiveField<std::string>("Path", std::string());
-		}
+            type->AddPrimitiveField<std::string>("Path", std::string());
+        }
 
-		const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
-		void SetPath(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
-		void ResetPath() { ValuePtr->ResetFieldToDefault(0); }
-	};
+        const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
+        void SetPath(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
+        void ResetPath() { ValuePtr->ResetFieldToDefault(0); }
+    };
 
-	class AssetReference : public TypeWraper
-	{
-	public:
-		DEFINE_TYPE(AssetReference);
+    class AssetReference : public TypeWraper
+    {
+    public:
+        DEFINE_TYPE(AssetReference);
 
-		static void Register()
-		{
-			auto* type = TypeDatabase::Get().CreateType(TypeName);
-			type->AddAttribute<AttributeTypes::CustomEditorAttribute>("ResourceReferenceEditor");
+        static void Register()
+        {
+            auto* type = TypeDatabase::Get().CreateType(TypeName);
+            type->AddAttribute<AttributeTypes::CustomEditorAttribute>(ResourceReferenceEditor);
 
-			type->AddPrimitiveField<std::string>("Path", std::string());
-		}
+            type->AddPrimitiveField<std::string>("Path", std::string());
+        }
 
-		const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
-		void SetPath(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
-		void ResetPath() { ValuePtr->ResetFieldToDefault(0); }
-	};
+        const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
+        void SetPath(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
+        void ResetPath() { ValuePtr->ResetFieldToDefault(0); }
+    };
 
-	class Asset : public TypeWraper
-	{
-	public:
-		DEFINE_TYPE(Asset);
+    class Asset : public TypeWraper
+    {
+    public:
+        DEFINE_TYPE(Asset);
 
-		static void Register()
-		{
-			auto* type = TypeDatabase::Get().CreateType(TypeName);
+        static void Register()
+        {
+            auto* type = TypeDatabase::Get().CreateType(TypeName);
 
-			auto path = type->AddPrimitiveField<std::string>("Path", std::string());
-			path->AddAttribute<AssetPathAttribute>();
-			path->AddAttribute<AttributeTypes::ReadOnlyAttribute>();
-		}
+            auto path = type->AddPrimitiveField<std::string>("Path", std::string());
+            path->AddAttribute<AssetPathAttribute>();
+            path->AddAttribute<AttributeTypes::ReadOnlyAttribute>();
+        }
 
-		const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
-		void SetPath(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
-		void ResetPath() { ValuePtr->ResetFieldToDefault(0); }
-	};
+        const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
+        void SetPath(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
+        void ResetPath() { ValuePtr->ResetFieldToDefault(0); }
+    };
 }

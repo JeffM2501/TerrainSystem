@@ -26,6 +26,14 @@ void HistoryPanel::OnShow()
     ImGui::BeginChild("HistoryPanel", ImVec2(0, 0));
 
     auto& editEvents = manager->GetEditEvents();
+
+    if (editEvents.empty())
+    {
+        ImGui::Text("No edit history available.");
+        ImGui::EndChild();
+        return;
+    }
+
     for (auto itr = editEvents.rbegin(); itr != editEvents.rend(); itr++)
     {
         auto& event = *itr;
