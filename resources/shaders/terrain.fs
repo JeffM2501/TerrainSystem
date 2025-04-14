@@ -5,13 +5,16 @@ in vec2 fragTexCoord;
 in vec2 fragTexCoord2;
 in vec4 fragColor;
 in vec3 fragNormal;
+in vec3 fragPosition;
 
 uniform int selected;
 uniform vec4 selectedColor;
 
 uniform int showSplat;
+uniform float specularValue;
 
 uniform vec3 sunVector;
+uniform vec3 viewPos;
 
 uniform sampler2D matDiffuse0;
 uniform vec4 matTint0;
@@ -43,8 +46,10 @@ void main()
         return;
     }
     // Texel color fetching from texture sampler
-    vec4 texelColor = vec4(1,0,1,1);
+    vec4 texelColor = vec4(1, 1, 1, 1);
     vec4 splatColor = texture(splatmap, fragTexCoord);
+
+    vec3 viewD = normalize(viewPos - fragPosition);
 
     // TODO< check the splat map to see if we even need the base layer
 
@@ -110,6 +115,13 @@ void main()
 
     float ambient = 6.0f;
     vec3 specular = vec3(0.0);
+
+     float specCo = 0.0;
+    if (NdotL > 0.0) 
+        specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), specularValue); // 16 refers to shine
+
+    if (specularValue > 0)
+        specular += specCo;
 
     finalColor = (texelColor*((tint + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
     finalColor += texelColor*(ambient/10.0)*tint;

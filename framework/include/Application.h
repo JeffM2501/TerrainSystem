@@ -57,12 +57,12 @@ namespace EditorFramework
 		void SaveDocument(size_t documentID);
 		void SaveDocumentAs(size_t documentID);
 
-        template <class T>
-        uint64_t RegisterPanel()
-        {
+		template <class T>
+		uint64_t RegisterPanel()
+		{
 			Panels.try_emplace(T::PanelID(), std::make_unique<T>());
 			return T::PanelID();
-        }
+		}
 
 		template<class T>
 		T* GetPanel()
@@ -95,15 +95,17 @@ namespace EditorFramework
 		virtual void OnStartup() {};
 		virtual void OnShutdown() {};
 		virtual void OnUpdate() {};
-		
-		virtual void OnLoadSettings(rapidjson::Document& settingsDocument){};
-        virtual void OnSaveSettings(rapidjson::Document& settingsDocument){};
+
+		virtual void OnLoadSettings(rapidjson::Document& settingsDocument) {};
+		virtual void OnSaveSettings(rapidjson::Document& settingsDocument) {};
 
 		virtual void OnRegisterDocuments() {};
 		virtual void OnRegisterPanels() {};
 		virtual void OnRegisterMenus() {};
 
 		virtual void OnSetupInitalState() {};
+
+		virtual void OnSetupMainMenuBar(MenuBar& menu) {};
 
 		virtual void OnApplyStyle();
 		virtual void SetupBackgroundTexture();
@@ -116,8 +118,8 @@ namespace EditorFramework
 		void CompletePendingSave(size_t documentId, bool save);
 		void CancelPendingSave();
 
-        MenuBar MainMenu;
-        Tokens::TokenSource LifeToken;
+		MenuBar MainMenu;
+		Tokens::TokenSource LifeToken;
 
 	private:
 		void Startup();

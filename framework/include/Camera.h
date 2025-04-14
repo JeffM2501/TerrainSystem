@@ -24,32 +24,38 @@ namespace EditorFramework
 
 		virtual size_t GetControlllerTypeID() = 0;
 
-		float TranslateSpeed = 100.0f;
-		float FastTranslateModifyer = 10.0f;
-        float MouseSensitivity = 1.0f / 500.0f;
+		enum class EnableState
+		{
+			Disabled,
+			EnabledAlways,
+			EnableOnAction,
+		};
+
+
+		EnableState EnabledState = EnableState::EnableOnAction;
 
 	protected:
-        void ApplyTranslation(EditorCamera& camera);
+		Vector3 ApplyTranslation(EditorCamera& camera);
 	};
 
-    class FocusCameraController : public EditorCameraController
-    {
-    public:
-        DEFINE_CAMERA_CONTROLLER(FocusCameraController);
-        bool Update(EditorCamera& camera, const Vector2& renderSize) final;
+	class FocusCameraController : public EditorCameraController
+	{
+	public:
+		DEFINE_CAMERA_CONTROLLER(FocusCameraController);
+		bool Update(EditorCamera& camera, const Vector2& renderSize) final;
 
 		void SetFocusPoint(EditorCamera& camera, const Vector3& point, float time = 1.0f, float distance = 10.0f, bool focusFirst = true);
 
-    private:
-        Vector3 DesiredCameraPosition = { 0, 0, 0 };
-        Vector3 DesiredCameraTarget = { 0, 0, 0 };
+	private:
+		Vector3 DesiredCameraPosition = { 0, 0, 0 };
+		Vector3 DesiredCameraTarget = { 0, 0, 0 };
 
-        Vector3 StartCameraPosition = { 0, 0, 0 };
-        Vector3 StartCameraTarget = { 0, 0, 0 };
+		Vector3 StartCameraPosition = { 0, 0, 0 };
+		Vector3 StartCameraTarget = { 0, 0, 0 };
 
 		float TotalTime = 0;
-        float CurrentTime = 0;
-    };
+		float CurrentTime = 0;
+	};
 
 	class FPSCameraController : public EditorCameraController
 	{
@@ -60,8 +66,8 @@ namespace EditorFramework
 
 	class OribitCameraController : public EditorCameraController
 	{
-	public:	
-        DEFINE_CAMERA_CONTROLLER(OribitCameraController);
+	public:
+		DEFINE_CAMERA_CONTROLLER(OribitCameraController);
 		bool Update(EditorCamera& camera, const Vector2& renderSize) final;
 
 	private:
@@ -70,61 +76,65 @@ namespace EditorFramework
 
 	class EditorCamera
 	{
-		public:
-			std::vector<std::unique_ptr<EditorCameraController>> Controllers;
+	public:
+		std::vector<std::unique_ptr<EditorCameraController>> Controllers;
 
-			template<class T, typename ...Args>
-			void PushController(Args&&... args)
+		template<class T, typename ...Args>
+		void PushController(Args&&... args)
+		{
+			auto controller = std::make_unique<T>(std::forward<Args>(args)...);
+			Controllers.emplace_back(std::move(controller));
+		}
+
+		EditorCameraController* FindController(size_t controllerID)
+		{
+			for (auto& controller : Controllers)
 			{
-				auto controller = std::make_unique<T>(std::forward<Args>(args)...);
-				Controllers.emplace_back(std::move(controller));
+				if (controller->GetControlllerTypeID() == controllerID)
+					return controller.get();
 			}
+			return nullptr;
+		}
+		EditorCameraController* FindController(std::string_view controllerName)
+		{
+			for (auto& controller : Controllers)
+			{
+				if (controller->GetControlllerTypeID() == std::hash<std::string_view>{}(controllerName))
+					return controller.get();
+			}
+			return nullptr;
+		}
+		template <class T>
+		T* FindController()
+		{
+			return static_cast<T*>(FindController(T::ControlllerTypeID()));
+		}
 
-            EditorCameraController* FindController(size_t controllerID)
-            {
-                for (auto& controller : Controllers)
-                {
-                    if (controller->GetControlllerTypeID() == controllerID)
-                        return controller.get();
-                }
-                return nullptr;
-            }
-            EditorCameraController* FindController(std::string_view controllerName)
-            {
-                for (auto& controller : Controllers)
-                {
-                    if (controller->GetControlllerTypeID() == std::hash<std::string_view>{}(controllerName))
-                        return controller.get();
-                }
-                return nullptr;
-            }
-			template <class T>
-            T* FindController()
-            {
-                return static_cast<T*>(FindController(T::ControlllerTypeID()));
-            }
+		void Update(const Vector2& renderSize);
+		void Apply();
 
-			void Update(const Vector2& renderSize);
-			void Apply();
+		void SetFOV(float fovy) { ViewCamera.fovy = fovy; }
+		float GetFOVY() const { return ViewCamera.fovy; }
 
-			void SetFOV(float fovy) { ViewCamera.fovy = fovy; }
-			float GetFOVY() const { return ViewCamera.fovy; }
+		Camera3D* GetCamera() { return &ViewCamera; }
 
-			Camera3D* GetCamera() { return &ViewCamera; }
+		EditorCameraController* GetActiveController() { return ActiveController; }
 
-            EditorCameraController* GetActiveController() { return ActiveController; }
+		template <class T>
+		bool IsConrollerActive()
+		{
+			if (!ActiveController)
+				return false;
 
-			template <class T>
-            bool IsConrollerActive()
-            {
-				if (!ActiveController)
-					return false;
+			return ActiveController->GetControlllerTypeID() == T::ControlllerTypeID();
+		}
 
-                return ActiveController->GetControlllerTypeID() == T::ControlllerTypeID();
-            }
+		float TranslateSpeed = 100.0f;
+		float FastTranslateModifyer = 10.0f;
+		float MouseSensitivity = 1.0f / 500.0f;
 
-		private:
-			Camera3D	ViewCamera = { 0 };
-            EditorCameraController* ActiveController = nullptr;
+	private:
+		Camera3D	ViewCamera = { 0 };
+		EditorCameraController* ActiveController = nullptr;
 	};
 }

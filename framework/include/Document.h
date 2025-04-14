@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "rlgl.h"
 #include "Events.h"
 #include "Toolbar.h"
 #include "Camera.h"
@@ -54,15 +55,15 @@ namespace EditorFramework
 
 		virtual Toolbar* GetToolbar() { return &MainToolbar; }
 		virtual MenuBar& GetDocumentMenu() { return DocumentMenuBar; }
-        virtual CommandContextSet* GetDocumentCommandContext() { return &DocumentCommandContext; }
+		virtual CommandContextSet* GetDocumentCommandContext() { return &DocumentCommandContext; }
 
 		Events::EventSource<Document> OnDirty;
 
-        virtual void SetDirty()
-        {
-            Dirty = true;
-            OnDirty.Invoke(*this);
-        }
+		virtual void SetDirty()
+		{
+			Dirty = true;
+			OnDirty.Invoke(*this);
+		}
 
 	protected:
 		size_t DocumentID = 0;
@@ -94,7 +95,7 @@ namespace EditorFramework
 		void OnShowContent(int width, int height) override;
 		void OnUpdate(int width, int height) override;
 
-        EditorCamera& GetCamera() { return VieportCamera; }
+		EditorCamera& GetCamera() { return VieportCamera; }
 
 	protected:
 		virtual void OnShowScene(const Vector2& renderSize) = 0;
@@ -104,6 +105,8 @@ namespace EditorFramework
 
 		Color ClearColor = SKYBLUE;
 		bool ZIsUp = true;
+		double NearPlane = RL_CULL_DISTANCE_NEAR;
+		double FarPlane = RL_CULL_DISTANCE_FAR;
 	};
 }
 
