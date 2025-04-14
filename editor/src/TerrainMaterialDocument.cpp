@@ -32,7 +32,7 @@ void TerrainMaterialDocument::OpenAsset(const std::string& assetPath)
 
 void TerrainMaterialDocument::RegisterEditHandler()
 {
-    AssetData->ValuePtr->OnPrimitiveValueChanged.Add([this](const Types::ValueChangedEvent& event)
+    AssetData->ValuePtr->OnValueChanged.Add([this](const Types::ValueChangedEvent& event)
         {
             SetDirty();
         }, Token.GetToken());

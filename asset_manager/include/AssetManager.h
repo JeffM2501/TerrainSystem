@@ -13,82 +13,84 @@
 
 namespace AssetSystem
 {
-	namespace AssetManager
-	{
-		extern std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
+    namespace AssetManager
+    {
+        extern std::unordered_map<size_t, std::unique_ptr<TypeWraper>> TempAssets;
 
-		AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
+        void SetAssetRoot(const std::string& path);
 
-		void CloseAsset(AssetTypes::Asset* asset);
+        AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
 
-		void StoreAsset(const std::string& assetFilePath, std::unique_ptr<TypeWraper> assetData);
+        void CloseAsset(AssetTypes::Asset* asset);
 
-		template <class T>
-		T* OpenAsset(const std::string& assetFilePath)
-		{
-			auto existing = FindExistingAsset(assetFilePath);
+        void StoreAsset(const std::string& assetFilePath, std::unique_ptr<TypeWraper> assetData);
 
-			if (existing)
-			{
-				if (existing->TypeName != T::TypeName)
-					return nullptr;
-				return static_cast<T*>(existing);
-			}
-			// todo make the path relative to asset root not working dir
-			std::unique_ptr<T> asset = T::ReadAs<T>(assetFilePath, true);
+        template <class T>
+        T* OpenAsset(const std::string& assetFilePath)
+        {
+            auto existing = FindExistingAsset(assetFilePath);
 
-			if (!asset->IsValid())
-			{
-				return nullptr;
-			}
+            if (existing)
+            {
+                if (existing->TypeName != T::TypeName)
+                    return nullptr;
+                return static_cast<T*>(existing);
+            }
+            // todo make the path relative to asset root not working dir
+            std::unique_ptr<T> asset = T::ReadAs<T>(assetFilePath, true);
 
-			// set the current path in the asset
-			// TODO, see if the path is different?
-			asset->SetPath(assetFilePath);
+            if (!asset->IsValid())
+            {
+                return nullptr;
+            }
 
-			T* ptr = asset.get();
-			StoreAsset(assetFilePath, std::move(asset));
+            // set the current path in the asset
+            // TODO, see if the path is different?
+            asset->SetPath(assetFilePath);
 
-			return ptr;
-		}
+            T* ptr = asset.get();
+            StoreAsset(assetFilePath, std::move(asset));
 
-		template <class T>
-		T* CreateTempAsset()
-		{
-			std::unique_ptr<T> asset = std::make_unique<T>();
-			T* ptr = asset.get();
+            return ptr;
+        }
 
-			TempAssets[reinterpret_cast<size_t>(ptr)] = std::move(asset);
+        template <class T>
+        T* CreateTempAsset()
+        {
+            std::unique_ptr<T> asset = std::make_unique<T>();
+            T* ptr = asset.get();
 
-			return ptr;
-		}
+            TempAssets[reinterpret_cast<size_t>(ptr)] = std::move(asset);
 
-		template <class T>
-		T* CreateAsset(const std::string& assetFilePath)
-		{
-			auto existing = FindExistingAsset(assetFilePath);
+            return ptr;
+        }
 
-			if (existing)
-			{
-				if (existing->TypeName != T::TypeName)
-					return nullptr;
-				return existing;
-			}
+        template <class T>
+        T* CreateAsset(const std::string& assetFilePath)
+        {
+            auto existing = FindExistingAsset(assetFilePath);
 
-			std::unique_ptr<T> asset = std::unique_ptr<T>();
-			T* ptr = asset.get();
+            if (existing)
+            {
+                if (existing->TypeName != T::TypeName)
+                    return nullptr;
+                return existing;
+            }
 
-			if (!asset->IsValid())
-			{
-				return nullptr;
-			}
+            std::unique_ptr<T> asset = std::unique_ptr<T>();
+            T* ptr = asset.get();
 
-			// set the current path in the asset
-			asset->SetPath(assetFilePath);
+            if (!asset->IsValid())
+            {
+                return nullptr;
+            }
 
-			StoreAsset(assetFilePath, std::move(asset));
+            // set the current path in the asset
+            asset->SetPath(assetFilePath);
 
-			return ptr;
-		}
-	}
+            StoreAsset(assetFilePath, std::move(asset));
+
+            return ptr;
+        }
+    }
 }

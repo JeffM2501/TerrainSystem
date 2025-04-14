@@ -45,7 +45,7 @@ void AssetEditEventRecord::CheckMergeability()
 
 void AssetEditManager::RegisterEditCallbacks(Types::TypeValue* assetData)
 {
-    assetData->OnPrimitiveValueChanged.Add([this](const Types::ValueChangedEvent& event)
+    assetData->OnValueChanged.Add([this](const Types::ValueChangedEvent& event)
         {
             OnAssetDirty.Invoke(AssetDirtyEvent{ event.Value->GetParent()->ID });
 

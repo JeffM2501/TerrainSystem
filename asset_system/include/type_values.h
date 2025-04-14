@@ -21,6 +21,7 @@ namespace Types
         virtual ~ValueChangedRecord() = default;
 
         using Ptr = std::shared_ptr<ValueChangedRecord>;
+
     };
 
     class ValueChangedEvent
@@ -30,6 +31,14 @@ namespace Types
         FieldPath Path;
 
         ValueChangedRecord::Ptr Record = nullptr;
+
+        enum ValueRecordType
+        {
+            Primitive,
+            Enumeration
+        };
+
+        ValueRecordType RecordType = ValueRecordType::Primitive;
 
         template<class T>
         T* GetRecordAs()
@@ -46,6 +55,15 @@ namespace Types
         T NewValue;
 
         using Ptr = std::shared_ptr<PrimitiveValueChangedRecord>;
+    };
+
+    class EnumValueChangedRecord : public ValueChangedRecord
+    {
+    public:
+        int OldValue;
+        int NewValue;
+
+        using Ptr = std::shared_ptr<EnumValueChangedRecord>;
     };
 
     class FieldValue
@@ -70,7 +88,6 @@ namespace Types
 
         virtual TypeValue* GetParent() { return ParentValue; }
         virtual const TypeValue* GetParent() const { return ParentValue; }
-
     };
 
     class EnumerationFieldValue : public FieldValue
@@ -138,17 +155,17 @@ namespace Types
         PrimitiveListFieldValue(const PrimitiveListFieldValue&) = delete;
         PrimitiveListFieldValue& operator = (const PrimitiveListFieldValue&) = delete;
 
-        Events::EventSource<ValueChangedEvent> OnPrimitiveValueChanged;
+        Events::EventSource<ValueChangedEvent> OnValueChanged;
 
-        void CallPrimitiveValueChanged(ValueChangedEvent& eventRecord)
+        void CallValueChanged(ValueChangedEvent& eventRecord)
         {
             eventRecord.Value = this;
-            OnPrimitiveValueChanged.Invoke(eventRecord);
+            OnValueChanged.Invoke(eventRecord);
 
             if (ParentValue)
             {
                 eventRecord.Path.PushBack(path);
-                ParentValue->CallPrimitiveValueChanged(eventRecord);
+                ParentValue->CallValueChanged(eventRecord);
             }
         }
 
@@ -226,7 +243,7 @@ namespace Types
         TypeValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
         TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) { SetType(t); }
 
-        Events::EventSource<ValueChangedEvent> OnPrimitiveValueChanged;
+        Events::EventSource<ValueChangedEvent> OnValueChanged;
 
         TypeValue* GetParent() override
         {
@@ -244,15 +261,15 @@ namespace Types
             return reinterpret_cast<const TypeValue*>(this);
         }
 
-        void CallPrimitiveValueChanged(ValueChangedEvent& eventRecord)
+        void CallValueChanged(ValueChangedEvent& eventRecord)
         {
             eventRecord.Value = this;
-            OnPrimitiveValueChanged.Invoke(eventRecord);
+            OnValueChanged.Invoke(eventRecord);
 
             if (ParentValue)
             {
                 eventRecord.Path.PushFront(SubPath);
-                ParentValue->CallPrimitiveValueChanged(eventRecord);
+                ParentValue->CallValueChanged(eventRecord);
             }
         }
 
@@ -299,7 +316,7 @@ namespace Types
             valueItr->SetValue(value);
 
             eventRecord.Path.Elements.push_back(FieldPath::Field(fieldIndex));
-            CallPrimitiveValueChanged(eventRecord);
+            CallValueChanged(eventRecord);
         }
 
         template<typename T>
@@ -324,7 +341,13 @@ namespace Types
                 itr = Values.insert_or_assign(fieldIndex, std::move(std::make_unique<EnumerationFieldValue>(this, SubPath + FieldPath::Field(fieldIndex)))).first;
 
             EnumerationFieldValue* valueItr = reinterpret_cast<EnumerationFieldValue*>(itr->second.get());
+
+            ValueChangedEvent eventRecord;
+            eventRecord.Record = std::make_shared<EnumValueChangedRecord>();
+            eventRecord.GetRecordAs<EnumValueChangedRecord>()->OldValue = valueItr->GetValue();
             valueItr->SetValueAs(value);
+            eventRecord.GetRecordAs<EnumValueChangedRecord>()->NewValue = valueItr->GetValue();
+            CallValueChanged(eventRecord);
         }
 
         void ResetFieldToDefault(int fieldIndex);
@@ -425,6 +448,31 @@ namespace Types
                     else
                     {
                         GetTypeFieldValue(fieldIndex)->SetPrimtiveFieldFromPath(path, value, pathIndex + 1);
+                    }
+                }
+            }
+        }
+
+        void SetEnumFieldFromPath(const FieldPath& path, const int& value, int pathIndex = 0)
+        {
+            if (path.Elements[pathIndex].Type == FieldPath::ElementType::Field)
+            {
+                int fieldIndex = path.Elements[pathIndex].Index;
+
+                auto* fieldTypeInfo = GetType()->GetField(fieldIndex);
+
+                if (fieldTypeInfo->IsEnum())
+                {
+                    if (!fieldTypeInfo->IsList())
+                    {
+                        SetFieldEnumerationValue(fieldIndex, value);
+                    }
+                }
+                else if (fieldTypeInfo->IsType())
+                {
+                    if (!fieldTypeInfo->IsList())
+                    {
+                        GetTypeFieldValue(fieldIndex)->SetEnumFieldFromPath(path, value, pathIndex + 1);
                     }
                 }
             }
