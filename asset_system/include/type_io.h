@@ -24,7 +24,7 @@ namespace TypeIO
 
 		bool AddPrimtiveField(TypeValue* destinationValue, int fieldIndex, PrimitiveFieldInfo* fieldInfo, rapidjson::Value& jsonValue);
 		bool AddPrimtiveListField(TypeValue* destinationValue, int fieldIndex, PrimitiveFieldInfo* fieldInfo, rapidjson::Value& jsonValue);
-
+		bool AddEnumerationeField(TypeValue* destinationValue, int fieldIndex, EnumerationFieldInfo* fieldInfo, rapidjson::Value& jsonValue);
 		bool ReadTypeValue(TypeValue* destinationValue, rapidjson::Value& jsonValue);
 		bool ReadTypeListValue(TypeListValue& listValue, rapidjson::Value& jsonValue);
 
@@ -42,6 +42,8 @@ namespace TypeIO
 		rapidjson::Value WriteTypeListValue(const TypeListValue* value);
 
 		rapidjson::Value WritePrimitiveField(const FieldInfo* fieldInfo, const FieldValue* value);
+
+		rapidjson::Value WriteEnumerationField(const FieldInfo* fieldInfo, const FieldValue* value);
 
 		bool SetPrimitiveFieldJson(PrimitiveType primType, const FieldValue* value, rapidjson::Value& fieldType, rapidjson::Value& fieldValue);
 		bool SetPrimitiveFieldListJson(PrimitiveType primType, const FieldValue* value, rapidjson::Value& fieldType, rapidjson::Value& fieldValue);
