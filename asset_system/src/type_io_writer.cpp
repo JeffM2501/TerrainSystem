@@ -1,6 +1,7 @@
 #include "type_io.h"
 
 #include "field_info.h"
+#include "attributes.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -191,7 +192,7 @@ bool TypeWriter::SetPrimitiveFieldJson(PrimitiveType primType, const FieldValue*
     case PrimitiveType::GUID:
         fieldType.SetString("GUID");
         returnValue.SetString(StringRef(static_cast<const PrimitiveFieldValue<Hashes::GUID>*>(value)->GetValue().ToString().c_str()));
-    break;
+        break;
 
     case PrimitiveType::Color:
     {
@@ -469,8 +470,8 @@ bool TypeWriter::SetPrimitiveFieldListJson(PrimitiveType primType, const FieldVa
             v.SetString(StringRef(value.ToString().c_str()));
             returnValue.PushBack(v, RootDocument->GetAllocator());
         }
-    break; 
-    
+        break;
+
     case PrimitiveType::Color:
     {
         fieldType.SetString("color[]");
@@ -604,6 +605,9 @@ rapidjson::Value TypeWriter::WriteTypeListValue(const TypeListValue* value)
 
     for (size_t i = 0; i < value->Size(); i++)
     {
+        if (type->FieldHasAttribute<AttributeTypes::NoSerializationAttribute>(int(i)))
+            continue;
+
         returnValue.PushBack(WriteTypeValue(&value->Get(i)), RootDocument->GetAllocator());
     }
     rootType.AddMember(ValueName, returnValue, RootDocument->GetAllocator());

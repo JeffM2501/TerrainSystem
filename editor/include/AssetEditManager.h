@@ -80,7 +80,7 @@ public:
     template <class T>
     T* OpenAsset(const std::string& assetFilePath)
     {
-        T* asset = AssetManager::OpenAsset<T>(assetFilePath);
+        T* asset = AssetSystem::AssetManager::OpenAsset<T>(assetFilePath);
         if (asset)
         {
             uint64_t hash = Hashes::CRC64Str(assetFilePath);
@@ -98,7 +98,7 @@ public:
     template <class T>
     T* CreateTempAsset()
     {
-        T* asset = AssetManager::CreateTempAsset<T>();
+        T* asset = AssetSystem::AssetManager::CreateTempAsset<T>();
         if (asset)
         {
             uint64_t hash = uint64_t(asset);
@@ -113,7 +113,7 @@ public:
     template <class T>
     T* CreateAsset(const std::string& assetFilePath)
     {
-        T* asset = AssetManager::CreateAsset<T>(assetFilePath);
+        T* asset = AssetSystem::AssetManager::CreateAsset<T>(assetFilePath);
         if (asset)
         {
             uint64_t hash = Hashes::CRC64Str(assetFilePath);
@@ -126,6 +126,16 @@ public:
         }
 
         return asset;
+    }
+
+    bool SaveAssetAs(AssetTypes::Asset* asset, const AssetSystem::AssetManager::AssetPath& assetPath)
+    {
+        return AssetSystem::AssetManager::SaveAssetAs(asset, assetPath);
+    }
+
+    bool SaveAsset(AssetTypes::Asset* asset)
+    {
+        return AssetSystem::AssetManager::SaveAsset(asset);
     }
 
     void BeginEvent(std::string_view eventName, bool allowMerge = true);

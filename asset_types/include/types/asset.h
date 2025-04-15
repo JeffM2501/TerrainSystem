@@ -14,7 +14,6 @@ namespace AssetTypes
     static constexpr std::string_view ResourceReferenceEditor = "ResourceReferenceEditor";
     static constexpr std::string_view TextureReferenceEditor = "TextureReferenceEditor";
 
-
     // attributes
     class AssetPathAttribute : public AttributeTypes::Attribute
     {
@@ -87,8 +86,9 @@ namespace AssetTypes
             auto* type = TypeDatabase::Get().CreateType(TypeName);
 
             auto path = type->AddPrimitiveField<std::string>("Path", std::string());
-            path->AddAttribute<AssetPathAttribute>();
+            path->AddAttribute<AttributeTypes::NoSerializationAttribute>();
             path->AddAttribute<AttributeTypes::ReadOnlyAttribute>();
+            path->AddAttribute<AssetPathAttribute>();
         }
 
         const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }

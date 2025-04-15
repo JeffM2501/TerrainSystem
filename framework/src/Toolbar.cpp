@@ -15,10 +15,10 @@ namespace EditorFramework
 
         const char* name = TextFormat("###Toolbar%p", this);
 
-        BarHeight = ImGui::GetTextLineHeight() + (ImGui::GetStyle().FramePadding.y*4);
+        BarHeight = ImGui::GetTextLineHeight() + (ImGui::GetStyle().FramePadding.y * 4);
 
         bool show = ImGui::BeginChild(name, ImVec2(ImGui::GetContentRegionAvail().x, BarHeight));
-  
+
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().FramePadding.y);
         if (show)
         {
@@ -100,6 +100,12 @@ namespace EditorFramework
             }
 
             if (state)
+            {
+                auto color = ImGui::ColorConvertFloat4ToU32(ImGui::GetStyle().Colors[ImGuiCol_TabSelectedOverline]);
+                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), color, ImGui::GetStyle().FrameRounding, 0, ScaleToDPI(2.0f));
+            }
+
+            if (state)
                 ImGui::PopStyleColor();
 
             break;
@@ -129,10 +135,10 @@ namespace EditorFramework
         break;
         }
         ImGui::EndDisabled();
-        
+
 
         std::string toolTip(item.GetName());
- 
+
         std::string_view description = item.GetDescription();
         if (!description.empty())
         {
