@@ -5,80 +5,84 @@
 #include "imgui.h"
 #include "CRC64.h"
 
+#include "LifetimeToken.h"
+
 #include <string>
 #include <string_view>
 
 namespace EditorFramework
 {
-    class Document;
+	class Document;
 
-    enum class PlanelLayoutLocation : uint8_t
-    {
-        Floating,
-        Left,
-        Right,
-        Bottom,
-        Max
-    };
+	enum class PlanelLayoutLocation : uint8_t
+	{
+		Floating,
+		Left,
+		Right,
+		Bottom,
+		Max
+	};
 
 #define DEFINE_PANEL(T)\
     static uint64_t PanelID() {return Hashes::CRC64Str(#T);}\
 	uint64_t GetPanelID() override {  return Hashes::CRC64Str(#T); }
 
-    class Panel
-    {
-    public:
-        virtual uint64_t GetPanelID() = 0;
+	class Panel
+	{
+	public:
+		virtual uint64_t GetPanelID() = 0;
 
-        void Update();
+		void Update();
 
-        void Open() { Shown = true; }
-        void Close() { Shown = false; }
+		void Open() { Shown = true; }
+		void Close() { Shown = false; }
 
-        bool IsOpen() { return Shown; }
+		bool IsOpen() { return Shown; }
 
-        void ForceDockSpace(ImGuiID id) { ForcedDockingID = id; }
+		void ForceDockSpace(ImGuiID id) { ForcedDockingID = id; }
 
-        inline void DocumentChanged(Document* document)
-        {
-            OnDocumentChanged(document);
-            CurrentDocument = document;
-        }
+		inline void DocumentChanged(Document* document)
+		{
+			OnDocumentChanged(document);
+			CurrentDocument = document;
+		}
 
-        std::string_view GetImGuiName();
+		std::string_view GetImGuiName();
 
-        std::string_view GetName() const { return Name; }
-        std::string_view GetIcon() const { return Icon; }
+		std::string_view GetName() const { return Name; }
+		std::string_view GetIcon() const { return Icon; }
 
-        PlanelLayoutLocation Location = PlanelLayoutLocation::Floating;
+		PlanelLayoutLocation Location = PlanelLayoutLocation::Floating;
 
-    protected:
-        virtual void OnUpdate() {};
-        virtual void OnShow() {};
-        virtual void OnDocumentChanged(Document*) {};
+	protected:
+		virtual void OnUpdate() {};
+		virtual void OnShow() {};
+		virtual void OnDocumentChanged(Document*) {};
 
-        std::string Icon;
-        std::string Name;
+		Tokens::TokenSource Token;
 
-        Document* GetDocument() { return CurrentDocument; }
+		std::string Icon;
+		std::string Name;
 
-        template<class T>
-        T* GetDoumentAs()
-        {
-            if (!CurrentDocument || CurrentDocument->GetDocumentTypeID() != T::DocumentTypeID())
-                return nullptr;
+		Document* GetDocument() { return CurrentDocument; }
 
-            return static_cast<T*>(CurrentDocument);
-        }
-    private:
-        bool Shown = true;
+		template<class T>
+		T* GetDoumentAs()
+		{
+			if (!CurrentDocument || CurrentDocument->GetDocumentTypeID() != T::DocumentTypeID())
+				return nullptr;
 
-        ImGuiID ForcedDockingID = 0;
+			return static_cast<T*>(CurrentDocument);
+		}
+	private:
+		bool Shown = true;
 
-        Document* CurrentDocument;
+		ImGuiID ForcedDockingID = 0;
 
-        Vector2 MiniumSize = { 300, 300 };
+		Document* CurrentDocument;
 
-        std::string ImGuiName;
-    };
+		Vector2 MiniumSize = { 300, 300 };
+
+		std::string ImGuiName;
+	};
 }

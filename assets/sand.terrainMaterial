@@ -1,0 +1,56 @@
+{
+    "Version": "v1",
+    "RootData": {
+        "TypeName": "TerrainMaterialAsset",
+        "Fields": {
+            "Path": {
+                "TypeName": "string",
+                "Value": "sand.terrainMaterial"
+            },
+            "Material": {
+                "TypeName": "TerrainMaterial",
+                "Fields": {
+                    "Name": {
+                        "TypeName": "string",
+                        "Value": "Sand"
+                    },
+                    "DiffuseTexture": {
+                        "TypeName": "ResourceReference",
+                        "Fields": {
+                            "Path": {
+                                "TypeName": "string",
+                                "Value": "terrain_materials/adesert_cracks_d-resized.png"
+                            }
+                        }
+                    },
+                    "DiffuseColor": {
+                        "TypeName": "color",
+                        "Value": [
+                            127,
+                            66,
+                            158,
+                            255
+                        ]
+                    },
+                    "NormalMap": {
+                        "TypeName": "ResourceReference",
+                        "Fields": {
+                            "Path": {
+                                "TypeName": "string",
+                                "Value": "terrain_materials/desert_sand_big_n-resized.png"
+                            }
+                        }
+                    },
+                    "MaterialType": {
+                        "TypeName": "TerrainMaterialTypeEnum",
+                        "Value": "Tintable"
+                    }
+                }
+            },
+            "Category": {
+                "TypeName": "string",
+                "Value": "Dirts"
+            }
+        }
+    }
+}

@@ -60,6 +60,9 @@ namespace EditorFramework
 
 		bool IsActionHeld(size_t hash, bool anyMod)
 		{
+			if (ImGui::GetIO().WantCaptureKeyboard)
+				return false;
+
 			auto* action = GetAction(hash);
 
 			if (!action)
@@ -125,13 +128,13 @@ namespace EditorFramework
 
 		std::string_view GetActionShortcutString(size_t hash)
 		{
-            static std::string IconButtonStringCache;
+			static std::string IconButtonStringCache;
 
-            IconButtonStringCache.clear();
+			IconButtonStringCache.clear();
 
-            auto* action = GetAction(hash);
-            if (!action)
-                return "";
+			auto* action = GetAction(hash);
+			if (!action)
+				return "";
 
 			return ImGui::GetKeyChordName(action->Shortcut);
 		}
@@ -143,16 +146,16 @@ namespace EditorFramework
 
 		bool IsActionDefault(size_t hash)
 		{
-            auto* action = GetAction(hash);
-            if (!action)
-                return true;
+			auto* action = GetAction(hash);
+			if (!action)
+				return true;
 
 			return action->DefaultShortcut == action->Shortcut;
 		}
 
 		bool SetActionKeybind(size_t hash, ImGuiKeyChord shortcut)
 		{
-            auto* action = GetAction(hash);
+			auto* action = GetAction(hash);
 			if (!action)
 				return false;
 
@@ -199,7 +202,7 @@ namespace EditorFramework
 
 			int size = array.Size();
 
-			for (auto &item : array)
+			for (auto& item : array)
 			{
 				if (!item.IsObject() || !item.HasMember("action") || !item.HasMember("key"))
 					continue;
@@ -214,10 +217,10 @@ namespace EditorFramework
 				int chord = keyValue->value.GetInt();
 
 				ImGuiKeyChord shortcut = ImGuiKeyChord(chord);
-				
-                auto* action = GetAction(hash);
-                if (!action)
-                    continue;
+
+				auto* action = GetAction(hash);
+				if (!action)
+					continue;
 
 				action->Shortcut = shortcut;
 

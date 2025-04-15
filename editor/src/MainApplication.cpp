@@ -16,6 +16,8 @@
 
 #include "TerrainDocument.h"
 #include "TerrainMaterialDocument.h"
+
+#include "AssetBrowserPanel.h"
 #include "TerrainInfoPanel.h"
 #include "TerrainGenerationPanel.h"
 #include "PropertiesPanel.h"
@@ -104,7 +106,8 @@ protected:
 		RegisterPanel<PropertiesPanel>();
 		RegisterPanel<TerrainInfoPanel>();
 		RegisterPanel<TerrainGenerationPanel>();
-		RegisterPanel<HistoryPanel>();
+		RegisterPanel<AssetBrowserPanel>();
+
 	}
 
 	void OnRegisterDocuments() override

@@ -982,5 +982,7 @@ namespace EditorFramework
 
 		style.AntiAliasedLines = true; // Enable anti-aliased lines
 		style.AntiAliasedFill = true;  // Enable anti-aliased fill
+
+		style.WindowMenuButtonPosition = ImGuiDir_Right;
 	}
 }

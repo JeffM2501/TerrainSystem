@@ -79,6 +79,7 @@ bool TypeReader::AddEnumerationeField(TypeValue* destinationValue, int fieldInde
 		}
 	}
 	return false;
+
 }
 
 bool TypeReader::AddPrimtiveField(TypeValue* destinationValue, int fieldIndex, PrimitiveFieldInfo* fieldInfo, rapidjson::Value& jsonValue)

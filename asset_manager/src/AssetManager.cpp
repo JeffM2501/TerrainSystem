@@ -17,6 +17,7 @@ namespace AssetSystem
 
 		static std::unordered_map<std::string, AssetFileRecord> OpenedAssets;
 		std::unordered_map<size_t, std::shared_ptr<TypeWraper>> TempAssets;
+		Events::EventSource<std::string> AssetRootChanged;
 
 		std::string AssetRootPath;
 
@@ -39,6 +40,8 @@ namespace AssetSystem
 			SanitizePath(AssetRootPath);
 			if (!AssetRootPath.empty() && *AssetRootPath.rbegin() != '/')
 				AssetRootPath += "/";
+
+			AssetRootChanged.Invoke(AssetRootPath);
 		}
 
 		bool IsPathInRoot(const FileSystemPath& path)

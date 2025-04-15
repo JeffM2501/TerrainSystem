@@ -10,12 +10,15 @@
 #include "CRC64.h"
 
 #include "types/asset.h"
+#include "Events.h"
 
 namespace AssetSystem
 {
 	namespace AssetManager
 	{
 		extern std::unordered_map<size_t, std::shared_ptr<TypeWraper>> TempAssets;
+
+		extern Events::EventSource<std::string> AssetRootChanged;
 
 		void SetAssetRoot(const std::string& path);
 
