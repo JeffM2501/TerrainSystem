@@ -25,7 +25,7 @@ namespace Editor
             // Load the thumbnail from the file system
             Texture2D thumbnail = LoadTexture(AssetManager::ToFileSystemPath(AssetManager::AssetPath(path)).c_str());
             GenTextureMipmaps(&thumbnail);
-            SetTextureFilter(thumbnail, TEXTURE_FILTER_TRILINEAR);
+            SetTextureFilter(thumbnail, TEXTURE_FILTER_ANISOTROPIC_16X);
             ThumbnailCache[crc] = thumbnail;
             return thumbnail;
         }
