@@ -29,7 +29,6 @@ namespace AssetSystem
 		AssetPath ToAssetPath(const FileSystemPath& path);
 		FileSystemPath ToFileSystemPath(const AssetPath& path);
 
-
 		AssetTypes::Asset* FindExistingAsset(const std::string& assetFilePath);
 
 		void CloseAsset(AssetTypes::Asset* asset);

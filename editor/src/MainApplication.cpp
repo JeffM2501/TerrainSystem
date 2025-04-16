@@ -13,6 +13,7 @@
 
 #include "asset_types.h"
 #include "AssetManager.h"
+#include "AssetDatabase.h"
 
 #include "TerrainDocument.h"
 #include "TerrainMaterialDocument.h"
@@ -183,6 +184,8 @@ private:
 int main(int argc, char* argv[])
 {
 	Types::RegisterTypes();
+	AssetSystem::AssetTypeDatabase::Init();
+
 	TerrainEditorApp app;
 	app.SetCommandLine(argv, argc);
 

@@ -1,20 +1,30 @@
 #pragma once
 
-#include "GUID.h"
+#include "type_database.h"
+
 #include <string>
 #include <vector>
 
 namespace AssetSystem
 {
-    namespace AssetFileDatabase
-    {
-        struct AssetFileRecord
-        {
-            std::string Path;
-            uint64_t PathHash;
-            uint64_t AssetTypeId;
-        };
+	namespace AssetTypeDatabase
+	{
+		struct AssetTypeRecord
+		{
+			uint64_t TypeID = 0;
+			const Types::TypeInfo* Type = nullptr;
+			std::string Extension;
+			std::string Icon;
+		};
 
-        size_t GetAssetsOfType(uint64_t assetTypeId, std::vector<const AssetFileRecord*>& outAssets);
-    }
+		const std::vector<AssetTypeRecord>& GetAssetTypes();
+		const AssetTypeRecord* GetAssetTypeInfo(uint64_t typeId);
+
+		template<class T>
+		const AssetTypeRecord* GetAssetTypeInfo()
+		{
+			return GetAssetTypeInfo(Types::TypeDatabase::GetTypeId(T::TypeName));
+		}
+		void Init();
+	}
 }

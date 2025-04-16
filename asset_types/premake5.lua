@@ -36,4 +36,5 @@ project (baseName)
     include_raylib()
 
     link_to("asset_system")
-	link_to("common")
+    link_to("common")
+    link_to("rlImGui")

@@ -214,3 +214,14 @@ bool TypeDatabase::IsBaseClassOf(uint64_t testType, uint64_t possibleBase)
 
 	return false;
 }
+
+void TypeDatabase::ItterateTypes(std::function<void(uint64_t, const TypeInfo*)> func)
+{
+	if (!func)
+		return;
+
+	for (const auto& [id, typeInfo] : Types)
+	{
+		func(id, typeInfo.get());
+	}
+}
