@@ -10,6 +10,8 @@
 
 
 ## TODO
+### Document System
+* Don't double open documents
 ### Terrain
 * Heightmap as floats (float16?)
 * Way to read heightmaps from mega image.

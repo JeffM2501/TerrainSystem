@@ -104,11 +104,10 @@ public:
 protected:
 	void OnRegisterPanels() override
 	{
+		RegisterPanel<AssetBrowserPanel>();
 		RegisterPanel<PropertiesPanel>();
 		RegisterPanel<TerrainInfoPanel>();
 		RegisterPanel<TerrainGenerationPanel>();
-		RegisterPanel<AssetBrowserPanel>();
-
 	}
 
 	void OnRegisterDocuments() override

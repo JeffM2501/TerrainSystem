@@ -54,6 +54,8 @@ namespace EditorFramework
 
 		Document* GetActiveDocument() { return ActiveDocument; }
 		void OpenAssetDocument();
+		size_t OpenAssetDocument(std::string_view assetPath);
+
 		void SaveDocument(size_t documentID);
 		void SaveDocumentAs(size_t documentID);
 
@@ -158,6 +160,7 @@ namespace EditorFramework
 
 		void RebuildWindowMenu();
 
+		uint64_t UnknownDocumentFactory = 0;
 		size_t LastDocumentId = 0;
 		Document* ActiveDocument = nullptr;
 		size_t FocusNextDocument = 0;

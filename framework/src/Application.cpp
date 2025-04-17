@@ -314,7 +314,7 @@ namespace EditorFramework
 
 				if (documentVis)
 				{
-					if (documentVis && doc.get() != ActiveDocument)
+					if (FocusNextDocument == 0 && documentVis && doc.get() != ActiveDocument)
 						SetActiveDocument(id);
 
 					auto contentArea = ImGui::GetContentRegionAvail();
@@ -756,14 +756,9 @@ namespace EditorFramework
 		PendingQuit = false;
 	}
 
-	void Application::OpenAssetDocument()
+	size_t Application::OpenAssetDocument(std::string_view assetPath)
 	{
-		auto fileToOpen = tinyfd_openFileDialog("Open file...", nullptr, int(FileExtensions.size()), &FileExtensions[0], nullptr, false);
-
-		if (!fileToOpen)
-			return;
-
-		auto extension = GetFileExtension(fileToOpen);
+		auto extension = GetFileExtension(assetPath.data());
 		extension++;
 
 		size_t idToUse = 0;
@@ -777,12 +772,24 @@ namespace EditorFramework
 		}
 
 		if (idToUse == 0)
-			idToUse = DocumentFactories.begin()->first;
-
-		if (idToUse != 0)
 		{
-			auto documentId = OpenDocument(idToUse, fileToOpen);
+			if (UnknownDocumentFactory == 0)
+				return 0;
+
+			idToUse = UnknownDocumentFactory;
 		}
+
+		return OpenDocument(idToUse, assetPath.data());
+	}
+
+	void Application::OpenAssetDocument()
+	{
+		auto fileToOpen = tinyfd_openFileDialog("Open file...", nullptr, int(FileExtensions.size()), &FileExtensions[0], nullptr, false);
+
+		if (!fileToOpen)
+			return;
+
+		OpenAssetDocument(fileToOpen);
 	}
 
 	void Application::SaveDocument(size_t documentID)
@@ -862,6 +869,8 @@ namespace EditorFramework
 		char prefix = ' ';
 		if (ActiveDocument && ActiveDocument->IsDirty())
 			prefix = '*';
+
+		FocusNextDocument = documentID;
 
 		if (ActiveDocument)
 			SetWindowTitle(TextFormat("%c%s - %s", prefix, ActiveDocument->GetDocumentName().data(), GetWindowTitle().data()));
