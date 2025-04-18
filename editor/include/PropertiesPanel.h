@@ -17,6 +17,7 @@ public:
 
 protected:
     void OnShow() override;
+    void ShowType(int indentLevel, Properties::TypeEditorCache& cache, Types::TypeValue* value);
 
     Types::TypeValue* ObjectPointer = nullptr;
 

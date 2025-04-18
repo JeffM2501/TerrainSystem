@@ -145,6 +145,10 @@ protected:
 			SetupAssetRoot();
 		else
 			AssetSystem::AssetManager::SetAssetRoot(AssetRoot);
+
+		GetPanel<AssetBrowserPanel>()->ForceFocus = true;
+
+		OpenDocument<TerrainDocument>();
 	}
 
 	std::string_view GetWindowTitle() override

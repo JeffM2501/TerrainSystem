@@ -48,6 +48,8 @@ namespace EditorFramework
 			CurrentDocument = document;
 		}
 
+		bool ForceFocus = false;
+
 		std::string_view GetImGuiName();
 
 		std::string_view GetName() const { return Name; }

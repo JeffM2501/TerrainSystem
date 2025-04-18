@@ -18,10 +18,14 @@ namespace EditorFramework
                 ImGui::SetNextWindowDockID(0);
             else
                 ImGui::SetNextWindowDockID(ForcedDockingID);
+        }
 
+        if (ForceFocus || ForcedDockingID != 0)
+        {   
             ImGui::SetNextWindowFocus();
         }
 
+        ForceFocus = false;
         ForcedDockingID = 0;
 
         bool vis = ImGui::Begin(name.data(), &Shown);

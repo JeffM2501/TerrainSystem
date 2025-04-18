@@ -25,7 +25,7 @@ PropertiesPanel::PropertiesPanel()
 
 static constexpr float IndentOffset = 5.0f;
 
-void ShowType(int indentLevel, TypeEditorCache& cache, Types::TypeValue* value)
+void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::TypeValue* value)
 {
 	ImGui::PushID(cache.TypeDisplayName.c_str());
 
@@ -42,12 +42,12 @@ void ShowType(int indentLevel, TypeEditorCache& cache, Types::TypeValue* value)
 		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted(editor.DisplayName.c_str());
 
-
 		ImGui::TableNextColumn();
 		ImGui::BeginDisabled(value->GetType()->FieldHasAttribute<ReadOnlyAttribute>(index));
 		ImGui::PushID(editor.DisplayName.c_str());
 		if (editor.IsList)
 		{
+			// primitive list
 			if ((ImGui::GetCurrentContext()->CurrentItemFlags & ImGuiItemFlags_Disabled) == 0)
 			{
 				if (ImGui::Button(ICON_FA_PLUS))
@@ -56,6 +56,7 @@ void ShowType(int indentLevel, TypeEditorCache& cache, Types::TypeValue* value)
 					listValue.Add();
 				}
 				ImGui::SetItemTooltip("Add item to %s list", editor.DisplayName.c_str());
+				
 				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGuiUtils::GetButtonSize(ICON_FA_TRASH).x, 0);
 				ImGui::BeginDisabled(value->GetListFieldCount(index) == 0);
 				if (ImGui::Button(ICON_FA_TRASH))
@@ -123,25 +124,80 @@ void ShowType(int indentLevel, TypeEditorCache& cache, Types::TypeValue* value)
 		}
 		auto& editorList = editor.Editors;
 
+		auto& listValue = value->GetTypeListFieldValue(index);
+
+		bool isList = value->GetType()->GetField(index)->IsList();
+
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
+		ImGui::PushID(editor.DisplayName.c_str());
+
+		if (isList)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_SeparatorHovered]);
+			if (ImGui::Button(ICON_FA_PLUS))
+			{
+				listValue.Add();
+				Registry.BuildCacheForListField(value, &cache, index);
+			}
+            ImGui::SameLine();
+            ImGui::BeginDisabled(value->GetListFieldCount(index) == 0);
+            if (ImGui::Button(ICON_FA_TRASH))
+            {
+                listValue.Clear();
+            }
+            ImGui::EndDisabled();
+            ImGui::SetItemTooltip("Clear all items from %s list", editor.DisplayName.c_str());
+
+			ImGui::PopStyleColor();
+		}
+		ImGui::PopID();
+        
+        ImGui::SetItemTooltip("Add item %s list", editor.DisplayName.c_str());
+		ImGui::SameLine(0, 0);
 
 		ImGui::Dummy(ImVec2(indentLevel * ScaleToDPI(IndentOffset), 1));
 		ImGui::SameLine(0, 0);
 
-		if (ImGui::CollapsingHeader(editor.DisplayName.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_LabelSpanAllColumns))
+		if (ImGui::CollapsingHeader(editor.DisplayName.c_str(), ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_LabelSpanAllColumns))
 		{
-			if (value->GetType()->GetField(index)->GetType() == FieldType::TypeList)
+			// type list
+			if (isList)
 			{
 				ImGui::PushID(editor.DisplayName.c_str());
-				if (ImGui::Button(ICON_FA_PLUS))
-				{
 
-				}
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				ImGui::BeginChild(editor.DisplayName.c_str());
-				ImGui::EndChild();
+				int indexToDelete = -1;
+                for (int i = 0; i < value->GetListFieldCount(index); i++)
+                {
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+
+                    ImGui::PushID(TextFormat("###%d", i));
+                    const char* label = TextFormat("%d", i + 1);
+					if (ImGui::Button(ICON_FA_MINUS))
+						indexToDelete = i;
+                    
+                    ImGui::SetItemTooltip("Remove index %d from %s list", i + 1, editor.DisplayName.c_str());
+
+                    ImGui::SameLine();
+					bool show = (ImGui::CollapsingHeader(label, ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_LabelSpanAllColumns));
+					ImGui::PopID();
+
+					if (show)
+					{
+						ImGui::PushID(TextFormat("###%d", i));
+						ShowType(indentLevel + 1, editorList[i], &listValue[i]);
+						ImGui::PopID();
+					}
+					else
+					{
+						ImGui::TableNextRow();
+					}
+                }
+
+				if (indexToDelete >= 0)
+					listValue.Delete(indexToDelete);
+
 				ImGui::PopID();
 			}
 			else

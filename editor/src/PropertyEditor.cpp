@@ -791,6 +791,19 @@ namespace Properties
 		return newName;
 	}
 
+	void EditorRegistry::BuildCacheForListField(Types::TypeValue* value, TypeEditorCache* cache, int fieldIndex) const
+	{
+		cache->TypeEditors[fieldIndex].Editors.clear();
+
+		auto& typeList = value->GetTypeListFieldValue(fieldIndex);
+
+		for (int i = 0; i < typeList.Size(); i++)
+		{
+			cache->TypeEditors[fieldIndex].Editors.push_back(TypeEditorCache());
+			BuildCacheForType(&typeList[i], &cache->TypeEditors[fieldIndex].Editors[i]);
+        }
+	}
+
 	void EditorRegistry::BuildCacheForType(Types::TypeValue* value, TypeEditorCache* cache) const
 	{
 		if (value == nullptr)

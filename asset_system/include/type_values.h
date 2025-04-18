@@ -513,14 +513,14 @@ namespace Types
 
 	using TypeValueList = std::vector<TypeValue::Ptr>;
 
-	class TypeListValue : public FieldValue
+	class TypeListValue : public ListFieldValue
 	{
 	protected:
 		const TypeInfo* Type = nullptr;
 		TypeValueList Values;
 	public:
-		TypeListValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
-		TypeListValue(const TypeInfo* t, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) { Type = t; }
+		TypeListValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : ListFieldValue(parentValue, path) {}
+		TypeListValue(const TypeInfo* t, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : ListFieldValue(parentValue, path) { Type = t; }
 
 		virtual ~TypeListValue() = default;
 
@@ -543,11 +543,24 @@ namespace Types
 
 		typename std::vector<TypeValue::Ptr>::iterator Erase(typename std::vector<TypeValue::Ptr>::iterator at) { return Values.erase(at); }
 
-		void Clear() { Values.clear(); }
+		void Clear() override { Values.clear(); }
 
-		bool IsEmpty() const { return Values.empty(); }
+		bool IsEmpty() const override { return Values.empty(); }
 
-		size_t Size() const { return Values.size(); }
+		size_t Size() const override { return Values.size(); }
+
+		size_t Add() override
+		{
+			// push the known default type, make people insert pointer types
+			PushBack(GetType());
+
+			return Values.size() - 1;
+		}
+
+		void Delete(size_t index) override
+		{
+			Values.erase(Values.begin() + index);
+		}
 
 		TypeValue* PushBack(const TypeInfo* type)
 		{

@@ -246,7 +246,6 @@ AssetBrowserPanel::AssetBrowserPanel()
 		{
 			RebuildFolderTree();
 			ApplyCurrentFolder(&FolderRoot);
-			//SetCurrentFolder(&FolderRoot);
 		}, Token.GetToken());
 }
 

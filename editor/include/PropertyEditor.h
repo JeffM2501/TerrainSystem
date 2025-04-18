@@ -30,7 +30,7 @@ namespace Properties
 		PropertyEditor GetEditorForType(const Types::TypeInfo* type, int fieldIndex) const;
 
 		void BuildCacheForType(Types::TypeValue* type, TypeEditorCache* cache) const;
-
+		void BuildCacheForListField(Types::TypeValue* type, TypeEditorCache* cache, int fieldIndex) const;
 	private:
 		EditorSet BaseSet;
 		std::vector<EditorSet> SetStack;
