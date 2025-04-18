@@ -19,19 +19,21 @@ static constexpr float CAMERA_MOUSE_MOVE_SENSITIVITY = 0.003f;
 
 using namespace EditorFramework;
 
-std::string_view TerrainDocument::GetDocumentName()
-{
-	if (AssetPath.empty())
-		return TextFormat("Untitled Terrain %d", DocumentID);
-	else
-		return GetFileNameWithoutExt(AssetPath.c_str());
-}
-
 void TerrainDocument::OnUpdate(int width, int height)
 {
 	ViewportDocument::OnUpdate(width, height);
 
 	SetShaderValue(TerrainShader, SunVectorLoc, SunVector, SHADER_UNIFORM_VEC3);
+}
+
+void TerrainDocument::OnAssetOpen()
+{
+
+}
+
+void TerrainDocument::OnAssetDirty()
+{
+
 }
 
 void TerrainDocument::OnShowScene(const Vector2& renderSize)
@@ -102,7 +104,7 @@ void TerrainDocument::OnShowUI()
 	ImGui::End();
 }
 
-void TerrainDocument::OnCreated()
+void TerrainDocument::SetupDocument()
 {
 	TerrainShader = LoadShader("resources/shaders/terrain.vs", "resources/shaders/terrain.fs");
 	if (!IsShaderValid(TerrainShader))
@@ -121,12 +123,6 @@ void TerrainDocument::OnCreated()
 
 	Renderer.SetShader(TerrainShader);
 
-	LoadMaterial("Grass", "resources/terrain_materials/grass_ground_d-resized.png");
-	LoadMaterial("Ground", "resources/terrain_materials/ground_crackedv_d-resized.png");
-	LoadMaterial("Road", "resources/terrain_materials/ground_dry_d-resized.png");
-	LoadMaterial("Snow", "resources/terrain_materials/snow_grass3_d-resized.png");
-
-	LoadMaterial("Grid", "resources/grid.png");
 
 	auto visGroup = MainToolbar.AddGroup("TerrainVis");
 	auto splatCommand = visGroup->AddItem<StateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this](CommandContextSet*) {ShowSplat = !ShowSplat; }, [this](CommandContextSet*) {return ShowSplat; });
@@ -136,6 +132,18 @@ void TerrainDocument::OnCreated()
 	auto viewMenu = DocumentMenuBar.AddSubItem("View", "", 20);
 	auto showGroup = viewMenu->AddGroup("Show", ICON_FA_EYE);
 	showGroup->AddItem(0, splatCommand);
+}
+
+void TerrainDocument::OnCreated()
+{
+	SetupDocument();
+
+	LoadMaterial("Grass", "resources/terrain_materials/grass_ground_d-resized.png");
+	LoadMaterial("Ground", "resources/terrain_materials/ground_crackedv_d-resized.png");
+	LoadMaterial("Road", "resources/terrain_materials/ground_dry_d-resized.png");
+	LoadMaterial("Snow", "resources/terrain_materials/snow_grass3_d-resized.png");
+
+	LoadMaterial("Grid", "resources/grid.png");
 }
 
 TerrainTile& TerrainDocument::GetTile(int x, int y)

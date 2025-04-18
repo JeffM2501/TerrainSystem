@@ -7,6 +7,7 @@
 #include "imgui_internal.h"
 #include "DisplayScale.h"
 #include "Application.h"
+#include "JsonHelper.h"
 
 using namespace EditorFramework;
 using namespace AttributeTypes;
@@ -14,6 +15,48 @@ using namespace AssetSystem;
 using namespace Types;
 
 static std::unordered_map<std::string, std::string> ExtensionMap;
+
+static char* stristr(const char* str1, const char* str2)
+{
+	const char* p1 = str1;
+	const char* p2 = str2;
+	const char* r = *p2 == 0 ? str1 : 0;
+
+	while (*p1 != 0 && *p2 != 0)
+	{
+		if (tolower((unsigned char)*p1) == tolower((unsigned char)*p2))
+		{
+			if (r == 0)
+			{
+				r = p1;
+			}
+
+			p2++;
+		}
+		else
+		{
+			p2 = str2;
+			if (r != 0)
+			{
+				p1 = r + 1;
+			}
+
+			if (tolower((unsigned char)*p1) == tolower((unsigned char)*p2))
+			{
+				r = p1;
+				p2++;
+			}
+			else
+			{
+				r = 0;
+			}
+		}
+
+		p1++;
+	}
+
+	return *p2 == 0 ? (char*)r : 0;
+}
 
 namespace AssetItems
 {
@@ -305,26 +348,64 @@ bool AssetBrowserPanel::ShowFolderTreeNode(AssetItems::FolderInfo& info)
 
 void AssetBrowserPanel::ApplyFileFilter()
 {
-
+	auto* item = CurrentFolderContents.Reset();
+	while (item)
+	{
+		item->Filtered = stristr(item->Name.c_str(), FilterText) == nullptr;
+		item = CurrentFolderContents.Next();
+	}
 }
-
 bool AssetBrowserPanel::CanNavigateBack()
 {
-	return false;
+	return NavigationHistory.empty() || NavigationHistoryIndex > 0;
 }
 
 void AssetBrowserPanel::NavigateBack()
 {
+	if (NavigationHistoryIndex > 0)
+		NavigationHistoryIndex--;
+	ApplyCurrentFolder(NavigationHistory[NavigationHistoryIndex]);
 }
 
 bool AssetBrowserPanel::CanNavigateForward()
 {
-	return false;
+	return NavigationHistoryIndex + 1 < NavigationHistory.size();
 }
 
 void AssetBrowserPanel::NavigateForward()
 {
+	if (NavigationHistoryIndex + 1 < NavigationHistory.size())
+		NavigationHistoryIndex++;
+	ApplyCurrentFolder(NavigationHistory[NavigationHistoryIndex]);
+}
 
+void AssetBrowserPanel::LoadSettings(rapidjson::Document& settings)
+{
+	if (!settings.HasMember("AssetBrowserSettings"))
+		return;
+
+	auto settingsValue = settings.FindMember("AssetBrowserSettings");
+
+	bool isIcon = JSONHelper::GetValue<bool>(settingsValue->value, "IconView", false);
+
+	if (isIcon)
+		CurrentView = &GridView;
+	else
+		CurrentView = &ListView;
+}
+
+void AssetBrowserPanel::SaveSettings(rapidjson::Document& settings)
+{
+	rapidjson::Value defaultSettings("AssetBrowserSettings", settings.GetAllocator());
+	defaultSettings.SetObject();
+
+	if (!settings.HasMember("AssetBrowserSettings"))
+		settings.AddMember("AssetBrowserSettings", defaultSettings, settings.GetAllocator());
+
+	auto settingsValue = settings.FindMember("AssetBrowserSettings");
+
+	bool isIcon = CurrentView == &GridView;
+	JSONHelper::SetOrCreateValue(settingsValue->value, "IconView", isIcon, settings);
 }
 
 void AssetBrowserPanel::ShowFilePane()
@@ -354,13 +435,13 @@ void AssetBrowserPanel::SetCurrentFolder(AssetItems::FolderInfo* folder)
 	if (CurrentFolderContents.Folder == folder)
 		return;
 
-	// 	while (NavigationHistory.size() > NavigationHistoryIndex + 1)
-	// 	{
-	// 		NavigationHistory.erase(NavigationHistory.begin() + NavigationHistory.size() - 1);
-	// 	}
-	// 
-	// 	NavigationHistoryIndex++;
-	// 	NavigationHistory.push_back(folder);
+	while (NavigationHistory.size() > NavigationHistoryIndex + 1)
+	{
+		NavigationHistory.erase(NavigationHistory.begin() + NavigationHistory.size() - 1);
+	}
+
+	NavigationHistoryIndex++;
+	NavigationHistory.push_back(folder);
 
 	ApplyCurrentFolder(folder);
 }
@@ -387,7 +468,6 @@ void AssetBrowserPanel::ApplyCurrentFolder(AssetItems::FolderInfo* folder)
 
 	ApplyFileFilter();
 }
-
 
 void  AssetBrowserPanel::ShowHeader()
 {

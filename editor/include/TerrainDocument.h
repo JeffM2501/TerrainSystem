@@ -4,45 +4,50 @@
 
 #include "TerrainTile.h"
 #include "TerrainRender.h"
+#include "AssetDocument.h"
+
+#include "types/terrain.h"
 
 #include "raylib.h"
 #include <vector>
 #include <string>
 
-class TerrainDocument : public EditorFramework::ViewportDocument
+class TerrainDocument : public AssetDocument<AssetTypes::TerrainAsset>
 {
 public:
-    REGISTER_DOCUMENT(TerrainDocument, terrain);
-    std::string_view GetDocumentName();
-    void OnUpdate(int width, int height);
-    void OnShowScene(const Vector2& renderSize) override;
-    void OnShowUI() override;
-    void OnCreated() override;
+	REGISTER_DOCUMENT(TerrainDocument, terrain);
+	void OnUpdate(int width, int height);
+	void OnShowScene(const Vector2& renderSize) override;
+	void OnShowUI() override;
+	void OnCreated() override;
 
-    TerrainInfo Info;
-    std::vector<TerrainTile> Tiles;
-    std::unordered_map<std::string, TerrainMaterial> MaterialLibrary;
-    float SunVector[3] = { 0,0,1 };
+	TerrainInfo Info;
+	std::vector<TerrainTile> Tiles;
+	std::unordered_map<std::string, TerrainMaterial> MaterialLibrary;
+	float SunVector[3] = { 0,0,1 };
 
-    TerrainTile& GetTile(int x, int y);
-    bool HasTile(int x, int y) const;
+	TerrainTile& GetTile(int x, int y);
+	bool HasTile(int x, int y) const;
 
-    void LoadMaterial(const std::string& name,  std::string_view path);
+	void LoadMaterial(const std::string& name, std::string_view path);
 
-    const TerrainMaterial* GetMaterial(const std::string& name) const;
+	const TerrainMaterial* GetMaterial(const std::string& name) const;
 
-    TerrainPosition SelectedTileLoc;
+	TerrainPosition SelectedTileLoc;
 
-    TerrainPosition TerrainBounds = { 0,0 };
-    
+	TerrainPosition TerrainBounds = { 0,0 };
+
 protected:
-   // Camera3D Camera = { 0 };
+	void OnAssetOpen() override;
+	void OnAssetDirty() override;
 
-    bool ShowSplat = false;
+	void SetupDocument();
 
-    Shader TerrainShader = { 0 };
-    TerainRenderer Renderer;
-    int SunVectorLoc = 0;
-    int SelectedShaderFlagLoc = 0;
-    int ShowSplatFlagLoc = 0;
+	bool ShowSplat = false;
+
+	Shader TerrainShader = { 0 };
+	TerainRenderer Renderer;
+	int SunVectorLoc = 0;
+	int SelectedShaderFlagLoc = 0;
+	int ShowSplatFlagLoc = 0;
 };

@@ -184,6 +184,9 @@ namespace EditorFramework
 		Rectangle ContentRectangle = { 0,0,0,0 };
 
 		bool WindowMenuDirty = false;
+
+
+		rapidjson::Document SettingDocument;
 	};
 
 	template<class T>

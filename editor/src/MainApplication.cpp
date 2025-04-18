@@ -141,8 +141,6 @@ protected:
 
 	void OnSetupInitalState() override
 	{
-		OpenDocument<TerrainMaterialDocument>();
-
 		if (AssetRoot.empty())
 			SetupAssetRoot();
 		else

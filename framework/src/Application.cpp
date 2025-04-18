@@ -158,9 +158,11 @@ namespace EditorFramework
 			}
 		}
 
+		RegisterDefaultPanels();
 		OnRegisterPanels();
 
-		RegisterDefaultPanels();
+		for (auto& [id, panel] : Panels)
+			panel->LoadSettings(SettingDocument);
 
 		RegisterStandardActions();
 
@@ -399,6 +401,9 @@ namespace EditorFramework
 
 	void Application::Shutdown()
 	{
+		for (auto& [id, panel] : Panels)
+			panel->SaveSettings(SettingDocument);
+
 		SaveSettings();
 
 		if (IsTextureValid(BackgroundTexture))
@@ -417,48 +422,30 @@ namespace EditorFramework
 		std::string settingsPath = GetAppSettingsFolder(GetApplicationFolderName());
 		settingsPath += "/settings.json";
 
-		rapidjson::Document document;
-
 		if (FileExists(settingsPath.c_str()))
 		{
 			auto text = LoadFileText(settingsPath.c_str());
-			document.Parse(text);
+			SettingDocument.Parse(text);
 			UnloadFileText(text);
 		}
 		else
 		{
-			document.SetObject();
+			SettingDocument.SetObject();
 		}
 
 		// app settings for window
-		WindowSize.x = JSONHelper::GetValue<float>(document, "WindowSizeX", 1280);
-		WindowSize.y = JSONHelper::GetValue<float>(document, "WindowSizeY", 800);
-		WindowPos.x = JSONHelper::GetValue<float>(document, "WindowPosX", InvalidSize);
-		WindowPos.y = JSONHelper::GetValue<float>(document, "WindowPosY", -InvalidSize);
-		WindowIsMaximized = JSONHelper::GetValue<bool>(document, "WindowIsMaximized", false);
+		WindowSize.x = JSONHelper::GetValue<float>(SettingDocument, "WindowSizeX", 1280);
+		WindowSize.y = JSONHelper::GetValue<float>(SettingDocument, "WindowSizeY", 800);
+		WindowPos.x = JSONHelper::GetValue<float>(SettingDocument, "WindowPosX", InvalidSize);
+		WindowPos.y = JSONHelper::GetValue<float>(SettingDocument, "WindowPosY", -InvalidSize);
+		WindowIsMaximized = JSONHelper::GetValue<bool>(SettingDocument, "WindowIsMaximized", false);
 
-		OnLoadSettings(document);
+		ActionRegistry::DeserializeKeybindings(SettingDocument);
 	}
 
 	void Application::LoadKeybindings()
 	{
-		std::string settingsPath = GetAppSettingsFolder(GetApplicationFolderName());
-		settingsPath += "/settings.json";
-
-		rapidjson::Document document;
-
-		if (FileExists(settingsPath.c_str()))
-		{
-			auto text = LoadFileText(settingsPath.c_str());
-			document.Parse(text);
-			UnloadFileText(text);
-		}
-		else
-		{
-			document.SetObject();
-		}
-
-		ActionRegistry::DeserializeKeybindings(document);
+		OnLoadSettings(SettingDocument);
 	}
 
 	void Application::SaveSettings()
@@ -466,18 +453,6 @@ namespace EditorFramework
 		std::string settingsPath = GetAppSettingsFolder(GetApplicationFolderName());
 		settingsPath += "/settings.json";
 
-		rapidjson::Document document;
-
-		if (FileExists(settingsPath.c_str()))
-		{
-			auto text = LoadFileText(settingsPath.c_str());
-			document.Parse(text);
-			UnloadFileText(text);
-		}
-		else
-		{
-			document.SetObject();
-		}
 		WindowSize.x = GetScreenWidth() / GetWindowScaleDPI().x;
 		WindowSize.y = GetScreenHeight() / GetWindowScaleDPI().y;
 
@@ -488,20 +463,20 @@ namespace EditorFramework
 
 		if (!WindowIsMaximized)
 		{
-			JSONHelper::SetOrCreateValue(document, "WindowSizeX", WindowSize.x, document);
-			JSONHelper::SetOrCreateValue(document, "WindowSizeY", WindowSize.y, document);
+			JSONHelper::SetOrCreateValue(SettingDocument, "WindowSizeX", WindowSize.x, SettingDocument);
+			JSONHelper::SetOrCreateValue(SettingDocument, "WindowSizeY", WindowSize.y, SettingDocument);
 		}
-		JSONHelper::SetOrCreateValue(document, "WindowPosX", WindowPos.x, document);
-		JSONHelper::SetOrCreateValue(document, "WindowPosY", WindowPos.y, document);
-		JSONHelper::SetOrCreateValue(document, "WindowIsMaximized", WindowIsMaximized, document);
+		JSONHelper::SetOrCreateValue(SettingDocument, "WindowPosX", WindowPos.x, SettingDocument);
+		JSONHelper::SetOrCreateValue(SettingDocument, "WindowPosY", WindowPos.y, SettingDocument);
+		JSONHelper::SetOrCreateValue(SettingDocument, "WindowIsMaximized", WindowIsMaximized, SettingDocument);
 
-		ActionRegistry::SerializeKeybindings(document);
+		ActionRegistry::SerializeKeybindings(SettingDocument);
 
-		OnSaveSettings(document);
+		OnSaveSettings(SettingDocument);
 
 		rapidjson::StringBuffer buffer;
 		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-		document.Accept(writer);
+		SettingDocument.Accept(writer);
 
 		SaveFileText(settingsPath.c_str(), (char*)buffer.GetString());
 	}

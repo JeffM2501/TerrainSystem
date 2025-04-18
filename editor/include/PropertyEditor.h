@@ -12,7 +12,7 @@ namespace Properties
 {
 	class TypeEditorCache;
 
-	using PropertyEditor = std::function<bool(Types::TypeValue* value, int fieldIndex, bool expanded)>;
+	using PropertyEditor = std::function<bool(Types::TypeValue* value, int fieldIndex, int arrayIndex)>;
 
 	class EditorSet : public std::unordered_map<std::string, PropertyEditor>
 	{
@@ -48,18 +48,19 @@ namespace Properties
 		{
 		public:
 			std::string DisplayName;
+			bool IsList = false;
 			PropertyEditor Editor;
 		};
 
 		std::map<int, PrimitiveFieldCacheInfo> FieldEditors;
 
-        class TypeFieldCacheInfo
-        {
-        public:
-            std::string DisplayName;
+		class TypeFieldCacheInfo
+		{
+		public:
+			std::string DisplayName;
 			std::vector<TypeEditorCache> Editors;
 			PropertyEditor CustomEditor = nullptr;
-        };
+		};
 
 		std::map<int, TypeFieldCacheInfo> TypeEditors;
 

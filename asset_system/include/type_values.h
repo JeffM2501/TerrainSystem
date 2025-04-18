@@ -159,12 +159,11 @@ namespace Types
 
 		void CallValueChanged(ValueChangedEvent& eventRecord)
 		{
-			eventRecord.Value = this;
+			eventRecord.Value = ParentValue;
 			OnValueChanged.Invoke(eventRecord);
 
 			if (ParentValue)
 			{
-				eventRecord.Path.PushBack(path);
 				ParentValue->CallValueChanged(eventRecord);
 			}
 		}
@@ -173,10 +172,14 @@ namespace Types
 		const std::vector<T>& GetValues() const { return Values; }
 		void SetValues(const std::vector<T>& newValues) { Values = newValues; }
 
-		const T& GetValue(size_t index = 0) const { return Values[index]; }
+		const T& GetValue(size_t index = 0) const
+		{
+			return Values[index];
+		}
+
 		bool SetValue(const T& newValue, size_t index = 0)
 		{
-			if (index == value.size())
+			if (index == Values.size())
 			{
 				PushBack(newValue);
 				return true;
@@ -185,12 +188,12 @@ namespace Types
 				return false;
 
 			ValueChangedEvent eventRecord;
-			eventRecord.Path = SubPath + FieldPath::Index(index);
+			eventRecord.Path = SubPath + FieldPath::Index(int(index));
 			eventRecord.Record = std::make_shared<PrimitiveValueChangedRecord<T>>();
 			eventRecord.GetRecordAs<PrimitiveValueChangedRecord<T>>()->OldValue = Values[index];
 			eventRecord.GetRecordAs<PrimitiveValueChangedRecord<T>>()->NewValue = newValue;
 			Values[index] = newValue;
-			CallPrimitiveValueChanged(eventRecord);
+			CallValueChanged(eventRecord);
 			return true;
 		}
 
@@ -400,6 +403,17 @@ namespace Types
 			}
 
 			return *(ListFieldValue*)itr->second.get();
+		}
+
+		int32_t GetListFieldCount(int fieldIndex)
+		{
+			auto itr = Values.find(fieldIndex);
+			if (itr == Values.end() || !Type->GetField(fieldIndex)->IsList())
+				return -1;
+
+			const ListFieldValue* fieldPtr = itr->second->GetAs<ListFieldValue>();
+
+			return int32_t(fieldPtr->Size());
 		}
 
 		template<typename T>

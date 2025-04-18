@@ -6,6 +6,7 @@
 #include "CRC64.h"
 
 #include "LifetimeToken.h"
+#include "rapidjson/document.h"
 
 #include <string>
 #include <string_view>
@@ -54,6 +55,9 @@ namespace EditorFramework
 
 		PlanelLayoutLocation Location = PlanelLayoutLocation::Floating;
 
+		virtual void LoadSettings(rapidjson::Document& settings) {}
+		virtual void SaveSettings(rapidjson::Document& settings) {}
+
 	protected:
 		virtual void OnUpdate() {};
 		virtual void OnShow() {};
@@ -79,7 +83,7 @@ namespace EditorFramework
 
 		ImGuiID ForcedDockingID = 0;
 
-		Document* CurrentDocument;
+		Document* CurrentDocument = nullptr;
 
 		Vector2 MiniumSize = { 300, 300 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Document.h"
+#include "AssetDocument.h"
 
 #include "TerrainTile.h"
 #include "LifetimeToken.h"
@@ -13,56 +14,35 @@
 #include <vector>
 #include <string>
 
-class TerrainMaterialDocument : public EditorFramework::ViewportDocument
+class TerrainMaterialDocument : public AssetDocument<AssetTypes::TerrainMaterialAsset>
 {
 public:
-    REGISTER_DOCUMENT(TerrainMaterialDocument, terrainMaterial);
-    std::string_view GetDocumentName();
+	REGISTER_DOCUMENT(TerrainMaterialDocument, terrainMaterial);
 
-    void CreateAsset() override;
-    void OpenAsset(const std::string& assetPath) override;
-    void SaveAsset() override;
-    void SaveAsAsset(const std::string& assetPath) override;
+	void OnCreated() override;
 
-    void OnCreated() override;
-    void OnActivated() override;
-    void OnDeactivated() override;
-
-    bool UsesAsset() override { return true; }
-
-    std::string_view GetAssetPath() const
-    {
-        if (AssetData)
-            return AssetData->GetPath();
-
-        return "";
-    }
-
-    ~TerrainMaterialDocument();
+	~TerrainMaterialDocument();
 protected:
-    void OnShowScene(const Vector2& renderSize) override;
+	void OnShowScene(const Vector2& renderSize) override;
 
-    void RegisterEditHandler();
-    void RebuildMaterial();
+	void RebuildMaterial();
+
+	void OnAssetOpen() override;
+	void OnAssetDirty() override;
 
 protected:
-    AssetTypes::TerrainMaterialAsset* AssetData = nullptr;
-    Tokens::TokenSource Token;
+	Shader TerrainShader = { 0 };
 
-    AssetEditManager EditManager;
+	int SunVectorLoc = 0;
+	float SunVector[3] = { 1,1,1 };
+	int SpecularValueLoc = 0;
+	float SpecularValue = 0;
 
-    Shader TerrainShader = { 0 };
+	Model* CurrentMesh = nullptr;
 
-    int SunVectorLoc = 0;
-    float SunVector[3] = { 1,1,1 };
-    int SpecularValueLoc = 0;
-    float SpecularValue = 0;
-
-    Model* CurrentMesh = nullptr;
-
-    Model Cube = { 0 };
-    Model Sphere = { 0 };
-    Model Matbal = { 0 };
-    Model Heightmap = { 0 };
-    Material RenderMat = { 0 };
+	Model Cube = { 0 };
+	Model Sphere = { 0 };
+	Model Matbal = { 0 };
+	Model Heightmap = { 0 };
+	Material RenderMat = { 0 };
 };
