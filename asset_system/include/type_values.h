@@ -24,6 +24,64 @@ namespace Types
 
 	};
 
+    template<class T>
+    class PrimitiveValueChangedRecord : public ValueChangedRecord
+    {
+    public:
+        T OldValue;
+        T NewValue;
+
+        using Ptr = std::shared_ptr<PrimitiveValueChangedRecord>;
+    };
+
+    class EnumValueChangedRecord : public ValueChangedRecord
+    {
+    public:
+        int OldValue;
+        int NewValue;
+
+        using Ptr = std::shared_ptr<EnumValueChangedRecord>;
+    };
+
+    template<class T>
+    class PrimitiveListItemAddedRecord : public ValueChangedRecord
+    {
+    public:
+        T NewValue;
+        using Ptr = std::shared_ptr<PrimitiveListItemAddedRecord>;
+    };
+
+    template<class T>
+    class PrimitiveListItemRemovedRecord : public ValueChangedRecord
+    {
+    public:
+        T OldValue;
+        using Ptr = std::shared_ptr<PrimitiveListItemRemovedRecord>;
+    };
+
+    template<class T>
+    class PrimitiveListClearedRecord : public ValueChangedRecord
+    {
+    public:
+        std::vector<T> OldValues;
+        using Ptr = std::shared_ptr<PrimitiveListClearedRecord>;
+    };
+
+
+	class TypeListItemRemovedRecord : public ValueChangedRecord
+	{
+	public:
+		std::unique_ptr<TypeValue> OldValue;
+		using Ptr = std::shared_ptr<TypeListItemRemovedRecord>;
+	};
+
+    class TypeListItemClearedRecord : public ValueChangedRecord
+    {
+    public:
+		std::unique_ptr<TypeValue> OldValue;
+        using Ptr = std::shared_ptr<TypeListItemRemovedRecord>;
+    };
+
 	class ValueChangedEvent
 	{
 	public:
@@ -34,36 +92,23 @@ namespace Types
 
 		enum ValueRecordType
 		{
-			Primitive,
-			Enumeration
+			PrimitiveChanged,
+			EnumerationChanged,
+			PrimitiveListItemAdded,
+			PrimitiveListItemRemoved,
+			PrimitiveListCleared,
+			TypeListItemAdded,
+			TypeListItemRemoved,
+			TypeListCleared
 		};
 
-		ValueRecordType RecordType = ValueRecordType::Primitive;
+		ValueRecordType RecordType = ValueRecordType::PrimitiveChanged;
 
 		template<class T>
 		T* GetRecordAs()
 		{
 			return static_cast<T*>(Record.get());
 		}
-	};
-
-	template<class T>
-	class PrimitiveValueChangedRecord : public ValueChangedRecord
-	{
-	public:
-		T OldValue;
-		T NewValue;
-
-		using Ptr = std::shared_ptr<PrimitiveValueChangedRecord>;
-	};
-
-	class EnumValueChangedRecord : public ValueChangedRecord
-	{
-	public:
-		int OldValue;
-		int NewValue;
-
-		using Ptr = std::shared_ptr<EnumValueChangedRecord>;
 	};
 
 	class FieldValue
@@ -207,7 +252,18 @@ namespace Types
 
 		typename std::vector<T>::iterator Erase(typename std::vector<T>::iterator at) { return Values.erase(at); }
 
-		inline void Clear() override { Values.clear(); }
+		inline void Clear() override 
+		{
+			Values.clear(); 
+
+            ValueChangedEvent eventRecord;
+            eventRecord.Path = SubPath;
+            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::PrimitiveListCleared;
+            eventRecord.Record = std::make_shared<PrimitiveListClearedRecord<T>>();
+			eventRecord.GetRecordAs<PrimitiveListClearedRecord<T>>()->OldValues = Values;
+
+            CallValueChanged(eventRecord);
+		}
 
 		inline bool IsEmpty() const override { return Values.empty(); }
 
@@ -216,13 +272,31 @@ namespace Types
 		inline size_t Add() override
 		{
 			Values.resize(Values.size() + 1);
+
+            ValueChangedEvent eventRecord;
+            eventRecord.Path = SubPath + FieldPath::Index(int(Values.size()));
+            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::PrimitiveListItemAdded;
+            eventRecord.Record = std::make_shared<PrimitiveListItemAddedRecord<T>>();
+            eventRecord.GetRecordAs<PrimitiveListItemAddedRecord<T>>()->NewValue = Values[Values.size()-1];
+   
+            CallValueChanged(eventRecord);
+
 			return Values.size() - 1;
 		}
 
 		inline void Delete(size_t index) override
 		{
-			if (index < Values.size())
-				Values.erase(Values.begin() + index);
+			if (index >= Values.size())
+				return;
+
+            ValueChangedEvent eventRecord;
+            eventRecord.Path = SubPath + FieldPath::Index(int(index));
+			eventRecord.RecordType = ValueChangedEvent::ValueRecordType::PrimitiveListItemRemoved;
+            eventRecord.Record = std::make_shared<PrimitiveListItemRemovedRecord<T>>();
+            eventRecord.GetRecordAs<PrimitiveListItemRemovedRecord<T>>()->OldValue = Values[index];
+			Values.erase(Values.begin() + index);
+
+			CallValueChanged(eventRecord);
 		}
 
 		void PushBack(const T& value) { return Values.push_back(value); }
@@ -346,6 +420,7 @@ namespace Types
 			EnumerationFieldValue* valueItr = reinterpret_cast<EnumerationFieldValue*>(itr->second.get());
 
 			ValueChangedEvent eventRecord;
+			eventRecord.RecordType = ValueChangedEvent::ValueRecordType::EnumerationChanged;
 			eventRecord.Record = std::make_shared<EnumValueChangedRecord>();
 			eventRecord.GetRecordAs<EnumValueChangedRecord>()->OldValue = valueItr->GetValue();
 			valueItr->SetValueAs(value);
@@ -362,6 +437,7 @@ namespace Types
 			EnumerationFieldValue* valueItr = reinterpret_cast<EnumerationFieldValue*>(itr->second.get());
 
 			ValueChangedEvent eventRecord;
+			eventRecord.RecordType = ValueChangedEvent::ValueRecordType::EnumerationChanged;
 			eventRecord.Record = std::make_shared<EnumValueChangedRecord>();
 			eventRecord.GetRecordAs<EnumValueChangedRecord>()->OldValue = valueItr->GetValue();
 			valueItr->SetValue(value);
@@ -428,9 +504,17 @@ namespace Types
 				itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
 			}
 
-			(PrimitiveListFieldValue<T>*)itr->second->push_back(value);
+			auto* list = (PrimitiveListFieldValue<T>*)itr->second;
+			list->push_back(value);
 
-			// TODO, call add event
+			// add event
+            ValueChangedEvent eventRecord;
+			eventRecord.Path.PushFront(FieldPath::Index(list.Size() - 1));
+			eventRecord.Path.PushFront(SubPath);
+            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::PrimitiveListItemAdded;
+            eventRecord.Record = std::make_shared<PrimitiveListItemAddedRecord>();
+            eventRecord.GetRecordAs<PrimitiveListItemAddedRecord>()->NewValue = value;
+            CallValueChanged(eventRecord);
 		}
 
 		TypeListValue& GetTypeListFieldValue(int fieldIndex);

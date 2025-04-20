@@ -108,6 +108,7 @@ protected:
 		RegisterPanel<PropertiesPanel>();
 		RegisterPanel<TerrainInfoPanel>();
 		RegisterPanel<TerrainGenerationPanel>();
+		RegisterPanel<HistoryPanel>();
 	}
 
 	void OnRegisterDocuments() override

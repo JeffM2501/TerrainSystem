@@ -208,7 +208,7 @@ namespace AssetTypes
 			tiles->AddAttribute<AttributeTypes::ReadOnlyAttribute>();
 			tiles->AddAttribute<AttributeTypes::HiddenAttribute>();
 
-			type->AddPrimitiveListField("FloatList", PrimitiveType::Float32);
+			type->AddPrimitiveListField("VecList", PrimitiveType::Vector3);
 		}
 
 		TerrainInfo GetInfo() const { return TerrainInfo(ValuePtr->GetTypeFieldValue(1)); }

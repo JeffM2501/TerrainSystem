@@ -39,6 +39,32 @@ void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::T
 		ImGui::Dummy(ImVec2(indentLevel * ScaleToDPI(IndentOffset), 1));
 		ImGui::SameLine(0, 0);
 
+		if (editor.IsList)
+		{
+			if (ImGui::Button(ICON_FA_PLUS))
+			{
+				ListFieldValue& listValue = value->GetPrimitiveListFieldValue(index);
+				listValue.Add();
+			}
+			ImGui::SetItemTooltip("Add item to %s list", editor.DisplayName.c_str());
+			ImGui::SameLine();
+
+            if ((ImGui::GetCurrentContext()->CurrentItemFlags & ImGuiItemFlags_Disabled) == 0)
+            {
+                ImGui::SameLine();
+                ImGui::BeginDisabled(value->GetListFieldCount(index) == 0);
+                if (ImGui::Button(ICON_FA_TRASH))
+                {
+                    ListFieldValue& listValue = value->GetPrimitiveListFieldValue(index);
+                    listValue.Clear();
+                }
+                ImGui::EndDisabled();
+                ImGui::SetItemTooltip("Clear all items from %s list", editor.DisplayName.c_str());
+            }
+
+			ImGui::SameLine();
+		}
+
 		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted(editor.DisplayName.c_str());
 
@@ -48,25 +74,6 @@ void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::T
 		if (editor.IsList)
 		{
 			// primitive list
-			if ((ImGui::GetCurrentContext()->CurrentItemFlags & ImGuiItemFlags_Disabled) == 0)
-			{
-				if (ImGui::Button(ICON_FA_PLUS))
-				{
-					ListFieldValue& listValue = value->GetPrimitiveListFieldValue(index);
-					listValue.Add();
-				}
-				ImGui::SetItemTooltip("Add item to %s list", editor.DisplayName.c_str());
-				
-				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGuiUtils::GetButtonSize(ICON_FA_TRASH).x, 0);
-				ImGui::BeginDisabled(value->GetListFieldCount(index) == 0);
-				if (ImGui::Button(ICON_FA_TRASH))
-				{
-					ListFieldValue& listValue = value->GetPrimitiveListFieldValue(index);
-					listValue.Clear();
-				}
-				ImGui::EndDisabled();
-				ImGui::SetItemTooltip("Clear all items from %s list", editor.DisplayName.c_str());
-			}
 
 			for (int i = 0; i < value->GetListFieldCount(index); i++)
 			{
@@ -140,6 +147,8 @@ void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::T
 				listValue.Add();
 				Registry.BuildCacheForListField(value, &cache, index);
 			}
+			ImGui::SetItemTooltip("Add item %s list", editor.DisplayName.c_str());
+
             ImGui::SameLine();
             ImGui::BeginDisabled(value->GetListFieldCount(index) == 0);
             if (ImGui::Button(ICON_FA_TRASH))
@@ -152,8 +161,7 @@ void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::T
 			ImGui::PopStyleColor();
 		}
 		ImGui::PopID();
-        
-        ImGui::SetItemTooltip("Add item %s list", editor.DisplayName.c_str());
+
 		ImGui::SameLine(0, 0);
 
 		ImGui::Dummy(ImVec2(indentLevel * ScaleToDPI(IndentOffset), 1));

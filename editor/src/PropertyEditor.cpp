@@ -568,7 +568,7 @@ namespace Properties
 		char buffer[256] = { 0 };
 		strcpy(buffer, ref.GetPath().c_str());
 
-		auto buttonSize = ImGuiUtils::GetButtonsSize(ICON_FA_ELLIPSIS, ICON_FA_FOLDER_OPEN, "");
+		auto buttonSize = ImGuiUtils::GetButtonsSize(ICON_FA_ELLIPSIS, ICON_FA_FOLDER_OPEN, ICON_FA_TRASH);
 		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - buttonSize.x - ImGui::GetStyle().ItemInnerSpacing.x);
 
 		if (ImGui::InputText(label, buffer, 256))
@@ -581,6 +581,7 @@ namespace Properties
 			if (!fileToOpen.empty())
 				ref.SetPath(fileToOpen);
 		}
+		ImGui::SetItemTooltip("Select Resource File");
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(ref.GetPath().empty());
@@ -590,6 +591,17 @@ namespace Properties
 
 			OpenURL(TextFormat("file://%s", filePath.c_str()));
 		}
+		ImGui::SetItemTooltip("Show in explorer");
+		ImGui::EndDisabled();
+
+
+        ImGui::SameLine();
+        ImGui::BeginDisabled(ref.GetPath().empty());
+        if (ImGui::Button(ICON_FA_TRASH))
+        {
+			ref.ResetPath();
+        }
+        ImGui::SetItemTooltip("Clear resource reference");
 		ImGui::EndDisabled();
 
 		return false;

@@ -26,7 +26,7 @@ public:
 		FieldPath	ValuePath;
 	};
 
-	class PrimitiveFieldEditAction : public EditAction
+	class FieldEditAction : public EditAction
 	{
 	public:
 		ValueChangedRecord::Ptr ValueRecord;

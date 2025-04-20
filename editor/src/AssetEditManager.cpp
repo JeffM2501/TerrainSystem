@@ -49,7 +49,7 @@ void AssetEditManager::RegisterEditCallbacks(Types::TypeValue* assetData)
         {
             OnAssetDirty.Invoke(AssetDirtyEvent{ event.Value->GetParent()->ID });
 
-            auto* action = CurrentEditEvent->PushAction<AssetEditEventRecord::PrimitiveFieldEditAction>();
+            auto* action = CurrentEditEvent->PushAction<AssetEditEventRecord::FieldEditAction>();
             action->AssetId = event.Value->GetParent()->ID;
             action->ValuePath = event.Path;
             action->ValueRecord = event.Record;
