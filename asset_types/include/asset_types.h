@@ -22,7 +22,7 @@
 
 #include "type_database.h"
 
-namespace Types
+namespace AssetTypes
 {
 	void RegisterTypes();
 }

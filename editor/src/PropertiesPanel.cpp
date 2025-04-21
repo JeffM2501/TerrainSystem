@@ -110,6 +110,8 @@ void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::T
 
 	for (auto& [index, editor] : cache.TypeEditors)
 	{
+		bool isList = value->GetType()->GetField(index)->IsList();
+
 		if (editor.CustomEditor)
 		{
 			ImGui::TableNextRow();
@@ -118,13 +120,69 @@ void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::T
 			ImGui::Dummy(ImVec2(indentLevel * ScaleToDPI(IndentOffset), 1));
 			ImGui::SameLine(0, 0);
 
+            if (isList)
+            {
+                if (ImGui::Button(ICON_FA_PLUS))
+                {
+                    ListFieldValue& listValue = value->GetTypeListFieldValue(index);
+                    listValue.Add();
+                }
+                ImGui::SetItemTooltip("Add item to %s list", editor.DisplayName.c_str());
+                ImGui::SameLine();
+
+                if ((ImGui::GetCurrentContext()->CurrentItemFlags & ImGuiItemFlags_Disabled) == 0)
+                {
+                    ImGui::SameLine();
+                    ImGui::BeginDisabled(value->GetListFieldCount(index) == 0);
+                    if (ImGui::Button(ICON_FA_TRASH))
+                    {
+                        ListFieldValue& listValue = value->GetTypeListFieldValue(index);
+                        listValue.Clear();
+                    }
+                    ImGui::EndDisabled();
+                    ImGui::SetItemTooltip("Clear all items from %s list", editor.DisplayName.c_str());
+                }
+
+                ImGui::SameLine();
+            }
+
 			ImGui::AlignTextToFramePadding();
 			ImGui::TextUnformatted(editor.DisplayName.c_str());
 
 			ImGui::TableNextColumn();
 			ImGui::BeginDisabled(value->GetType()->FieldHasAttribute<ReadOnlyAttribute>(index));
 			ImGui::PushID(editor.DisplayName.c_str());
-			editor.CustomEditor(value, index, -1);
+			if (isList)
+			{
+				for (int i = 0; i < value->GetListFieldCount(index); i++)
+				{
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+
+                    ImGui::PushID(TextFormat("###%d", i));
+                    const char* label = TextFormat("%d", i + 1);
+                    if (ImGui::Button(ICON_FA_MINUS))
+                    {
+                        ListFieldValue& listValue = value->GetPrimitiveListFieldValue(index);
+                        listValue.Delete(i);
+                    }
+                    ImGui::SetItemTooltip("Remove index %d from %s list", i + 1, editor.DisplayName.c_str());
+
+                    ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(label).x, 0);
+                    ImGui::TextUnformatted(label);
+                    ImGui::PopID();
+
+                    ImGui::TableNextColumn();
+                    ImGui::PushID(TextFormat("###%d", i));
+					editor.CustomEditor(value, index, i);
+                    ImGui::PopID();
+				}
+			}
+			else
+			{
+				editor.CustomEditor(value, index, -1);
+			}
+			
 			ImGui::PopID();
 			ImGui::EndDisabled();
 			continue;
@@ -132,8 +190,6 @@ void PropertiesPanel::ShowType(int indentLevel, TypeEditorCache& cache, Types::T
 		auto& editorList = editor.Editors;
 
 		auto& listValue = value->GetTypeListFieldValue(index);
-
-		bool isList = value->GetType()->GetField(index)->IsList();
 
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();

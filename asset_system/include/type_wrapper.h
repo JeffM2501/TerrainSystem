@@ -113,10 +113,9 @@ public : \
 	template<class T>
 	class TypeListWrapper
 	{
-	private:
+	public:
 		TypeListValue& ValueList;
 
-	public:
 		TypeListWrapper(TypeListValue& valueList) : ValueList(valueList) {}
 
 		// TODO, make this an internal iterator that returns the type wrapper so it can be de-referenced

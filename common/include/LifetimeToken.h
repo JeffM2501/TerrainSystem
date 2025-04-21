@@ -12,13 +12,21 @@ namespace Tokens
 
 		friend TokenSource;
 		void Invalidate() { Valid = false; };
+
+		size_t ID = 0;
 	public:
 		bool IsValid() const { return Valid; }
-		LifetimeToken() = default;
+		LifetimeToken()
+		{
+			ID = size_t(this);
+		}
 		
+		size_t GetID() const { return ID; }
+
 		// noncopyable
 		LifetimeToken(const LifetimeToken&) = delete;
 		LifetimeToken& operator = (const LifetimeToken&) = delete;
+
 	};
 
 	using LifetimeTokenPtr = std::shared_ptr<LifetimeToken>;

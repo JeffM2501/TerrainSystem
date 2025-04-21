@@ -1,6 +1,7 @@
 #include "PropertyEditor.h"
 #include "attributes.h"
 #include "types/asset.h"
+#include "AssetReference.h"
 #include "AssetManager.h"
 
 #include "imgui.h"
@@ -563,7 +564,18 @@ namespace Properties
 
 	bool ResourceReferenceEditor(Types::TypeValue* value, int fieldIndex, int arrayIndex)
 	{
-		AssetTypes::ResourceReference ref(value->GetTypeFieldValue(fieldIndex));
+		TypeValue* fieldValue = nullptr;
+
+        bool isList = value->GetType()->GetField(fieldIndex)->IsList();
+        if (isList && arrayIndex >= value->GetListFieldCount(fieldIndex))
+            return false;
+
+        if (isList)
+            fieldValue = &value->GetTypeListFieldValue(fieldIndex)[arrayIndex];
+        else
+            fieldValue = value->GetTypeFieldValue(fieldIndex);
+
+		AssetTypes::ResourceReference ref(fieldValue);
 		const char* label = TextFormat("###%s", value->GetType()->GetField(fieldIndex)->GetName().c_str());
 		char buffer[256] = { 0 };
 		strcpy(buffer, ref.GetPath().c_str());
@@ -607,9 +619,77 @@ namespace Properties
 		return false;
 	}
 
+    bool AssetReferenceEditor(Types::TypeValue* value, int fieldIndex, int arrayIndex)
+    {
+        TypeValue* fieldValue = nullptr;
+
+        bool isList = value->GetType()->GetField(fieldIndex)->IsList();
+        if (isList && arrayIndex >= value->GetListFieldCount(fieldIndex))
+            return false;
+
+        if (isList)
+            fieldValue = &value->GetTypeListFieldValue(fieldIndex)[arrayIndex];
+        else
+            fieldValue = value->GetTypeFieldValue(fieldIndex);
+
+        AssetTypes::AssetReference ref(fieldValue);
+        const char* label = TextFormat("###%s", value->GetType()->GetField(fieldIndex)->GetName().c_str());
+        char buffer[256] = { 0 };
+        strcpy(buffer, ref.GetPath().c_str());
+
+        auto buttonSize = ImGuiUtils::GetButtonsSize(ICON_FA_ELLIPSIS, ICON_FA_FOLDER_OPEN, ICON_FA_TRASH);
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - buttonSize.x - ImGui::GetStyle().ItemInnerSpacing.x);
+
+        if (ImGui::InputText(label, buffer, 256))
+            ref.SetPath(buffer);
+
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_ELLIPSIS))
+        {
+            auto fileToOpen = AssetRefPickerDialog(value, fieldIndex, buffer);
+            if (!fileToOpen.empty())
+                ref.SetPath(fileToOpen);
+        }
+        ImGui::SetItemTooltip("Select Resource File");
+
+        ImGui::SameLine();
+        ImGui::BeginDisabled(ref.GetPath().empty());
+        if (ImGui::Button(ICON_FA_FILE_PEN))
+        {
+            AssetManager::FileSystemPath filePath = AssetManager::ToFileSystemPath(AssetManager::AssetPath(buffer));
+
+            OpenURL(TextFormat("file://%s", filePath.c_str()));
+        }
+        ImGui::SetItemTooltip("Show in explorer");
+        ImGui::EndDisabled();
+
+
+        ImGui::SameLine();
+        ImGui::BeginDisabled(ref.GetPath().empty());
+        if (ImGui::Button(ICON_FA_TRASH))
+        {
+            ref.ResetPath();
+        }
+        ImGui::SetItemTooltip("Clear resource reference");
+        ImGui::EndDisabled();
+
+        return false;
+    }
+
 	bool TextureReferenceEditor(Types::TypeValue* value, int fieldIndex, int arrayIndex)
 	{
-		AssetTypes::ResourceReference ref(value->GetTypeFieldValue(fieldIndex));
+        TypeValue* fieldValue = nullptr;
+
+        bool isList = value->GetType()->GetField(fieldIndex)->IsList();
+        if (isList && arrayIndex >= value->GetListFieldCount(fieldIndex))
+            return false;
+
+        if (isList)
+            fieldValue = &value->GetTypeListFieldValue(fieldIndex)[arrayIndex];
+        else
+            fieldValue = value->GetTypeFieldValue(fieldIndex);
+
+		AssetTypes::ResourceReference ref(fieldValue);
 
 		ImGui::PushID(value);
 		Vector2 size{ ImGui::GetFrameHeight(), ImGui::GetFrameHeight() };
@@ -656,6 +736,7 @@ namespace Properties
 		BaseSet[ColorEditorName] = ColorPropertyEditor;
 
 		BaseSet[std::string(AssetTypes::ResourceReferenceEditor)] = ResourceReferenceEditor;
+		BaseSet[std::string(AssetTypes::AssetReferenceEditor)] = AssetReferenceEditor;
 		BaseSet[std::string(AssetTypes::TextureReferenceEditor)] = TextureReferenceEditor;
 	}
 

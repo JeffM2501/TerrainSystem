@@ -14,11 +14,10 @@ using namespace AssetTypes;
 
 int main(int argc, char* argv[])
 {
-	Types::RegisterTypes();
+	AssetTypes::RegisterTypes();
 
 	TestDerivedType test3 = TypeDatabase::Get().CreateTypeValue<AssetTypes::TestDerivedType>();
 	auto strDefault = test3.GetDerivedString();// test3.SetDerivedString("I was also set");
-
 
 	auto matAsset = TypeDatabase::Get().CreateTypeValue<AssetTypes::TerrainMaterialAsset>();
 

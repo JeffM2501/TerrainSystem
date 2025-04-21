@@ -73,10 +73,13 @@ namespace Types
         const std::vector<T>& GetValues() const { return Values; }
         void SetValues(const std::vector<T>& newValues) { Values = newValues; }
 
+#pragma warning( push )
+#pragma warning( disable : 4172)
         const T& GetValue(size_t index = 0) const
         {
             return Values[index];
         }
+#pragma warning( pop )
 
         bool SetValue(const T& newValue, size_t index = 0)
         {

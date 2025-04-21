@@ -71,11 +71,17 @@ void TerrainGenerationPanel::OnShow()
                 tile.Splatmap = LoadTextureFromImage(testSplat);
                 UnloadImage(testSplat);
 
-                 tile.AddMaterial(doc->GetMaterial("Grass"));
-                 tile.AddMaterial(doc->GetMaterial("Ground"));
-                 tile.AddMaterial(doc->GetMaterial("Road"));
-                 tile.AddMaterial(doc->GetMaterial("Snow"));
-                 tile.AddMaterial(doc->GetMaterial("Grid"));
+                for (int i = 0; i < 5; i++)
+                {
+                    if (i < doc->MaterialListCache.size())
+                    {
+                        tile.AddMaterial(&doc->MaterialListCache[i]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
 
 
                 tile.Origin = TerrainPosition{ x, y };

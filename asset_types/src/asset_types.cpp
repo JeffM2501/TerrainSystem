@@ -1,10 +1,11 @@
 #include "asset_types.h"
 
+#include "AssetReference.h"
 #include "types/test_type.h"
 #include "types/asset.h"
 #include "types/terrain.h"
 
-namespace Types
+namespace AssetTypes
 {
 	void RegisterTypes()
 	{

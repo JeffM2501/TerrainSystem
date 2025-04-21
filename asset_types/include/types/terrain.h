@@ -1,7 +1,7 @@
 #pragma once
 
 #include "type_wrapper.h"
-
+#include "AssetReference.h"
 #include "types/asset.h"
 #include "raylib.h"
 #include "raymath.h"
@@ -202,17 +202,16 @@ namespace AssetTypes
 			auto* info = type->AddTypeField("Info", TerrainInfo::TypeName);
 			info->AddAttribute<AttributeTypes::ReadOnlyAttribute>();
 
-			type->AddTypeListField("Materials", TerrainMaterial::TypeName);
+			auto * materials = type->AddTypeListField("Materials", AssetReference::TypeName,false);
+			materials->AddAttribute<AssetRefTypeAttribute>(TerrainMaterialAsset::TypeName);
 
 			auto* tiles = type->AddTypeListField("Tiles", TerrainTile::TypeName);
 			tiles->AddAttribute<AttributeTypes::ReadOnlyAttribute>();
 			tiles->AddAttribute<AttributeTypes::HiddenAttribute>();
-
-			type->AddPrimitiveListField("VecList", PrimitiveType::Vector3);
 		}
 
 		TerrainInfo GetInfo() const { return TerrainInfo(ValuePtr->GetTypeFieldValue(1)); }
-		TypeListWrapper<TerrainMaterial> GetMaterials() const { return TypeListWrapper<TerrainMaterial>(ValuePtr->GetTypeListFieldValue(2)); }
+		TypeListWrapper<AssetReference> GetMaterials() const { return TypeListWrapper<AssetReference>(ValuePtr->GetTypeListFieldValue(2)); }
 		TypeListWrapper<TerrainTile> GetTiles() const { return TypeListWrapper<TerrainTile>(ValuePtr->GetTypeListFieldValue(3)); }
 	};
 }

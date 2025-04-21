@@ -87,6 +87,7 @@ namespace Types
         TypeListFieldInfo(const std::string& name, class TypeInfo* type, bool isPointer = false)
             : FieldInfo(name)
             , TypePtr(type)
+            , IsPointer(isPointer)
         {
             Type = FieldType::TypeList;
         }

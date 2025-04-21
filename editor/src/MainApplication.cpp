@@ -185,7 +185,7 @@ private:
 
 int main(int argc, char* argv[])
 {
-	Types::RegisterTypes();
+	AssetTypes::RegisterTypes();
 	AssetSystem::AssetTypeDatabase::Init();
 
 	TerrainEditorApp app;

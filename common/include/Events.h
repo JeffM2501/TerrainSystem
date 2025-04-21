@@ -37,7 +37,7 @@ namespace Events
 		{
 			for (auto itr = EventHandlers.begin(); itr != EventHandlers.end(); itr++)
 			{
-				if (itr->Token == token)
+				if (itr->Token->GetID() == token->GetID())
 				{
 					EventHandlers.erase(itr);
 					return;
@@ -56,7 +56,7 @@ namespace Events
 				}
 				else
 				{
-					// if the token is not valid, remove from the list of events as the funciton pointer is not valid anymore
+					// if the token is not valid, remove from the list of events as the function pointer is not valid anymore
 					itr = EventHandlers.erase(itr);
 				}
 			}

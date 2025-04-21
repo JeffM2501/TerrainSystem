@@ -2,6 +2,7 @@
 
 #include "CRC64.h"
 #include "type_values.h"
+#include "AssetReference.h"
 #include "AssetManager.h"
 #include "LifetimeToken.h"
 #include "Events.h"
@@ -193,4 +194,83 @@ public:
 	};
 
 	Events::EventSource<AssetDirtyEvent> OnAssetDirty;
+};
+
+template<class T>
+class AssetReferenceResolver
+{
+private:
+	AssetEditManager& Manager;
+public:
+    T* AssetValue = nullptr;
+	Tokens::TokenSource	Token;
+
+	AssetTypes::AssetReference Reference;
+
+	Events::EventSource<AssetReferenceResolver<T>> ReferenceChanged;
+    Events::EventSource<AssetReferenceResolver<T>> ReferenceDataChanged;
+
+	Events::EventSource<AssetReferenceResolver<T>> AssetReferenceClosed;
+    Events::EventSource<AssetReferenceResolver<T>> AssetReferenceOpened;
+
+	AssetReferenceResolver(AssetEditManager& manager, Types::TypeValue* value)
+		: Manager(manager)
+		, Reference(value)
+	{
+		value->OnValueChanged.Add([this](ValueChangedEvent evt) 
+			{
+				Resolve();
+			}
+		, Token.GetToken());
+	}
+
+	AssetReferenceResolver(const AssetReferenceResolver&) = delete;
+	AssetReferenceResolver& operator = (const AssetReferenceResolver&) = delete;
+
+	virtual ~AssetReferenceResolver()
+	{
+		Close();
+	}
+
+	bool IsValid() const { return AssetValue != nullptr; }
+
+	bool Resolve()
+    {
+		// we have an asset
+		if (AssetValue)
+		{
+			// it's the same asset, so do nothing
+			if (AssetValue->GetPath() == Reference.GetPath())
+				return false;
+		}
+		
+		Close();
+		AssetValue = Manager.OpenAsset<T>(Reference.GetPath());
+
+		if (AssetValue)
+		{
+            AssetValue->Value->OnValueChanged.Add([this](const ValueChangedEvent& evt) {ReferenceDataChanged.Invoke(*this); }, Token.GetToken());
+            AssetReferenceOpened.Invoke(*this);
+            ReferenceDataChanged.Invoke(*this);
+
+			return true;
+		}
+
+		return false;
+	}
+
+    void Close()
+    {
+        if (AssetValue)
+        {
+            // remove all event handlers from the asset we are going to close
+            AssetValue->Value->OnValueChanged.Remove(Token.GetToken());
+            AssetReferenceClosed.Invoke(*this);
+
+            // we are done referencing this asset
+            Manager.CloseAsset(AssetValue);
+
+            AssetValue = nullptr;
+        }
+    }
 };

@@ -1,4 +1,5 @@
 #include "TerrainDocument.h"
+#include "EditorThumbnailManager.h"
 #include "Application.h"
 #include "DisplayScale.h"
 #include "Dialog.h"
@@ -18,22 +19,158 @@ static constexpr float CAMERA_ORBITAL_SPEED = 0.25f;
 static constexpr float CAMERA_MOUSE_MOVE_SENSITIVITY = 0.003f;
 
 using namespace EditorFramework;
+using namespace Editor;
+
+class NewTerrainDocumentDialog : public Dialog
+{
+private:
+	AssetTypes::TerrainAsset* Terrain = nullptr;
+
+	int GridSize = 128;
+	float TileSize = 128;
+	float MinZ = -50;
+	float MaxZ = 100;
+
+protected:
+	DialogResult OnShow() override
+	{
+		if (ImGui::BeginTable("grid", 2, ImGuiTableFlags_SizingStretchSame, ImGui::GetContentRegionAvail()))
+		{
+			ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_None, 0.25f);
+			ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_None, 0.75f);
+
+			ImGui::TableNextRow(); ImGui::TableNextColumn();
+			ImGui::TextUnformatted("Quads per tile"); ImGui::TableNextColumn(); ImGui::InputInt("(count)###Quads", &GridSize, 1, 10);
+
+			ImGui::TableNextRow(); ImGui::TableNextColumn();
+            ImGui::TextUnformatted("Tile Size"); ImGui::TableNextColumn(); ImGui::InputFloat("(m)###Size", &TileSize, 1, 10);
+
+			ImGui::TableNextRow(); ImGui::TableNextColumn();
+            ImGui::TextUnformatted("Minimum Z"); ImGui::TableNextColumn(); ImGui::InputFloat("(m)###MinZ", &MinZ, 1, 10);
+
+			ImGui::TableNextRow(); ImGui::TableNextColumn();
+            ImGui::TextUnformatted("Maximum Z"); ImGui::TableNextColumn(); ImGui::InputFloat("(m)###MaxZ", &MaxZ, 1, 10);
+
+			ImGui::EndTable();
+		}
+		
+		return DialogResult::None;
+	}
+public:
+	NewTerrainDocumentDialog(AssetTypes::TerrainAsset* terrain, DialogCallback onAccept = nullptr, DialogCallback onCancel = nullptr)
+	{
+		DialogName = "Setup Terrain";
+
+		Terrain = terrain;
+		AcceptCallback = onAccept;
+		CancelCallback = onCancel;
+
+		AcceptName = "Create";
+		CancelName = "Defaults";
+
+		MinimumSize = ScaleToDPI(450, 150);
+	}
+
+	void OnAccept() override
+	{
+		// apply the data to the terrain
+		uint8_t size = uint8_t(GridSize);
+		Terrain->GetInfo().SetGridSize(size);
+		Terrain->GetInfo().SetTileSize(TileSize);
+		Terrain->GetInfo().SetMaxZ(MaxZ);
+		Terrain->GetInfo().SetTMinZ(MinZ);
+
+		Dialog::OnAccept();
+	}
+};
 
 void TerrainDocument::OnUpdate(int width, int height)
 {
 	ViewportDocument::OnUpdate(width, height);
 
 	SetShaderValue(TerrainShader, SunVectorLoc, SunVector, SHADER_UNIFORM_VEC3);
+}	
+
+void TerrainDocument::OnAssetCreate()
+{
+	Application::GetInstance().ShowDialogBox<NewTerrainDocumentDialog>(RootAsset);
 }
 
 void TerrainDocument::OnAssetOpen()
 {
+	RootAsset->GetMaterials().ValueList.OnValueChanged.Add([this](const ValueChangedEvent& event)
+		{
+			HandleMaterialListChangedEvent(event);
+		}, Token.GetToken());
 
+	auto& materials = RootAsset->GetMaterials();
+
+	for (int i = 0; i < materials.Size(); i++)
+	{
+		MaterialRefs.push_back(std::make_unique<AssetReferenceResolver<AssetTypes::TerrainMaterialAsset>>(EditManager, materials[i].ValuePtr));
+		RebuildMaterialIndex(i);
+		MaterialRefs.back()->ReferenceDataChanged.Add([this, i](auto&) {RebuildMaterialIndex(i); }, Token.GetToken());
+	}
 }
 
 void TerrainDocument::OnAssetDirty()
 {
 
+}
+
+void TerrainDocument::HandleMaterialListChangedEvent(const ValueChangedEvent& event)
+{
+	// figure out what slot changed and add/remove/rebuild it
+	if (event.RecordType == ValueChangedEvent::ValueRecordType::TypeListCleared)
+	{
+		MaterialListCache.clear();
+	}
+    else if (event.RecordType == ValueChangedEvent::ValueRecordType::TypeListItemRemoved)
+    {
+		int index = event.Path.Elements.back().Index;
+		MaterialListCache.erase(MaterialListCache.begin() + index);
+    }
+    else if (event.RecordType == ValueChangedEvent::ValueRecordType::TypeListItemAdded)
+    {
+        int index = event.Path.Elements.back().Index;
+        MaterialRefs.push_back(std::make_unique<AssetReferenceResolver<AssetTypes::TerrainMaterialAsset>>(EditManager, RootAsset->GetMaterials()[index].ValuePtr));
+		RebuildMaterialIndex(index);
+		MaterialRefs.back()->ReferenceDataChanged.Add([this, index](auto&) {RebuildMaterialIndex(index); }, Token.GetToken());
+    }
+	else if (event.RecordType == ValueChangedEvent::ValueRecordType::PrimitiveChanged)
+    {
+        int index = event.Path.Elements.back().Index;
+        RebuildMaterialIndex(index);
+    }
+}
+
+void TerrainDocument::RebuildMaterialIndex(int index)
+{
+    if (index >= MaterialListCache.size())
+        MaterialListCache.resize(index+1);
+
+	if (MaterialRefs[index]->IsValid())
+	{
+		auto& matAsset = MaterialRefs[index]->AssetValue->GetMaterial();
+
+		MaterialListCache[index].DiffuseColor = matAsset.GetDiffuseColor();
+
+		if (!matAsset.GetDiffuseTexture().GetPath().empty())
+			MaterialListCache[index].DiffuseMap = ThumbnailManager::GetThumbnail(matAsset.GetDiffuseTexture().GetPath());
+		else
+			MaterialListCache[index].DiffuseMap.id = -1;
+
+        if (!matAsset.GetNormalMap().GetPath().empty())
+            MaterialListCache[index].NormalMap = ThumbnailManager::GetThumbnail(matAsset.GetNormalMap().GetPath());
+        else
+            MaterialListCache[index].NormalMap.id = -1;
+	}
+	else
+	{
+		MaterialListCache[index].DiffuseColor = WHITE;
+		MaterialListCache[index].DiffuseMap.id = -1;
+		MaterialListCache[index].NormalMap.id = -1;
+	}
 }
 
 void TerrainDocument::OnShowScene(const Vector2& renderSize)
@@ -123,7 +260,6 @@ void TerrainDocument::SetupDocument()
 
 	Renderer.SetShader(TerrainShader);
 
-
 	auto visGroup = MainToolbar.AddGroup("TerrainVis");
 	auto splatCommand = visGroup->AddItem<StateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this](CommandContextSet*) {ShowSplat = !ShowSplat; }, [this](CommandContextSet*) {return ShowSplat; });
 
@@ -137,13 +273,6 @@ void TerrainDocument::SetupDocument()
 void TerrainDocument::OnCreated()
 {
 	SetupDocument();
-
-	LoadMaterial("Grass", "resources/terrain_materials/grass_ground_d-resized.png");
-	LoadMaterial("Ground", "resources/terrain_materials/ground_crackedv_d-resized.png");
-	LoadMaterial("Road", "resources/terrain_materials/ground_dry_d-resized.png");
-	LoadMaterial("Snow", "resources/terrain_materials/snow_grass3_d-resized.png");
-
-	LoadMaterial("Grid", "resources/grid.png");
 }
 
 TerrainTile& TerrainDocument::GetTile(int x, int y)
@@ -174,24 +303,4 @@ bool TerrainDocument::HasTile(int x, int y) const
 	}
 
 	return false;
-}
-
-void TerrainDocument::LoadMaterial(const std::string& name, std::string_view path)
-{
-	TerrainMaterial& mat = MaterialLibrary.insert_or_assign(name, TerrainMaterial()).first->second;
-	if (mat.DiffuseMap.id > 0)
-		UnloadTexture(mat.DiffuseMap);
-
-	mat.DiffuseMap = LoadTexture(path.data());
-	GenTextureMipmaps(&mat.DiffuseMap);
-	SetTextureFilter(mat.DiffuseMap, TEXTURE_FILTER_TRILINEAR);
-}
-
-const TerrainMaterial* TerrainDocument::GetMaterial(const std::string& name) const
-{
-	auto itr = MaterialLibrary.find(name);
-	if (itr == MaterialLibrary.end())
-		return nullptr;
-
-	return &itr->second;
 }

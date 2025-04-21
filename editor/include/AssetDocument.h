@@ -34,6 +34,7 @@ public:
 		RootAsset = EditManager.CreateTempAsset<T>();
 		RegisterEditHandler();
 		OnAssetCreate();
+		OnAssetOpen();
 	}
 
 	void OpenAsset(const std::string& assetPath) override

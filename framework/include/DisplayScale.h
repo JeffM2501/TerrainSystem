@@ -1,5 +1,6 @@
 #pragma once
 
+#include "imgui.h"
 
 namespace EditorFramework
 {
@@ -12,4 +13,9 @@ namespace EditorFramework
 	{
 		return (T)(value * GetDPIScale());
 	}
+
+    inline ImVec2 ScaleToDPI(float x, float y)
+    {
+		return ImVec2{ x * GetDPIScale(), y * GetDPIScale() };
+    }
 }

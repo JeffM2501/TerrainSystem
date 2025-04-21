@@ -11,6 +11,7 @@ using namespace Types;
 
 namespace AssetTypes
 {
+	
 	static constexpr std::string_view ResourceReferenceEditor = "ResourceReferenceEditor";
 	static constexpr std::string_view TextureReferenceEditor = "TextureReferenceEditor";
 
@@ -52,24 +53,6 @@ namespace AssetTypes
 	{
 	public:
 		DEFINE_TYPE(ResourceReference);
-
-		static void Register()
-		{
-			auto* type = TypeDatabase::Get().CreateType(TypeName);
-			type->AddAttribute<AttributeTypes::CustomEditorAttribute>(ResourceReferenceEditor);
-
-			type->AddPrimitiveField<std::string>("Path", std::string());
-		}
-
-		const std::string& GetPath() const { return ValuePtr->GetFieldPrimitiveValue<std::string>(0); }
-		void SetPath(const std::string& value) { ValuePtr->SetFieldPrimitiveValue<std::string>(0, value); }
-		void ResetPath() { ValuePtr->ResetFieldToDefault(0); }
-	};
-
-	class AssetReference : public TypeWraper
-	{
-	public:
-		DEFINE_TYPE(AssetReference);
 
 		static void Register()
 		{
