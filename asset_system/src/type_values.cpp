@@ -51,6 +51,40 @@ std::unique_ptr<ListFieldValue> ListFieldValue::Create(PrimitiveType primitiveTy
     }
 }
 
+
+TypeValue* TypeValue::GetParent()
+{
+    if (ParentValue)
+        return ParentValue->GetParent();
+
+    return reinterpret_cast<TypeValue*>(this);
+}
+
+const TypeValue* TypeValue::GetParent() const
+{
+    if (ParentValue)
+        return ParentValue->GetParent();
+
+    return reinterpret_cast<const TypeValue*>(this);
+}
+
+void TypeValue::CallValueChanged(ValueChangedEvent& eventRecord)
+{
+    eventRecord.Value = this;
+    OnValueChanged.Invoke(eventRecord);
+
+    if (ParentValue)
+    {
+        eventRecord.Path.PushFront(SubPath);
+        ParentValue->CallValueChanged(eventRecord);
+    }
+}
+
+bool TypeValue::FieldIsDefault(int fieldIndex) const
+{
+    return Values.find(fieldIndex) == Values.end();
+}
+
 void TypeValue::ResetFieldToDefault(int fieldIndex)
 {
     auto itr = Values.find(fieldIndex);
@@ -160,7 +194,7 @@ std::string_view TypeValue::GetFieldNameFromPath(const FieldPath& path, int path
             auto listIndex = path.Elements[pathIndex].Index;
 
             auto& listField = GetTypeListFieldValue(fieldIndex);
-            if (listIndex >= listField.Size())
+            if (listIndex >= listField.Size() || pathIndex >= path.Elements.size()-1)
                 return fieldInfo->GetName();
 
             return listField[listIndex].GetFieldNameFromPath(path, pathIndex + 1);
@@ -170,4 +204,54 @@ std::string_view TypeValue::GetFieldNameFromPath(const FieldPath& path, int path
         return typeFieldInfo->TypePtr->GetFieldNameFromPath(path, pathIndex + 1);
     }
     return std::string_view();
+}
+
+ListFieldValue& TypeValue::GetPrimitiveListFieldValue(int fieldIndex)
+{
+    auto itr = Values.find(fieldIndex);
+    if (itr == Values.end())
+    {
+        const PrimitiveFieldInfo* fieldPtr = Type->GetField<PrimitiveFieldInfo>(fieldIndex);
+
+        auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, SubPath + FieldPath::Field(fieldIndex));
+        itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
+    }
+
+    return *(ListFieldValue*)itr->second.get();
+}
+
+int32_t TypeValue::GetListFieldCount(int fieldIndex)
+{
+    auto itr = Values.find(fieldIndex);
+    if (itr == Values.end() || !Type->GetField(fieldIndex)->IsList())
+        return -1;
+
+    const ListFieldValue* fieldPtr = itr->second->GetAs<ListFieldValue>();
+
+    return int32_t(fieldPtr->Size());
+}
+
+void TypeValue::SetEnumFieldFromPath(const FieldPath& path, const int& value, int pathIndex)
+{
+    if (path.Elements[pathIndex].Type == FieldPath::ElementType::Field)
+    {
+        int fieldIndex = path.Elements[pathIndex].Index;
+
+        auto* fieldTypeInfo = GetType()->GetField(fieldIndex);
+
+        if (fieldTypeInfo->IsEnum())
+        {
+            if (!fieldTypeInfo->IsList())
+            {
+                SetFieldEnumerationValue(fieldIndex, value);
+            }
+        }
+        else if (fieldTypeInfo->IsType())
+        {
+            if (!fieldTypeInfo->IsList())
+            {
+                GetTypeFieldValue(fieldIndex)->SetEnumFieldFromPath(path, value, pathIndex + 1);
+            }
+        }
+    }
 }

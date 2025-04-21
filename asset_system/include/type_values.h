@@ -1,6 +1,9 @@
 #pragma once
 
 #include "type_database.h"
+#include "type_events.h"
+#include "type_field_value.h"
+#include "primitive_type_value.h"
 #include "field_path.h"
 #include "Events.h"
 #include <map>
@@ -9,299 +12,6 @@
 
 namespace Types
 {
-	class TypeValue;
-
-	class ValueChangedRecord
-	{
-	public:
-		ValueChangedRecord() = default;
-		ValueChangedRecord(const ValueChangedRecord&) = delete;
-		ValueChangedRecord& operator = (const ValueChangedRecord&) = delete;
-
-		virtual ~ValueChangedRecord() = default;
-
-		using Ptr = std::shared_ptr<ValueChangedRecord>;
-
-	};
-
-    template<class T>
-    class PrimitiveValueChangedRecord : public ValueChangedRecord
-    {
-    public:
-        T OldValue;
-        T NewValue;
-
-        using Ptr = std::shared_ptr<PrimitiveValueChangedRecord>;
-    };
-
-    class EnumValueChangedRecord : public ValueChangedRecord
-    {
-    public:
-        int OldValue;
-        int NewValue;
-
-        using Ptr = std::shared_ptr<EnumValueChangedRecord>;
-    };
-
-    template<class T>
-    class PrimitiveListItemAddedRecord : public ValueChangedRecord
-    {
-    public:
-        T NewValue;
-        using Ptr = std::shared_ptr<PrimitiveListItemAddedRecord>;
-    };
-
-    template<class T>
-    class PrimitiveListItemRemovedRecord : public ValueChangedRecord
-    {
-    public:
-        T OldValue;
-        using Ptr = std::shared_ptr<PrimitiveListItemRemovedRecord>;
-    };
-
-    template<class T>
-    class PrimitiveListClearedRecord : public ValueChangedRecord
-    {
-    public:
-        std::vector<T> OldValues;
-        using Ptr = std::shared_ptr<PrimitiveListClearedRecord>;
-    };
-
-
-	class TypeListItemRemovedRecord : public ValueChangedRecord
-	{
-	public:
-		std::unique_ptr<TypeValue> OldValue;
-		using Ptr = std::shared_ptr<TypeListItemRemovedRecord>;
-	};
-
-    class TypeListItemClearedRecord : public ValueChangedRecord
-    {
-    public:
-		std::unique_ptr<TypeValue> OldValue;
-        using Ptr = std::shared_ptr<TypeListItemRemovedRecord>;
-    };
-
-	class ValueChangedEvent
-	{
-	public:
-		TypeValue* Value = nullptr;
-		FieldPath Path;
-
-		ValueChangedRecord::Ptr Record = nullptr;
-
-		enum ValueRecordType
-		{
-			PrimitiveChanged,
-			EnumerationChanged,
-			PrimitiveListItemAdded,
-			PrimitiveListItemRemoved,
-			PrimitiveListCleared,
-			TypeListItemAdded,
-			TypeListItemRemoved,
-			TypeListCleared
-		};
-
-		ValueRecordType RecordType = ValueRecordType::PrimitiveChanged;
-
-		template<class T>
-		T* GetRecordAs()
-		{
-			return static_cast<T*>(Record.get());
-		}
-	};
-
-	class FieldValue
-	{
-	protected:
-		TypeValue* ParentValue = nullptr;
-		FieldPath SubPath;
-
-	public:
-		FieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath())
-			: ParentValue(parentValue)
-			, SubPath(path)
-		{
-		}
-		virtual ~FieldValue() = default;
-
-		template<typename T>
-		inline T* GetAs()
-		{
-			return reinterpret_cast<T*>(this);
-		}
-
-		virtual TypeValue* GetParent() { return ParentValue; }
-		virtual const TypeValue* GetParent() const { return ParentValue; }
-	};
-
-	class EnumerationFieldValue : public FieldValue
-	{
-	protected:
-		int32_t Value = 0;
-
-	public:
-		EnumerationFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
-		virtual ~EnumerationFieldValue() = default;
-		int32_t GetValue() const { return Value; }
-
-		template<class T>
-		T GetValueAs() const { return T(Value); }
-
-		void SetValue(const int32_t& newValue) { Value = newValue; }
-
-		template<class T>
-		void SetValueAs(const T& newValue) { Value = int32_t(newValue); }
-	};
-
-	template<typename T>
-	class PrimitiveFieldValue : public FieldValue
-	{
-	protected:
-		T Value;
-
-	public:
-		PrimitiveFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
-		virtual ~PrimitiveFieldValue() = default;
-		const T& GetValue() const { return Value; }
-		void SetValue(const T& newValue) { Value = newValue; }
-	};
-
-	class ListFieldValue : public FieldValue
-	{
-	public:
-		ListFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) {}
-		virtual ~ListFieldValue() = default;
-
-		virtual void Clear() = 0;
-
-		virtual bool IsEmpty() const = 0;
-
-		virtual size_t Size() const = 0;
-
-		// todo, make this take the type for it's default value
-		virtual size_t Add() = 0;
-
-		virtual void Delete(size_t index) = 0;
-
-		static std::unique_ptr<ListFieldValue> Create(PrimitiveType primitiveType, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath());
-	};
-
-	template<typename T>
-	class PrimitiveListFieldValue : public ListFieldValue
-	{
-	protected:
-		std::vector<T> Values;
-
-	public:
-		PrimitiveListFieldValue(TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : ListFieldValue(parentValue, path) {}
-		virtual ~PrimitiveListFieldValue() = default;
-		PrimitiveListFieldValue() = default;
-		PrimitiveListFieldValue(const PrimitiveListFieldValue&) = delete;
-		PrimitiveListFieldValue& operator = (const PrimitiveListFieldValue&) = delete;
-
-		Events::EventSource<ValueChangedEvent> OnValueChanged;
-
-		void CallValueChanged(ValueChangedEvent& eventRecord)
-		{
-			eventRecord.Value = ParentValue;
-			OnValueChanged.Invoke(eventRecord);
-
-			if (ParentValue)
-			{
-				ParentValue->CallValueChanged(eventRecord);
-			}
-		}
-
-		std::vector<T>& GetValues() { return Values; }
-		const std::vector<T>& GetValues() const { return Values; }
-		void SetValues(const std::vector<T>& newValues) { Values = newValues; }
-
-		const T& GetValue(size_t index = 0) const
-		{
-			return Values[index];
-		}
-
-		bool SetValue(const T& newValue, size_t index = 0)
-		{
-			if (index == Values.size())
-			{
-				PushBack(newValue);
-				return true;
-			}
-			if (index >= Values.size())
-				return false;
-
-			ValueChangedEvent eventRecord;
-			eventRecord.Path = SubPath + FieldPath::Index(int(index));
-			eventRecord.Record = std::make_shared<PrimitiveValueChangedRecord<T>>();
-			eventRecord.GetRecordAs<PrimitiveValueChangedRecord<T>>()->OldValue = Values[index];
-			eventRecord.GetRecordAs<PrimitiveValueChangedRecord<T>>()->NewValue = newValue;
-			Values[index] = newValue;
-			CallValueChanged(eventRecord);
-			return true;
-		}
-
-		typename std::vector<T>::iterator begin() { return Values.begin(); }
-		typename std::vector<T>::const_iterator begin() const { return Values.cbegin(); }
-
-		typename std::vector<T>::iterator end() { return Values.end(); }
-		typename std::vector<T>::const_iterator end() const { return Values.cend(); }
-
-		T& operator[] (int index) { return Values[index]; }
-
-		typename std::vector<T>::iterator Erase(typename std::vector<T>::iterator at) { return Values.erase(at); }
-
-		inline void Clear() override 
-		{
-			Values.clear(); 
-
-            ValueChangedEvent eventRecord;
-            eventRecord.Path = SubPath;
-            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::PrimitiveListCleared;
-            eventRecord.Record = std::make_shared<PrimitiveListClearedRecord<T>>();
-			eventRecord.GetRecordAs<PrimitiveListClearedRecord<T>>()->OldValues = Values;
-
-            CallValueChanged(eventRecord);
-		}
-
-		inline bool IsEmpty() const override { return Values.empty(); }
-
-		inline size_t Size() const override { return Values.size(); }
-
-		inline size_t Add() override
-		{
-			Values.resize(Values.size() + 1);
-
-            ValueChangedEvent eventRecord;
-            eventRecord.Path = SubPath + FieldPath::Index(int(Values.size()));
-            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::PrimitiveListItemAdded;
-            eventRecord.Record = std::make_shared<PrimitiveListItemAddedRecord<T>>();
-            eventRecord.GetRecordAs<PrimitiveListItemAddedRecord<T>>()->NewValue = Values[Values.size()-1];
-   
-            CallValueChanged(eventRecord);
-
-			return Values.size() - 1;
-		}
-
-		inline void Delete(size_t index) override
-		{
-			if (index >= Values.size())
-				return;
-
-            ValueChangedEvent eventRecord;
-            eventRecord.Path = SubPath + FieldPath::Index(int(index));
-			eventRecord.RecordType = ValueChangedEvent::ValueRecordType::PrimitiveListItemRemoved;
-            eventRecord.Record = std::make_shared<PrimitiveListItemRemovedRecord<T>>();
-            eventRecord.GetRecordAs<PrimitiveListItemRemovedRecord<T>>()->OldValue = Values[index];
-			Values.erase(Values.begin() + index);
-
-			CallValueChanged(eventRecord);
-		}
-
-		void PushBack(const T& value) { return Values.push_back(value); }
-	};
-
 	class TypeListValue;
 
 	using TypeValueFieldMap = std::map<int, std::unique_ptr<FieldValue>>;
@@ -321,44 +31,16 @@ namespace Types
 		TypeValue(const TypeInfo* t, TypeValue* parentValue = nullptr, const FieldPath& path = FieldPath()) : FieldValue(parentValue, path) { SetType(t); }
 
 		Events::EventSource<ValueChangedEvent> OnValueChanged;
-
-		TypeValue* GetParent() override
-		{
-			if (ParentValue)
-				return ParentValue->GetParent();
-
-			return reinterpret_cast<TypeValue*>(this);
-		}
-
-		const TypeValue* GetParent() const override
-		{
-			if (ParentValue)
-				return ParentValue->GetParent();
-
-			return reinterpret_cast<const TypeValue*>(this);
-		}
-
-		void CallValueChanged(ValueChangedEvent& eventRecord)
-		{
-			eventRecord.Value = this;
-			OnValueChanged.Invoke(eventRecord);
-
-			if (ParentValue)
-			{
-				eventRecord.Path.PushFront(SubPath);
-				ParentValue->CallValueChanged(eventRecord);
-			}
-		}
+		TypeValue* GetParent() override;
+		const TypeValue* GetParent() const override;
+		void CallValueChanged(ValueChangedEvent& eventRecord);
 
 		void SetType(const TypeInfo* type);
 
 		const TypeInfo* GetType() const { return Type; }
 		const TypeValueFieldMap& GetTypeFieldValues() const { return Values; }
 
-		bool FieldIsDefault(int fieldIndex) const
-		{
-			return Values.find(fieldIndex) == Values.end();
-		}
+		bool FieldIsDefault(int fieldIndex) const;
 
 		template<typename T>
 		inline const T& GetFieldPrimitiveValue(int fieldIndex)
@@ -467,30 +149,8 @@ namespace Types
 			return *(PrimitiveListFieldValue<T>*)itr->second.get();
 		}
 
-		ListFieldValue& GetPrimitiveListFieldValue(int fieldIndex)
-		{
-			auto itr = Values.find(fieldIndex);
-			if (itr == Values.end())
-			{
-				const PrimitiveFieldInfo* fieldPtr = Type->GetField<PrimitiveFieldInfo>(fieldIndex);
-
-				auto value = ListFieldValue::Create(fieldPtr->GetPrimitiveType(), this, SubPath + FieldPath::Field(fieldIndex));
-				itr = Values.insert_or_assign(fieldIndex, std::move(value)).first;
-			}
-
-			return *(ListFieldValue*)itr->second.get();
-		}
-
-		int32_t GetListFieldCount(int fieldIndex)
-		{
-			auto itr = Values.find(fieldIndex);
-			if (itr == Values.end() || !Type->GetField(fieldIndex)->IsList())
-				return -1;
-
-			const ListFieldValue* fieldPtr = itr->second->GetAs<ListFieldValue>();
-
-			return int32_t(fieldPtr->Size());
-		}
+		ListFieldValue& GetPrimitiveListFieldValue(int fieldIndex);
+		int32_t GetListFieldCount(int fieldIndex);
 
 		template<typename T>
 		void PushBackPrimitiveListFieldValue(int fieldIndex, T value)
@@ -567,30 +227,7 @@ namespace Types
 			}
 		}
 
-		void SetEnumFieldFromPath(const FieldPath& path, const int& value, int pathIndex = 0)
-		{
-			if (path.Elements[pathIndex].Type == FieldPath::ElementType::Field)
-			{
-				int fieldIndex = path.Elements[pathIndex].Index;
-
-				auto* fieldTypeInfo = GetType()->GetField(fieldIndex);
-
-				if (fieldTypeInfo->IsEnum())
-				{
-					if (!fieldTypeInfo->IsList())
-					{
-						SetFieldEnumerationValue(fieldIndex, value);
-					}
-				}
-				else if (fieldTypeInfo->IsType())
-				{
-					if (!fieldTypeInfo->IsList())
-					{
-						GetTypeFieldValue(fieldIndex)->SetEnumFieldFromPath(path, value, pathIndex + 1);
-					}
-				}
-			}
-		}
+		void SetEnumFieldFromPath(const FieldPath& path, const int& value, int pathIndex = 0);
 
 		std::string_view GetFieldNameFromPath(const FieldPath& path, int pathIndex = 0);
 	};
@@ -625,9 +262,24 @@ namespace Types
 
 		const TypeValue& Get(size_t index) const { return *Values[index].get(); }
 
-		typename std::vector<TypeValue::Ptr>::iterator Erase(typename std::vector<TypeValue::Ptr>::iterator at) { return Values.erase(at); }
+		typename std::vector<TypeValue::Ptr>::iterator Erase(typename std::vector<TypeValue::Ptr>::iterator at) 
+		{ 
+			return Values.erase(at);
+		}
 
-		void Clear() override { Values.clear(); }
+		void Clear() override 
+		{ 
+			Values.clear(); 
+
+            ValueChangedEvent eventRecord;
+            eventRecord.Path = SubPath;
+            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::TypeListCleared;
+            eventRecord.Record = std::make_shared<TypeListClearedRecord>();
+            eventRecord.GetRecordAs<TypeListClearedRecord>()->OldValues = std::move(Values);
+
+            CallValueChanged(eventRecord);
+			Values.clear();
+		}
 
 		bool IsEmpty() const override { return Values.empty(); }
 
@@ -643,7 +295,13 @@ namespace Types
 
 		void Delete(size_t index) override
 		{
+            ValueChangedEvent eventRecord;
+            eventRecord.Path = SubPath + FieldPath::Index(int(index));
+            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::TypeListItemRemoved;
+            eventRecord.Record = std::make_shared<TypeListItemRemovedRecord>();
+            eventRecord.GetRecordAs<TypeListItemRemovedRecord>()->OldValue = std::move(Values[index]);
 			Values.erase(Values.begin() + index);
+			CallValueChanged(eventRecord);
 		}
 
 		TypeValue* PushBack(const TypeInfo* type)
@@ -652,6 +310,14 @@ namespace Types
 			auto value = std::make_unique<TypeValue>(type, ParentValue, childPath);
 			TypeValue* ret = value.get();
 			Values.emplace_back(std::move(value));
+
+            ValueChangedEvent eventRecord;
+            eventRecord.Path = SubPath + FieldPath::Index(int(Values.size()-1));
+            eventRecord.RecordType = ValueChangedEvent::ValueRecordType::TypeListItemAdded;
+            eventRecord.Record = std::make_shared<TypeListItemAddedRecord>();
+			eventRecord.GetRecordAs<TypeListItemAddedRecord>()->NewTypeID = type->TypeId;
+			CallValueChanged(eventRecord);
+
 			return ret;
 		}
 
@@ -659,5 +325,18 @@ namespace Types
 		{
 			return PushBack(TypeDatabase::Get().FindType(typeName));
 		}
+
+        Events::EventSource<ValueChangedEvent> OnValueChanged;
+
+        void CallValueChanged(ValueChangedEvent& eventRecord)
+        {
+            eventRecord.Value = ParentValue;
+            OnValueChanged.Invoke(eventRecord);
+
+            if (ParentValue)
+            {
+                ParentValue->CallValueChanged(eventRecord);
+            }
+        }
 	};
 }
