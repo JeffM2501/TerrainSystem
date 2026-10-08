@@ -33,6 +33,16 @@ struct TerrainInfo
 };
 
 static constexpr uint8_t MaxLODLevels = 4;
+static constexpr uint8_t MaxTransitionMasks = 16;
+
+enum TerrainTransitionEdge : uint8_t
+{
+    TRANSITION_NONE  = 0,
+    TRANSITION_NORTH = 1 << 0, // +Y edge (y = GridSize)
+    TRANSITION_SOUTH = 1 << 1, // -Y edge (y = 0)
+    TRANSITION_EAST  = 1 << 2, // +X edge (x = GridSize)
+    TRANSITION_WEST  = 1 << 3, // -X edge (x = 0)
+};
 
 struct TerrainLODTriangleInfo
 {
@@ -55,6 +65,13 @@ struct TerrainTile
     unsigned int* VboId = nullptr;
 
     const TerrainLODTriangleInfo* LODs = nullptr;
+
+    const TerrainLODTriangleInfo& GetLODInfo(size_t lod, uint8_t transitionMask = 0) const
+    {
+        if (lod >= MaxLODLevels)
+            lod = MaxLODLevels - 1;
+        return LODs[(lod * MaxTransitionMasks) + (transitionMask & 0x0F)];
+    }
 
     TerrainTile(TerrainInfo& info);
     ~TerrainTile();

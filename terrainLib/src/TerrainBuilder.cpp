@@ -7,61 +7,133 @@
 
 int IndexList = -1;
 
-TerrainLODTriangleInfo LODInfos[MaxLODLevels];
+TerrainLODTriangleInfo LODInfos[MaxLODLevels * MaxTransitionMasks];
 
-void BuildLODIndexList(uint16_t* indexes, size_t& triangleIndex, int grid, int offset = 1)
+void BuildLODIndexList(uint16_t* indexes, size_t& triangleIndex, int grid, int lod, uint8_t transitionMask)
 {
-    bool flip = false;
-    // generate the index list
-    for (uint16_t y = 0; y < grid; y += offset)
+    auto GetVertIndex = [grid](int vx, int vy) -> uint16_t {
+        return (uint16_t)(vy * (grid + 1) + vx);
+    };
+
+    auto AddTriangle = [indexes, &triangleIndex](uint16_t i0, uint16_t i1, uint16_t i2) {
+        indexes[(triangleIndex * 3) + 0] = i0;
+        indexes[(triangleIndex * 3) + 1] = i1;
+        indexes[(triangleIndex * 3) + 2] = i2;
+        triangleIndex++;
+    };
+
+    int step = 1 << lod;
+
+    // For the coarsest LOD (LOD 3, step 8), no coarser transition is possible,
+    // so we generate regular quads with alternating diagonals.
+    if (lod >= MaxLODLevels - 1)
     {
-        for (uint16_t x = 0; x < grid; x += offset)
+        bool flip = false;
+        for (int y = 0; y < grid; y += step)
         {
-            uint16_t x2 = x + offset;
-            uint16_t y2 = y + offset;
-
-            /*
-                B	C
-
-                P	A
-            */
-            uint16_t p = y * uint16_t(grid + 1) + x;
-            uint16_t a = y * uint16_t(grid + 1) + x2;
-            uint16_t b = y2 * uint16_t(grid + 1) + x;
-            uint16_t c = y2 * uint16_t(grid + 1) + x2;
-
-            if (flip)
+            for (int x = 0; x < grid; x += step)
             {
-                // PAC
-                indexes[(triangleIndex * 3) + 0] = p;
-                indexes[(triangleIndex * 3) + 1] = a;
-                indexes[(triangleIndex * 3) + 2] = c;
-                triangleIndex++;
+                int x2 = x + step;
+                int y2 = y + step;
 
-                // PCB
-                indexes[(triangleIndex * 3) + 0] = p;
-                indexes[(triangleIndex * 3) + 1] = c;
-                indexes[(triangleIndex * 3) + 2] = b;
-                triangleIndex++;
+                uint16_t p = GetVertIndex(x, y);
+                uint16_t a = GetVertIndex(x2, y);
+                uint16_t b = GetVertIndex(x, y2);
+                uint16_t c = GetVertIndex(x2, y2);
+
+                if (flip)
+                {
+                    AddTriangle(p, a, c);
+                    AddTriangle(p, c, b);
+                }
+                else
+                {
+                    AddTriangle(p, a, b);
+                    AddTriangle(a, c, b);
+                }
+                flip = !flip;
+            }
+            flip = !flip;
+        }
+        return;
+    }
+
+    // For LOD 0, 1, 2, we subdivide into macro-blocks of size 2 * step (2S x 2S).
+    int macroStep = step * 2;
+
+    for (int y = 0; y < grid; y += macroStep)
+    {
+        for (int x = 0; x < grid; x += macroStep)
+        {
+            int x0 = x;
+            int x1 = x + step;
+            int x2 = x + macroStep;
+
+            int y0 = y;
+            int y1 = y + step;
+            int y2 = y + macroStep;
+
+            uint16_t v00 = GetVertIndex(x0, y0);
+            uint16_t v10 = GetVertIndex(x1, y0);
+            uint16_t v20 = GetVertIndex(x2, y0);
+
+            uint16_t v01 = GetVertIndex(x0, y1);
+            uint16_t v11 = GetVertIndex(x1, y1); // Center vertex
+            uint16_t v21 = GetVertIndex(x2, y1);
+
+            uint16_t v02 = GetVertIndex(x0, y2);
+            uint16_t v12 = GetVertIndex(x1, y2);
+            uint16_t v22 = GetVertIndex(x2, y2);
+
+            bool dropBottom = (y == 0) && (transitionMask & TRANSITION_SOUTH);
+            bool dropTop    = (y2 == grid) && (transitionMask & TRANSITION_NORTH);
+            bool dropLeft   = (x == 0) && (transitionMask & TRANSITION_WEST);
+            bool dropRight  = (x2 == grid) && (transitionMask & TRANSITION_EAST);
+
+            // South Quadrant (Bottom)
+            if (dropBottom)
+            {
+                AddTriangle(v00, v20, v11);
             }
             else
             {
-                // PAB
-                indexes[(triangleIndex * 3) + 0] = p;
-                indexes[(triangleIndex * 3) + 1] = a;
-                indexes[(triangleIndex * 3) + 2] = b;
-                triangleIndex++;
-
-                // ACB
-                indexes[(triangleIndex * 3) + 0] = a;
-                indexes[(triangleIndex * 3) + 1] = c;
-                indexes[(triangleIndex * 3) + 2] = b;
-                triangleIndex++;
+                AddTriangle(v00, v10, v11);
+                AddTriangle(v10, v20, v11);
             }
 
-            flip = !flip;
+            // East Quadrant (Right)
+            if (dropRight)
+            {
+                AddTriangle(v20, v22, v11);
+            }
+            else
+            {
+                AddTriangle(v20, v21, v11);
+                AddTriangle(v21, v22, v11);
+            }
+
+            // North Quadrant (Top)
+            if (dropTop)
+            {
+                AddTriangle(v22, v02, v11);
+            }
+            else
+            {
+                AddTriangle(v22, v12, v11);
+                AddTriangle(v12, v02, v11);
+            }
+
+            // West Quadrant (Left)
+            if (dropLeft)
+            {
+                AddTriangle(v02, v00, v11);
+            }
+            else
+            {
+                AddTriangle(v02, v01, v11);
+                AddTriangle(v01, v00, v11);
+            }
         }
-        flip = !flip;
     }
 }
 
@@ -70,25 +142,41 @@ void SetupIndexes(TerrainTile& tile)
     if (IndexList >= 0)
         return;
 
-    uint32_t triangleCount = uint32_t(tile.Info.TerrainGridSize) * uint32_t(tile.Info.TerrainGridSize) * 2;
-    uint16_t* indexes = (uint16_t*)MemAlloc(sizeof(uint16_t) * (triangleCount + triangleCount / 2 + triangleCount / 4) * 3);
+    int grid = tile.Info.TerrainGridSize;
+
+    // Allocate memory for all LODs across all 16 transition masks:
+    // LOD 0: 64*64*8 = 32768 per mask * 16 = 524,288 triangles
+    // LOD 1: 32*32*8 = 8192 per mask * 16 = 131,072 triangles
+    // LOD 2: 16*16*8 = 2048 per mask * 16 = 32,768 triangles
+    // LOD 3: 512 triangles
+    // Total <= 700,000 triangles
+    size_t maxTriangles = (size_t)(32768 + 8192 + 2048) * MaxTransitionMasks + 1024;
+    uint16_t* indexes = (uint16_t*)MemAlloc((unsigned int)(sizeof(uint16_t) * maxTriangles * 3));
 
     size_t triangleIndex = 0;
-    LODInfos[0].IndexStart = 0;
-    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 1);
-    LODInfos[0].IndexCount = triangleIndex - LODInfos[0].IndexStart;
 
-    LODInfos[1].IndexStart = triangleIndex;
-    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 2);
-    LODInfos[1].IndexCount = triangleIndex - LODInfos[1].IndexStart;
+    for (int lod = 0; lod < MaxLODLevels - 1; lod++)
+    {
+        for (uint8_t mask = 0; mask < MaxTransitionMasks; mask++)
+        {
+            size_t entry = lod * MaxTransitionMasks + mask;
+            LODInfos[entry].IndexStart = triangleIndex;
+            BuildLODIndexList(indexes, triangleIndex, grid, lod, mask);
+            LODInfos[entry].IndexCount = triangleIndex - LODInfos[entry].IndexStart;
+        }
+    }
 
-    LODInfos[2].IndexStart = triangleIndex;
-    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 4);
-    LODInfos[2].IndexCount = triangleIndex - LODInfos[2].IndexStart;
+    // For the coarsest LOD (LOD 3), generate once and share across all 16 masks
+    size_t lod3Start = triangleIndex;
+    BuildLODIndexList(indexes, triangleIndex, grid, MaxLODLevels - 1, TRANSITION_NONE);
+    size_t lod3Count = triangleIndex - lod3Start;
 
-    LODInfos[3].IndexStart = triangleIndex;
-    BuildLODIndexList(indexes, triangleIndex, tile.Info.TerrainGridSize, 8);
-    LODInfos[3].IndexCount = triangleIndex - LODInfos[3].IndexStart;
+    for (uint8_t mask = 0; mask < MaxTransitionMasks; mask++)
+    {
+        size_t entry = (MaxLODLevels - 1) * MaxTransitionMasks + mask;
+        LODInfos[entry].IndexStart = lod3Start;
+        LODInfos[entry].IndexCount = lod3Count;
+    }
 
     IndexList = rlLoadVertexBufferElement(indexes, (int)(triangleIndex * 3 * sizeof(unsigned short)), false);
 
@@ -140,6 +228,8 @@ Vector3 TileMeshBuilder::ComputeNormalForLocation(TerrainTile& tile, int16_t h, 
 
     return totalNormal;
 }
+
+constexpr int MAX_MESH_VERTEX_BUFFERS = 9;
 
 void TileMeshBuilder::Build(TerrainTile& tile)
 {

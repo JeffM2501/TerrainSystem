@@ -164,14 +164,19 @@ void UpdateCameraXY(Camera* camera, int mode)
 void GameInit()
 {
 	SetConfigFlags(/*FLAG_VSYNC_HINT |*/ FLAG_WINDOW_RESIZABLE);
-	InitWindow(0, 0, "Example");
+	InitWindow(1280, 720, "Example");
 	SetTargetFPS(144);
 
-	TerrainShader = LoadShader("resources/shaders/terrain..vs", "resources/shaders/terrain..fs");
-
-	//  _ASSERT(IsShaderValid(TerrainShader));
+	TerrainShader = LoadShader("resources/shaders/terrain.vs", "resources/shaders/terrain.fs");
+	if (!IsShaderValid(TerrainShader))
+		TerrainShader = LoadShader(nullptr, nullptr);
 
 	SunVectorLoc = GetShaderLocation(TerrainShader, "sunVector");
+
+	int selected = 0;
+	SetShaderValue(TerrainShader, GetShaderLocation(TerrainShader, "selected"), &selected, SHADER_UNIFORM_INT);
+	int showSplat = 0;
+	SetShaderValue(TerrainShader, GetShaderLocation(TerrainShader, "showSplat"), &showSplat, SHADER_UNIFORM_INT);
 
 	rlSetClipPlanes(0.1f, 5000.0f);
 
@@ -265,6 +270,11 @@ bool GameUpdate()
 	return true;
 }
 
+float Lod0Color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+float Lod1Color[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+float Lod2Color[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+float Lod3Color[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+
 void GameDraw()
 {
 	BeginDrawing();
@@ -290,11 +300,45 @@ void GameDraw()
 	//rlEnableWireMode();
 	for (int i = 0; i < Tiles.size(); i++)
 	{
-		int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y) / 3;
+		int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y) / 2;
+        lod = std::max(LODLevel, lod);
 		if (lod >= MaxLODLevels)
 			lod = MaxLODLevels - 1;
 
-		Renderer.Draw(Tiles[i], LODLevel);
+		auto GetNeighborLOD = [&](int64_t x, int64_t y) -> int {
+			for (const auto& t : Tiles)
+			{
+				if (t.Origin.X == x && t.Origin.Y == y)
+				{
+					int nl = (int)std::max(t.Origin.X, t.Origin.Y) / 2;
+					nl = std::max(LODLevel, nl);
+					if (nl >= MaxLODLevels) nl = MaxLODLevels - 1;
+					return nl;
+				}
+			}
+			return -1;
+		};
+
+		uint8_t transitionMask = TRANSITION_NONE;
+		int northLOD = GetNeighborLOD(Tiles[i].Origin.X, Tiles[i].Origin.Y + 1);
+		int southLOD = GetNeighborLOD(Tiles[i].Origin.X, Tiles[i].Origin.Y - 1);
+		int eastLOD  = GetNeighborLOD(Tiles[i].Origin.X + 1, Tiles[i].Origin.Y);
+		int westLOD  = GetNeighborLOD(Tiles[i].Origin.X - 1, Tiles[i].Origin.Y);
+
+		if (northLOD > lod) transitionMask |= TRANSITION_NORTH;
+		if (southLOD > lod) transitionMask |= TRANSITION_SOUTH;
+		if (eastLOD  > lod) transitionMask |= TRANSITION_EAST;
+		if (westLOD  > lod) transitionMask |= TRANSITION_WEST;
+
+		float* color = Lod0Color;
+		if (lod == 1)
+			color = Lod1Color;
+		else if (lod == 2)
+			color = Lod2Color;
+		else if (lod == 3)
+			color = Lod3Color;
+
+		Renderer.Draw(Tiles[i], lod, transitionMask, color);
 
 	}
 	//rlDisableWireMode();

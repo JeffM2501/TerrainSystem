@@ -197,13 +197,41 @@ void TerrainDocument::OnShowScene(const Vector2& renderSize)
 	for (int i = 0; i < Tiles.size(); i++)
 	{
 		// todo, compute the distance from the camera tile
-		int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y) / 3;
+		int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y) / 2;
 		if (lod >= MaxLODLevels)
 			lod = MaxLODLevels - 1;
 
+		auto GetNeighborLOD = [&](int64_t x, int64_t y) -> int {
+			for (const auto& t : Tiles)
+			{
+				if (t.Origin.X == x && t.Origin.Y == y)
+				{
+					int nl = (int)std::max(t.Origin.X, t.Origin.Y) / 2;
+					if (nl >= MaxLODLevels) nl = MaxLODLevels - 1;
+					return nl;
+				}
+			}
+			return -1;
+		};
+
+		uint8_t transitionMask = TRANSITION_NONE;
+		int northLOD = GetNeighborLOD(Tiles[i].Origin.X, Tiles[i].Origin.Y + 1);
+		int southLOD = GetNeighborLOD(Tiles[i].Origin.X, Tiles[i].Origin.Y - 1);
+		int eastLOD  = GetNeighborLOD(Tiles[i].Origin.X + 1, Tiles[i].Origin.Y);
+		int westLOD  = GetNeighborLOD(Tiles[i].Origin.X - 1, Tiles[i].Origin.Y);
+
+		if (northLOD > lod) transitionMask |= TRANSITION_NORTH;
+		if (southLOD > lod) transitionMask |= TRANSITION_SOUTH;
+		if (eastLOD  > lod) transitionMask |= TRANSITION_EAST;
+		if (westLOD  > lod) transitionMask |= TRANSITION_WEST;
+
 		int selected = 0;
+		if (ShowWires)
+			rlEnableWireMode();
 		SetShaderValue(TerrainShader, SelectedShaderFlagLoc, &selected, SHADER_UNIFORM_INT);
-		Renderer.Draw(Tiles[i], lod);
+		Renderer.Draw(Tiles[i], lod, transitionMask);
+		if (ShowWires)
+			rlDisableWireMode();
 		if (Tiles[i].Origin == SelectedTileLoc)
 		{
 			rlEnableWireMode();
@@ -211,7 +239,7 @@ void TerrainDocument::OnShowScene(const Vector2& renderSize)
 			//rlDisableDepthTest();
 			selected = 1;
 			SetShaderValue(TerrainShader, SelectedShaderFlagLoc, &selected, SHADER_UNIFORM_INT);
-			Renderer.Draw(Tiles[i], lod);
+			Renderer.Draw(Tiles[i], lod, transitionMask);
 			// rlEnableDepthTest();
 
 			rlDisableWireMode();
@@ -262,6 +290,7 @@ void TerrainDocument::SetupDocument()
 
 	auto visGroup = MainToolbar.AddGroup("TerrainVis");
 	auto splatCommand = visGroup->AddItem<StateMenuCommand>(0, ICON_FA_SPLOTCH, "Show Splatmap", [this](CommandContextSet*) {ShowSplat = !ShowSplat; }, [this](CommandContextSet*) {return ShowSplat; });
+	auto wireCommand = visGroup->AddItem<StateMenuCommand>(0, ICON_FA_BORDER_ALL, "Show Wires", [this](CommandContextSet*) {ShowWires = !ShowWires; }, [this](CommandContextSet*) {return ShowWires; });
 
 	auto& cameraGroup = MainToolbar.AddGroup("Cameras");
 

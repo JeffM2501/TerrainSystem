@@ -54,7 +54,7 @@ void SetShaderValueTextureSlot(Shader shader, int locIndex, Texture2D texture, i
 }
 
 
-void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
+void TerainRenderer::Draw(TerrainTile& tile, size_t lod, uint8_t transitionMask)
 {
     rlEnableShader(TerrainShader.id);
     rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_DIFFUSE], WHITEF, SHADER_UNIFORM_VEC4, 1);
@@ -123,8 +123,13 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
     // Send combined model-view-projection matrix to shader
     rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
+    if (lod >= MaxLODLevels)
+        lod = MaxLODLevels - 1;
+
+    size_t lodIndex = (lod * MaxTransitionMasks) + (transitionMask & 0x0F);
+
     // Draw mesh
-    rlDrawVertexArrayElements((int)tile.LODs[lod].IndexStart * 3, (int)tile.LODs[lod].IndexCount * 3, 0);
+    rlDrawVertexArrayElements((int)tile.LODs[lodIndex].IndexStart * 3, (int)tile.LODs[lodIndex].IndexCount * 3, 0);
 
     // disable texture units
 

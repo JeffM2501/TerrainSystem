@@ -4,6 +4,8 @@
 #include "rlgl.h"
 #include "config.h"
 
+constexpr int MAX_MESH_VERTEX_BUFFERS = 9;
+
 TerrainTile::TerrainTile(TerrainInfo& info)
     : Info(info)
 {

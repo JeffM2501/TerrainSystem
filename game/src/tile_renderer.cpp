@@ -37,10 +37,13 @@ void rlDrawVertexArrayElementsQuads(int offset, int count, const void* buffer)
     glDrawElements(GL_QUADS, count, GL_UNSIGNED_SHORT, (const unsigned short*)bufferPtr);
 }
 
-void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
+void TerainRenderer::Draw(TerrainTile& tile, size_t lod, uint8_t transitionMask, float* tint)
 {
     rlEnableShader(TerrainShader.id);
-    rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_DIFFUSE], WHITEF, SHADER_UNIFORM_VEC4, 1);
+    if (!tint)
+        tint = (float*)WHITEF;
+
+    rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_DIFFUSE], tint, SHADER_UNIFORM_VEC4, 1);
     rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_SPECULAR], WHITEF, SHADER_UNIFORM_VEC4, 1);
 
     Matrix transform = MatrixTranslate(tile.Origin.X * tile.Info.TerrainTileSize, tile.Origin.Y * tile.Info.TerrainTileSize, 0);
@@ -107,8 +110,13 @@ void TerainRenderer::Draw(TerrainTile& tile, size_t lod)
     // Send combined model-view-projection matrix to shader
     rlSetUniformMatrix(TerrainShader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
+    if (lod >= MaxLODLevels)
+        lod = MaxLODLevels - 1;
+
+    size_t lodIndex = (lod * MaxTransitionMasks) + (transitionMask & 0x0F);
+
     // Draw mesh
-    rlDrawVertexArrayElements((int)tile.LODs[lod].IndexStart * 3, (int)tile.LODs[lod].IndexCount * 3, 0);
+    rlDrawVertexArrayElements((int)tile.LODs[lodIndex].IndexStart * 3, (int)tile.LODs[lodIndex].IndexCount * 3, 0);
 
     // disable texture units
 

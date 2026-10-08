@@ -47,12 +47,14 @@ protected:
 	void RebuildMaterialIndex(int index);
 
 	bool ShowSplat = false;
+	bool ShowWires = false;
 
 	Shader TerrainShader = { 0 };
 	TerainRenderer Renderer;
 	int SunVectorLoc = 0;
 	int SelectedShaderFlagLoc = 0;
 	int ShowSplatFlagLoc = 0;
+
 
 	std::vector<std::unique_ptr<AssetReferenceResolver<AssetTypes::TerrainMaterialAsset>>> MaterialRefs;
 };
