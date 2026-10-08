@@ -62,13 +62,13 @@ $$\vec{N}_1 = \vec{PB} \times \vec{PA}, \quad \vec{N}_2 = \vec{PC} \times \vec{P
 These four vectors are summed and normalized to produce a smooth per-vertex surface normal.
 
 ### 3.4 Vertex Attribute Buffers (VBOs)
-Each tile owns a dedicated Vertex Array Object (`tile.VaoId`) and individual VBOs:
-- **VBO 0**: Vertex positions $(X, Y, Z)$ where $X, Y \in [0, \text{TerrainTileSize}]$.
-- **VBO 1**: Base UV coordinates normalized to $[0.0, 1.0]$.
-- **VBO 2**: Smoothed vertex normals $(N_x, N_y, N_z)$.
+Each tile owns a dedicated Vertex Array Object (`tile.VaoId`) and individual VBO handles:
+- **VBO 0**: Per-tile vertex positions $(X, Y, Z)$ where $X, Y \in [0, \text{TerrainTileSize}]$.
+- **VBO 1**: Base UV coordinates normalized to $[0.0, 1.0]$ (points to the **shared global texture coordinate buffer**).
+- **VBO 2**: Per-tile smoothed vertex normals $(N_x, N_y, N_z)$.
 - **VBO 3**: Vertex colors (default RGBA `255, 255, 255, 255`).
 - **VBO 4**: Tangents (optional / default).
-- **VBO 5**: Secondary tiled detail UV coordinates scaled by $\frac{\text{TerrainTileSize}}{\text{TerrainGridSize} \times 4}$.
+- **VBO 5**: Secondary tiled detail UV coordinates scaled by $\frac{\text{TerrainTileSize}}{\text{TerrainGridSize} \times 4}$ (points to the **shared global secondary texture coordinate buffer**).
 - **VBO 6**: Element index buffer (points to the **shared global index buffer**).
 
 ---

@@ -6,6 +6,8 @@
 #include "config.h"
 
 int IndexList = -1;
+int TextureCoordinate = -1;
+int TextureCoordinate2 = -1;
 
 TerrainLODTriangleInfo LODInfos[MaxLODLevels * MaxTransitionMasks];
 
@@ -183,6 +185,40 @@ void SetupIndexes(TerrainTile& tile)
     MemFree(indexes);
 }
 
+void SetupTextureCoordinates(TerrainTile& tile)
+{
+    if (TextureCoordinate >= 0 && TextureCoordinate2 >= 0)
+        return;
+
+    uint32_t vertCount = uint32_t(tile.Info.TerrainGridSize + 1) * uint32_t(tile.Info.TerrainGridSize + 1);
+
+    float* textureCords = (float*)MemAlloc(sizeof(float) * vertCount * 2);
+    float* textureCord2s = (float*)MemAlloc(sizeof(float) * vertCount * 2);
+
+    float uv2Scale = tile.Info.TerrainTileSize / (tile.Info.TerrainGridSize * 4);
+
+    int vertIndex = 0;
+    for (int y = 0; y < tile.Info.TerrainGridSize + 1; y++)
+    {
+        for (int x = 0; x < tile.Info.TerrainGridSize + 1; x++)
+        {
+            textureCords[(vertIndex * 2) + 0] = x / (float)(tile.Info.TerrainGridSize + 1);
+            textureCords[(vertIndex * 2) + 1] = y / (float)(tile.Info.TerrainGridSize + 1);
+
+            textureCord2s[(vertIndex * 2) + 0] = x * uv2Scale;
+            textureCord2s[(vertIndex * 2) + 1] = y * uv2Scale;
+
+            vertIndex++;
+        }
+    }
+
+    TextureCoordinate = rlLoadVertexBuffer(textureCords, vertCount * 2 * sizeof(float), false);
+    TextureCoordinate2 = rlLoadVertexBuffer(textureCord2s, vertCount * 2 * sizeof(float), false);
+
+    MemFree(textureCord2s);
+    MemFree(textureCords);
+}
+
 std::vector<Vector3> TileMeshBuilder::GetSiblingNormals(TerrainTile& tile, int16_t h, int16_t v)
 {
     std::vector<Vector3> tempNormals;
@@ -246,20 +282,18 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     tile.VboId[6] = 0;     // Vertex buffer: indices
 
     SetupIndexes(tile);
+    SetupTextureCoordinates(tile);
 
     uint32_t vertCount = uint32_t(tile.Info.TerrainGridSize + 1) * uint32_t(tile.Info.TerrainGridSize + 1);
     uint32_t triangleCount = uint32_t(tile.Info.TerrainGridSize) * uint32_t(tile.Info.TerrainGridSize) * 2;
 
     float* verts = (float*)MemAlloc(sizeof(float) * vertCount * 3);
     float* normals = (float*)MemAlloc(sizeof(float) * vertCount * 3);
-    float* textureCords = (float*)MemAlloc(sizeof(float) * vertCount * 2);
-    float* textureCord2s = (float*)MemAlloc(sizeof(float) * vertCount * 2);
     float* tangents = nullptr;
 
     uint8_t* colors = (uint8_t*)MemAlloc(vertCount * 4);
 
     float vertexScale = tile.Info.TerrainTileSize / tile.Info.TerrainGridSize;
-    float uv2Scale = tile.Info.TerrainTileSize / (tile.Info.TerrainGridSize * 4);
 
     // generate the attribute buffers
     int vertIndex = 0;
@@ -278,12 +312,6 @@ void TileMeshBuilder::Build(TerrainTile& tile)
             normals[(vertIndex * 3) + 1] = normal.y;
             normals[(vertIndex * 3) + 2] = normal.z;
 
-            textureCords[(vertIndex * 2) + 0] = x / (float)(tile.Info.TerrainGridSize + 1);
-            textureCords[(vertIndex * 2) + 1] = y / (float)(tile.Info.TerrainGridSize + 1);
-
-            textureCord2s[(vertIndex * 2) + 0] = x * uv2Scale;
-            textureCord2s[(vertIndex * 2) + 1] = y * uv2Scale;
-
             colors[(vertIndex * 4) + 0] = 255;
             colors[(vertIndex * 4) + 1] = 255;
             colors[(vertIndex * 4) + 2] = 255;
@@ -300,7 +328,8 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     rlSetVertexAttribute(0, 3, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(0);
 
-    tile.VboId[1] = rlLoadVertexBuffer(textureCords, vertCount * 2 * sizeof(float), false);
+    glBindBuffer(GL_ARRAY_BUFFER, TextureCoordinate);
+    tile.VboId[1] = TextureCoordinate;
     rlSetVertexAttribute(1, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(1);
 
@@ -327,7 +356,8 @@ void TileMeshBuilder::Build(TerrainTile& tile)
         rlDisableVertexAttribute(4);
     }
 
-    tile.VboId[5] = rlLoadVertexBuffer(textureCord2s, vertCount * 2 * sizeof(float), false);
+    glBindBuffer(GL_ARRAY_BUFFER, TextureCoordinate2);
+    tile.VboId[5] = TextureCoordinate2;
     rlSetVertexAttribute(5, 2, RL_FLOAT, 0, 0, 0);
     rlEnableVertexAttribute(5);
 
@@ -338,8 +368,6 @@ void TileMeshBuilder::Build(TerrainTile& tile)
     rlDisableVertexArray();
 
     MemFree(colors);
-    MemFree(textureCord2s);
-    MemFree(textureCords);
     MemFree(normals);
     MemFree(verts);
 }

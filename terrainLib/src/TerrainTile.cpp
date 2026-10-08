@@ -54,7 +54,7 @@ void TerrainTile::UnloadGeometry()
     {
         for (int i = 0; i < MAX_MESH_VERTEX_BUFFERS; i++)
         {
-            if (i != 6)
+            if (i != 1 && i != 5 && i != 6)
                 rlUnloadVertexBuffer(VboId[i]);
         }
             
