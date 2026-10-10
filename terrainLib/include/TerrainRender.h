@@ -28,5 +28,5 @@ public:
 
     void SetShader(Shader& shader);
 
-    void Draw(TerrainTile& tile, size_t lod = 0, uint8_t transitionMask = 0);
+    void Draw(TerrainTile& tile, size_t lod = 0, uint8_t transitionMask = 0, float* tint = nullptr);
 };

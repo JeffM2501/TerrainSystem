@@ -54,10 +54,13 @@ void SetShaderValueTextureSlot(Shader shader, int locIndex, Texture2D texture, i
 }
 
 
-void TerainRenderer::Draw(TerrainTile& tile, size_t lod, uint8_t transitionMask)
+void TerainRenderer::Draw(TerrainTile& tile, size_t lod, uint8_t transitionMask, float* tint)
 {
     rlEnableShader(TerrainShader.id);
-    rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_DIFFUSE], WHITEF, SHADER_UNIFORM_VEC4, 1);
+    if (!tint)
+        tint = (float*)WHITEF;
+
+    rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_DIFFUSE], tint, SHADER_UNIFORM_VEC4, 1);
     rlSetUniform(TerrainShader.locs[SHADER_LOC_COLOR_SPECULAR], WHITEF, SHADER_UNIFORM_VEC4, 1);
 
     Matrix transform = MatrixTranslate(tile.Origin.X * tile.Info.TerrainTileSize, tile.Origin.Y * tile.Info.TerrainTileSize, 0);

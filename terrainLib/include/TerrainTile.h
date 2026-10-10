@@ -80,7 +80,12 @@ struct TerrainTile
 
     void AddMaterial(const TerrainMaterial* material);
 
-    float GetLocalHeight(int x, int y) const;
+    inline float GetLocalHeight(int x, int y) const
+    {
+        size_t index = (y + 1) * (Info.TerrainGridSize + 3) + x + 1;
+        return TerrainHeightMap[index];
+    }
+    float GetHeightAt(float localX, float localY) const;
 
     void UnloadGeometry();
     void UnloadSplats();

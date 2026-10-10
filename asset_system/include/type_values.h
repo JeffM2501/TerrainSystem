@@ -216,7 +216,7 @@ namespace Types
 						}
 						else
 						{
-							list[listIndex].SetPrimtiveFieldFromPath(path, value, pathIndex + 1); W
+							list[listIndex].SetPrimtiveFieldFromPath(path, value, pathIndex + 1);
 						}
 					}
 					else

@@ -40,10 +40,41 @@ void TerrainTile::AddMaterial(const TerrainMaterial* material)
         LayerMaterials.push_back(material);
 }
 
-float TerrainTile::GetLocalHeight(int x, int y) const
+#include <algorithm>
+#include <cmath>
+
+
+float TerrainTile::GetHeightAt(float localX, float localY) const
 {
-    size_t index = (y + 1) * (Info.TerrainGridSize + 3) + x + 1;
-    return TerrainHeightMap[index];
+    if (TerrainHeightMap.empty() || Info.TerrainTileSize <= 0.0f)
+        return 0.0f;
+
+    float gridScale = (float)Info.TerrainGridSize / Info.TerrainTileSize;
+    float gx = localX * gridScale;
+    float gy = localY * gridScale;
+
+    gx = std::clamp(gx, 0.0f, (float)Info.TerrainGridSize);
+    gy = std::clamp(gy, 0.0f, (float)Info.TerrainGridSize);
+
+    int ix = (int)std::floor(gx);
+    int iy = (int)std::floor(gy);
+
+    if (ix >= Info.TerrainGridSize)
+        ix = Info.TerrainGridSize - 1;
+    if (iy >= Info.TerrainGridSize)
+        iy = Info.TerrainGridSize - 1;
+
+    float fx = gx - (float)ix;
+    float fy = gy - (float)iy;
+
+    float h00 = GetLocalHeight(ix, iy);
+    float h10 = GetLocalHeight(ix + 1, iy);
+    float h01 = GetLocalHeight(ix, iy + 1);
+    float h11 = GetLocalHeight(ix + 1, iy + 1);
+
+    float h0 = h00 + (h10 - h00) * fx;
+    float h1 = h01 + (h11 - h01) * fx;
+    return h0 + (h1 - h0) * fy;
 }
 
 void TerrainTile::UnloadGeometry()

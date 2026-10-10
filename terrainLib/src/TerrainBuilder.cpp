@@ -5,6 +5,8 @@
 #include "external/glad.h"
 #include "config.h"
 
+#include <span>
+
 int IndexList = -1;
 int TextureCoordinate = -1;
 int TextureCoordinate2 = -1;
@@ -219,50 +221,42 @@ void SetupTextureCoordinates(TerrainTile& tile)
     MemFree(textureCords);
 }
 
-std::vector<Vector3> TileMeshBuilder::GetSiblingNormals(TerrainTile& tile, int16_t h, int16_t v)
+Vector3 TileMeshBuilder::GetSiblingNormalSum(TerrainTile& tile, int16_t h, int16_t v)
 {
-    std::vector<Vector3> tempNormals;
-
-    Vector3 P = { 0,0,0 };
-
     float thisH = tile.GetLocalHeight(h, v);
     /*
             B
         A	P	C
             D
     */
+    float zA = tile.GetLocalHeight(h - 1, v) - thisH;
+    float zB = tile.GetLocalHeight(h, v + 1) - thisH;
+    float zC = tile.GetLocalHeight(h + 1, v) - thisH;
+    float zD = tile.GetLocalHeight(h, v - 1) - thisH;
 
-    Vector3 A = { -1, 0, tile.GetLocalHeight(h - 1,v) - thisH };
-    Vector3 B = { 0	, 1, tile.GetLocalHeight(h,v + 1) - thisH };
-    Vector3 C = { 1	, 0, tile.GetLocalHeight(h + 1,v) - thisH };
-    Vector3 D = { 0, -1, tile.GetLocalHeight(h,v - 1) - thisH };
+    float invLA = 1.0f / sqrtf(1.0f + zA * zA);
+    float invLB = 1.0f / sqrtf(1.0f + zB * zB);
+    float invLC = 1.0f / sqrtf(1.0f + zC * zC);
+    float invLD = 1.0f / sqrtf(1.0f + zD * zD);
 
-    Vector3 PA = Vector3Normalize(Vector3Subtract(A, P));
-    Vector3 PB = Vector3Normalize(Vector3Subtract(B, P));
-    Vector3 PC = Vector3Normalize(Vector3Subtract(C, P));
-    Vector3 PD = Vector3Normalize(Vector3Subtract(D, P));
+    float sx = invLA + invLC;
+    float sy = invLB + invLD;
 
-    tempNormals.push_back(Vector3CrossProduct(PB, PA));
-    tempNormals.push_back(Vector3CrossProduct(PC, PB));
-    tempNormals.push_back(Vector3CrossProduct(PD, PC));
-    tempNormals.push_back(Vector3CrossProduct(PA, PD));
-
-    return tempNormals;
+    return {
+        sy * (invLA * zA - invLC * zC),
+        sx * (invLD * zD - invLB * zB),
+        sx * sy
+    };
 }
 
 Vector3 TileMeshBuilder::ComputeNormalForLocation(TerrainTile& tile, int16_t h, int16_t v)
 {
-    std::vector<Vector3> tempNormals = GetSiblingNormals(tile, h, v);
+    float vertexScale = tile.Info.TerrainTileSize / (float)tile.Info.TerrainGridSize;
+    float dzX = tile.GetLocalHeight(h - 1, v) - tile.GetLocalHeight(h + 1, v);
+    float dzY = tile.GetLocalHeight(h, v - 1) - tile.GetLocalHeight(h, v + 1);
 
-    Vector3 totalNormal = { 0,0,0 };
-    for (const auto& norm : tempNormals)
-    {
-        totalNormal = Vector3Add(norm, totalNormal);
-    }
-
-    totalNormal = Vector3Scale(totalNormal, 1.0f / tempNormals.size());
-
-    return totalNormal;
+    Vector3 normal = { dzX, dzY, 2.0f * vertexScale };
+    return Vector3Normalize(normal);
 }
 
 constexpr int MAX_MESH_VERTEX_BUFFERS = 9;

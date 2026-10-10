@@ -41,9 +41,14 @@ void IGNORE(const char*) {}
 
 int LODLevel = 0;
 
-#include "terrain_tile.h"
-#include "tile_builder.h"
-#include "tile_renderer.h"
+#include "TerrainTile.h"
+#include "TerrainBuilder.h"
+#include "TerrainRender.h"
+
+#include <algorithm>
+#include <cmath>
+
+static constexpr float CAMERA_HEIGHT_OFFSET = 2.0f;
 
 
 float SunVector[3] = { 0,0,1 };
@@ -58,7 +63,16 @@ TerrainMaterial SnowMateral;
 
 std::vector<TerrainTile> Tiles;
 
-Camera3D ViewCamera = { 0 };
+struct CameraState
+{
+	Vector2 ViewAngles = { 0,0 };
+	Vector3 Position = { 0,0,0 };
+
+    float Offset = CAMERA_HEIGHT_OFFSET;
+	Camera3D ViewCamera = { 0 };
+};
+
+CameraState ViewCameraState;
 
 TerainRenderer Renderer;
 
@@ -70,11 +84,45 @@ static constexpr float CAMERA_PAN_SPEED = 20;
 static constexpr float CAMERA_ORBITAL_SPEED = 0.25f;
 static constexpr float CAMERA_MOUSE_MOVE_SENSITIVITY = 0.003f;
 
+float GetTerrainHeight(float worldX, float worldY);
+
+void UpdateCamera2()
+{
+    ViewCameraState.ViewAngles.x -= GetMouseDelta().x * CAMERA_MOUSE_MOVE_SENSITIVITY;
+    ViewCameraState.ViewAngles.y -= GetMouseDelta().y * CAMERA_MOUSE_MOVE_SENSITIVITY;
+    if (ViewCameraState.ViewAngles.y > 1.5f)
+        ViewCameraState.ViewAngles.y = 1.5f;
+    if (ViewCameraState.ViewAngles.y < -1.5f)
+        ViewCameraState.ViewAngles.y = -1.5f;
+    Vector3 forward = { cosf(ViewCameraState.ViewAngles.x) * cosf(ViewCameraState.ViewAngles.y), sinf(ViewCameraState.ViewAngles.x) * cosf(ViewCameraState.ViewAngles.y), sinf(ViewCameraState.ViewAngles.y) };
+    Vector3 forwardFlat = { cosf(ViewCameraState.ViewAngles.x), sinf(ViewCameraState.ViewAngles.x), 0 };
+	
+	Vector3 right = { -sinf(ViewCameraState.ViewAngles.x), cosf(ViewCameraState.ViewAngles.x), 0 };
+
+
+    float cameraMoveSpeed = CAMERA_MOVE_SPEED * GetFrameTime();
+    if (IsKeyDown(KEY_LEFT_SHIFT))
+        cameraMoveSpeed *= 10;
+    if (IsKeyDown(KEY_W)) ViewCameraState.Position = Vector3Add(ViewCameraState.Position, Vector3Scale(forwardFlat, cameraMoveSpeed));
+    if (IsKeyDown(KEY_S)) ViewCameraState.Position = Vector3Subtract(ViewCameraState.Position, Vector3Scale(forwardFlat, cameraMoveSpeed));
+    if (IsKeyDown(KEY_A)) ViewCameraState.Position = Vector3Subtract(ViewCameraState.Position, Vector3Scale(right, cameraMoveSpeed));
+    if (IsKeyDown(KEY_D)) ViewCameraState.Position = Vector3Add(ViewCameraState.Position, Vector3Scale(right, cameraMoveSpeed));
+    if (IsKeyDown(KEY_Q)) ViewCameraState.Offset -= cameraMoveSpeed;
+    if (IsKeyDown(KEY_E)) ViewCameraState.Offset += cameraMoveSpeed;
+
+    float terrainHeight = GetTerrainHeight(ViewCameraState.Position.x, ViewCameraState.Position.y);
+    float desiredZ = terrainHeight + ViewCameraState.Offset;
+    ViewCameraState.Position.z = desiredZ;
+
+	ViewCameraState.ViewCamera.position = ViewCameraState.Position;
+	ViewCameraState.ViewCamera.target = Vector3Add(ViewCameraState.ViewCamera.position, forward);
+}
+
 void UpdateCameraXY(Camera* camera, int mode)
 {
 	Vector2 mousePositionDelta = GetMouseDelta();
 
-	bool moveInWorldPlane = false;// ((mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON));
+	bool moveInWorldPlane = true;
 	bool rotateAroundTarget = ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
 	bool lockView = ((mode == CAMERA_FREE) || (mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
 	bool rotateUp = false;
@@ -82,7 +130,7 @@ void UpdateCameraXY(Camera* camera, int mode)
 	// Camera speeds based on frame time
 	float cameraMoveSpeed = CAMERA_MOVE_SPEED * GetFrameTime();
 	if (IsKeyDown(KEY_LEFT_SHIFT))
-		cameraMoveSpeed *= 5;
+		cameraMoveSpeed *= 10;
 
 	float cameraRotationSpeed = CAMERA_ROTATION_SPEED * GetFrameTime();
 	float cameraPanSpeed = CAMERA_PAN_SPEED * GetFrameTime();
@@ -203,25 +251,28 @@ void GameInit()
 
 	TileMeshBuilder builder;
 
-	int grid = 6;
+    int grid = 8;
 
-	for (int y = 0; y < grid; y++)
+    Image testSplat = GenImageChecked(65, 65, 2, 2, Color{ 255,0,0,0 }, Color{ 0,255,0,0 });
+    ImageDrawRectangle(&testSplat, 16, 16, 32, 32, Color{ 0,0,0,0 });
+	//ImageDrawCircle(&testSplat, 32, 32, 8, Color{ 0,0,0,0 });
+	
+    Texture testSplatTexture = LoadTextureFromImage(testSplat);
+	UnloadImage(testSplat);
+
+    double startTime = GetTime();
+
+	for (int y = -grid; y < grid; y++)
 	{
-		for (int x = 0; x < grid; x++)
+		for (int x = -grid; x < grid; x++)
 		{
 			auto& tile = Tiles.emplace_back(info);
 			Image heightmap = GenImagePerlinNoise(131, 131, (x * 128) - 1, (y * 128) - 1, perlinScale);
 			tile.SetHeightsFromImage(heightmap);
 			UnloadImage(heightmap);
 
-			Image testSplat = GenImageChecked(65, 65, 2, 2, Color{ 255,0,0,0 }, Color{ 0,255,0,0 });
-			ImageDrawRectangle(&testSplat, 16, 16, 32, 32, Color{ 0,0,0,0 });
-
-			//ImageDrawCircle(&testSplat, 32, 32, 8, Color{0,0,0,0});
-
-			tile.Splatmap = LoadTextureFromImage(testSplat);
-			UnloadImage(testSplat);
-
+			tile.Splatmap = testSplatTexture;
+			
 			tile.LayerMaterials.push_back(&GrassMateral);
 			tile.LayerMaterials.push_back(&GroundMateral);
 			tile.LayerMaterials.push_back(&RoadMateral);
@@ -231,14 +282,59 @@ void GameInit()
 		}
 	}
 
+	double endTime = GetTime();
+	TraceLog(LOG_INFO, "Terrain generation time: %f ms", (endTime - startTime) * 1000);
+
 	Renderer.SetShader(TerrainShader);
 
-	ViewCamera.fovy = 45;
-	ViewCamera.position.z = 10;
-	ViewCamera.position.y = -10;
+	ViewCameraState.ViewCamera.fovy = 45;
+	ViewCameraState.Position.z = 10;
+	ViewCameraState.Position.y = -10;
 
-	ViewCamera.up.z = 1;
+	ViewCameraState.ViewCamera.up.z = 1;
+	UpdateCamera2();
 	// load resources
+}
+
+float GetTerrainHeight(float worldX, float worldY)
+{
+	if (Tiles.empty())
+		return 0.0f;
+
+	int64_t minTileX = INT64_MAX, maxTileX = INT64_MIN;
+	int64_t minTileY = INT64_MAX, maxTileY = INT64_MIN;
+	for (const auto& t : Tiles)
+	{
+		minTileX = std::min(minTileX, t.Origin.X);
+		maxTileX = std::max(maxTileX, t.Origin.X);
+		minTileY = std::min(minTileY, t.Origin.Y);
+		maxTileY = std::max(maxTileY, t.Origin.Y);
+	}
+
+	float minWorldX = minTileX * info.TerrainTileSize;
+	float maxWorldX = (maxTileX + 1) * info.TerrainTileSize;
+	float minWorldY = minTileY * info.TerrainTileSize;
+	float maxWorldY = (maxTileY + 1) * info.TerrainTileSize;
+
+	float clampedX = std::clamp(worldX, minWorldX, maxWorldX);
+	float clampedY = std::clamp(worldY, minWorldY, maxWorldY);
+
+	int64_t tileX = (int64_t)std::floor(clampedX / info.TerrainTileSize);
+	int64_t tileY = (int64_t)std::floor(clampedY / info.TerrainTileSize);
+	if (tileX > maxTileX) tileX = maxTileX;
+	if (tileY > maxTileY) tileY = maxTileY;
+
+	for (const auto& t : Tiles)
+	{
+		if (t.Origin.X == tileX && t.Origin.Y == tileY)
+		{
+			float localX = clampedX - (t.Origin.X * info.TerrainTileSize);
+			float localY = clampedY - (t.Origin.Y * info.TerrainTileSize);
+			return t.GetHeightAt(localX, localY);
+		}
+	}
+
+	return 0.0f;
 }
 
 void GameCleanup()
@@ -251,7 +347,7 @@ void GameCleanup()
 bool GameUpdate()
 {
 	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-		UpdateCameraXY(&ViewCamera, CAMERA_THIRD_PERSON);
+		UpdateCamera2();
 
 	if (IsKeyDown(KEY_ONE))
 		LODLevel = 0;
@@ -271,16 +367,29 @@ bool GameUpdate()
 }
 
 float Lod0Color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-float Lod1Color[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
-float Lod2Color[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-float Lod3Color[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+float Lod1Color[4] = { 1.0f, 0.5f, 0.5f, 1.0f };
+float Lod2Color[4] = { 0.5f, 1.0f, 0.5f, 1.0f };
+float Lod3Color[4] = { 0.5f, 0.5f, 1.0f, 1.0f };
+
+
+int GetLODLevel(const TerrainPosition& tilePos, Vector3& cameraPos)
+{
+    int x = int((cameraPos.x) / info.TerrainGridSize);
+	int y = int((cameraPos.y)/ info.TerrainGridSize);
+
+	int lodStep = 2;
+
+	int lod = (int)std::max(std::abs(tilePos.X - x), std::abs(tilePos.Y - y)) / lodStep;
+
+	return lod;
+}
 
 void GameDraw()
 {
 	BeginDrawing();
 	ClearBackground(BLACK);
 
-	BeginMode3D(ViewCamera);
+	BeginMode3D(ViewCameraState.ViewCamera);
 
 	rlPushMatrix();
 	rlRotatef(90, 1, 0, 0);
@@ -296,11 +405,11 @@ void GameDraw()
 	DrawCube(Vector3{ info.TerrainGridSize * 0.5f,0,0 }, 0.5f, 0.5f, 0.5f, YELLOW);
 
 	DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
-
+	
 	//rlEnableWireMode();
 	for (int i = 0; i < Tiles.size(); i++)
 	{
-		int lod = (int)std::max(Tiles[i].Origin.X, Tiles[i].Origin.Y) / 2;
+        int lod = GetLODLevel(Tiles[i].Origin, ViewCameraState.Position);
         lod = std::max(LODLevel, lod);
 		if (lod >= MaxLODLevels)
 			lod = MaxLODLevels - 1;
@@ -310,9 +419,10 @@ void GameDraw()
 			{
 				if (t.Origin.X == x && t.Origin.Y == y)
 				{
-					int nl = (int)std::max(t.Origin.X, t.Origin.Y) / 2;
+					int nl = GetLODLevel(t.Origin, ViewCameraState.Position);
 					nl = std::max(LODLevel, nl);
-					if (nl >= MaxLODLevels) nl = MaxLODLevels - 1;
+					if (nl >= MaxLODLevels) 
+						nl = MaxLODLevels - 1;
 					return nl;
 				}
 			}
@@ -346,6 +456,8 @@ void GameDraw()
 	EndMode3D();
 
 	DrawText(TextFormat("LOD Level = %d", LODLevel), 3, 20, 20, WHITE);
+	DrawText(TextFormat("Camera Pos: (%.1f, %.1f, %.1f)", ViewCameraState.Position.x, ViewCameraState.Position.y, ViewCameraState.Position.z), 3, 40, 20, WHITE);
+	DrawText(TextFormat("Terrain Height: %.2f (+%.1f offset)", GetTerrainHeight(ViewCameraState.Position.x, ViewCameraState.Position.y), ViewCameraState.Offset), 3, 60, 20, WHITE);
 	DrawFPS(3, 3);
 	EndDrawing();
 }
