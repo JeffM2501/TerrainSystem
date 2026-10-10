@@ -34,6 +34,24 @@ void TerrainTile::SetHeightsFromImage(Image& image)
     }
 }
 
+void TerrainTile::InitHeightMap()
+{
+    TerrainHeightMap.resize((Info.TerrainGridSize + 3) * (Info.TerrainGridSize + 3), 0.0f);
+}
+
+void TerrainTile::SetHeightAt(int x, int y, float param)
+{
+    float z = param *(Info.TerrainMaxZ - Info.TerrainMinZ);
+    z += Info.TerrainMinZ;
+
+    int maxDimension = Info.TerrainGridSize + 3;
+    if (x >= 0 && x < maxDimension && y >= 0 && y < maxDimension)
+    {
+        size_t index = (y * maxDimension) + x;
+        TerrainHeightMap[index] = z;
+    }
+}
+
 void TerrainTile::AddMaterial(const TerrainMaterial* material)
 {
     if (material)

@@ -27,7 +27,12 @@ Use this as a starting point or replace it with your code.
 #include "rlgl.h"
 #include "rcamera.h"
 
+#include "external/stb_perlin.h"
+
 #include "game.h"   // an external header in this project
+
+#include <algorithm>
+#include <execution> // Required for execution policies
 
 
 #if defined(_WIN32)
@@ -105,8 +110,8 @@ void UpdateCamera2()
         cameraMoveSpeed *= 10;
     if (IsKeyDown(KEY_W)) ViewCameraState.Position = Vector3Add(ViewCameraState.Position, Vector3Scale(forwardFlat, cameraMoveSpeed));
     if (IsKeyDown(KEY_S)) ViewCameraState.Position = Vector3Subtract(ViewCameraState.Position, Vector3Scale(forwardFlat, cameraMoveSpeed));
-    if (IsKeyDown(KEY_A)) ViewCameraState.Position = Vector3Subtract(ViewCameraState.Position, Vector3Scale(right, cameraMoveSpeed));
-    if (IsKeyDown(KEY_D)) ViewCameraState.Position = Vector3Add(ViewCameraState.Position, Vector3Scale(right, cameraMoveSpeed));
+    if (IsKeyDown(KEY_D)) ViewCameraState.Position = Vector3Subtract(ViewCameraState.Position, Vector3Scale(right, cameraMoveSpeed));
+    if (IsKeyDown(KEY_A)) ViewCameraState.Position = Vector3Add(ViewCameraState.Position, Vector3Scale(right, cameraMoveSpeed));
     if (IsKeyDown(KEY_Q)) ViewCameraState.Offset -= cameraMoveSpeed;
     if (IsKeyDown(KEY_E)) ViewCameraState.Offset += cameraMoveSpeed;
 
@@ -118,95 +123,48 @@ void UpdateCamera2()
 	ViewCameraState.ViewCamera.target = Vector3Add(ViewCameraState.ViewCamera.position, forward);
 }
 
-void UpdateCameraXY(Camera* camera, int mode)
+void GenerateTileFromPerlinNoise(TerrainTile& tile, int width, int height, float offsetX, float offsetY, float scale)
 {
-	Vector2 mousePositionDelta = GetMouseDelta();
+	tile.InitHeightMap();
+    float aspectRatio = (float)width / (float)height;
 
-	bool moveInWorldPlane = true;
-	bool rotateAroundTarget = ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
-	bool lockView = ((mode == CAMERA_FREE) || (mode == CAMERA_FIRST_PERSON) || (mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL));
-	bool rotateUp = false;
+	int maxDimension = tile.Info.TerrainGridSize + 3;
 
-	// Camera speeds based on frame time
-	float cameraMoveSpeed = CAMERA_MOVE_SPEED * GetFrameTime();
-	if (IsKeyDown(KEY_LEFT_SHIFT))
-		cameraMoveSpeed *= 10;
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float nx = (float)(x + offsetX) * (scale / (float)width);
+            float ny = (float)(y + offsetY) * (scale / (float)height);
 
-	float cameraRotationSpeed = CAMERA_ROTATION_SPEED * GetFrameTime();
-	float cameraPanSpeed = CAMERA_PAN_SPEED * GetFrameTime();
-	float cameraOrbitalSpeed = CAMERA_ORBITAL_SPEED * GetFrameTime();
+            // Apply aspect ratio compensation to wider side
+            if (width > height) nx *= aspectRatio;
+            else ny /= aspectRatio;
 
-	if (mode == CAMERA_CUSTOM) {}
-	else if (mode == CAMERA_ORBITAL)
-	{
-		// Orbital can just orbit
-		Matrix rotation = MatrixRotate(GetCameraUp(camera), cameraOrbitalSpeed);
-		Vector3 view = Vector3Subtract(camera->position, camera->target);
-		view = Vector3Transform(view, rotation);
-		camera->position = Vector3Add(camera->target, view);
-	}
-	else
-	{
-		// Camera rotation
-		if (IsKeyDown(KEY_DOWN)) CameraPitch(camera, -cameraRotationSpeed, lockView, rotateAroundTarget, rotateUp);
-		if (IsKeyDown(KEY_UP)) CameraPitch(camera, cameraRotationSpeed, lockView, rotateAroundTarget, rotateUp);
-		if (IsKeyDown(KEY_RIGHT)) CameraYaw(camera, -cameraRotationSpeed, rotateAroundTarget);
-		if (IsKeyDown(KEY_LEFT)) CameraYaw(camera, cameraRotationSpeed, rotateAroundTarget);
+            // Basic perlin noise implementation (not used)
+            //float p = (stb_perlin_noise3(nx, ny, 0.0f, 0, 0, 0);
 
+            // Calculate a better perlin noise using fbm (fractal brownian motion)
+            // Typical values to start playing with:
+            //   lacunarity = ~2.0   -- spacing between successive octaves (use exactly 2.0 for wrapping output)
+            //   gain       =  0.5   -- relative weighting applied to each successive octave
+            //   octaves    =  6     -- number of "octaves" of noise3() to sum
+            float p = stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6);
+            if (p < -1.0f) p = -1.0f;
+            if (p > 1.0f) p = 1.0f;
+            float np = (p + 1.0f) * 0.5f;
 
-		// Camera movement
-		// Camera pan (for CAMERA_FREE)
-		if ((mode == CAMERA_FREE) && (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)))
-		{
-			const Vector2 mouseDelta = GetMouseDelta();
-			if (mouseDelta.x > 0.0f) CameraMoveRight(camera, cameraPanSpeed, moveInWorldPlane);
-			if (mouseDelta.x < 0.0f) CameraMoveRight(camera, -cameraPanSpeed, moveInWorldPlane);
-			if (mouseDelta.y > 0.0f) CameraMoveUp(camera, -cameraPanSpeed);
-			if (mouseDelta.y < 0.0f) CameraMoveUp(camera, cameraPanSpeed);
-		}
-		else
-		{
-			// Mouse support
-			CameraYaw(camera, -mousePositionDelta.x * CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-			CameraPitch(camera, -mousePositionDelta.y * CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
-		}
+            float z = np * (tile.Info.TerrainMaxZ - tile.Info.TerrainMinZ);
+            z += tile.Info.TerrainMinZ;
 
-		// Keyboard support
-		if (IsKeyDown(KEY_W)) CameraMoveForward(camera, cameraMoveSpeed, moveInWorldPlane);
-		if (IsKeyDown(KEY_A)) CameraMoveRight(camera, -cameraMoveSpeed, moveInWorldPlane);
-		if (IsKeyDown(KEY_S)) CameraMoveForward(camera, -cameraMoveSpeed, moveInWorldPlane);
-		if (IsKeyDown(KEY_D)) CameraMoveRight(camera, cameraMoveSpeed, moveInWorldPlane);
+            if (x >= 0 && x < maxDimension && y >= 0 && y < maxDimension)
+            {
+				tile.TerrainHeightMap[(y * maxDimension) + x] = z;
+            }
 
-		if (IsKeyDown(KEY_Q)) CameraMoveUp(camera, -cameraMoveSpeed);
-		if (IsKeyDown(KEY_E)) CameraMoveUp(camera, cameraMoveSpeed);
-
-		// Gamepad movement
-		if (IsGamepadAvailable(0))
-		{
-			// Gamepad controller support
-			CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 2) * CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-			CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 2) * CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
-
-			if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) <= -0.25f) CameraMoveForward(camera, cameraMoveSpeed, moveInWorldPlane);
-			if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) <= -0.25f) CameraMoveRight(camera, -cameraMoveSpeed, moveInWorldPlane);
-			if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) >= 0.25f) CameraMoveForward(camera, -cameraMoveSpeed, moveInWorldPlane);
-			if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) >= 0.25f) CameraMoveRight(camera, cameraMoveSpeed, moveInWorldPlane);
-		}
-
-		if (mode == CAMERA_FREE)
-		{
-			if (IsKeyDown(KEY_SPACE)) CameraMoveUp(camera, cameraMoveSpeed);
-			if (IsKeyDown(KEY_LEFT_CONTROL)) CameraMoveUp(camera, -cameraMoveSpeed);
-		}
-	}
-
-	if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL) || (mode == CAMERA_FREE))
-	{
-		// Zoom target distance
-		CameraMoveToTarget(camera, -GetMouseWheelMove());
-		if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraMoveToTarget(camera, 2.0f);
-		if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
-	}
+			//tile.SetHeightAt(x, y, np);
+        }
+    }
 }
 
 void GameInit()
@@ -251,7 +209,7 @@ void GameInit()
 
 	TileMeshBuilder builder;
 
-    int grid = 8;
+    int grid = 10;
 
     Image testSplat = GenImageChecked(65, 65, 2, 2, Color{ 255,0,0,0 }, Color{ 0,255,0,0 });
     ImageDrawRectangle(&testSplat, 16, 16, 32, 32, Color{ 0,0,0,0 });
@@ -267,20 +225,25 @@ void GameInit()
 		for (int x = -grid; x < grid; x++)
 		{
 			auto& tile = Tiles.emplace_back(info);
-			Image heightmap = GenImagePerlinNoise(131, 131, (x * 128) - 1, (y * 128) - 1, perlinScale);
-			tile.SetHeightsFromImage(heightmap);
-			UnloadImage(heightmap);
-
-			tile.Splatmap = testSplatTexture;
-			
-			tile.LayerMaterials.push_back(&GrassMateral);
-			tile.LayerMaterials.push_back(&GroundMateral);
-			tile.LayerMaterials.push_back(&RoadMateral);
-
-			tile.Origin = TerrainPosition{ x, y };
-			builder.Build(tile);
+            tile.Origin = TerrainPosition{ x, y };
 		}
 	}
+
+    std::for_each(std::execution::par, Tiles.begin(), Tiles.end(), [&testSplatTexture, perlinScale](TerrainTile& tile)
+	{
+        GenerateTileFromPerlinNoise(tile, 131, 131, (tile.Origin.X * 128.0f) - 1, (tile.Origin.Y * 128.0f) - 1, perlinScale);
+
+        tile.Splatmap = testSplatTexture;
+
+        tile.LayerMaterials.push_back(&GrassMateral);
+        tile.LayerMaterials.push_back(&GroundMateral);
+        tile.LayerMaterials.push_back(&RoadMateral);
+    });
+
+    for (auto& tile : Tiles)
+    {
+        builder.Build(tile);
+    }
 
 	double endTime = GetTime();
 	TraceLog(LOG_INFO, "Terrain generation time: %f ms", (endTime - startTime) * 1000);

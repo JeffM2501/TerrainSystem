@@ -78,6 +78,9 @@ struct TerrainTile
 
     void SetHeightsFromImage(Image& image);
 
+    void InitHeightMap();
+    void SetHeightAt(int x, int y, float param);
+
     void AddMaterial(const TerrainMaterial* material);
 
     inline float GetLocalHeight(int x, int y) const
