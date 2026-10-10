@@ -7,18 +7,30 @@
 constexpr int MAX_MESH_VERTEX_BUFFERS = 9;
 
 TerrainTile::TerrainTile(TerrainInfo& info)
-    : Info(info)
+    : Info(info), MinZ(info.TerrainMinZ), MaxZ(info.TerrainMaxZ)
 {
-
+    Bounds = GetBoundingBox();
 }
 
 TerrainTile::~TerrainTile()
 {
 }
 
+BoundingBox TerrainTile::GetBoundingBox() const
+{
+    float minX = (float)Origin.X * Info.TerrainTileSize;
+    float minY = (float)Origin.Y * Info.TerrainTileSize;
+    float maxX = (float)(Origin.X + 1) * Info.TerrainTileSize;
+    float maxY = (float)(Origin.Y + 1) * Info.TerrainTileSize;
+    return BoundingBox{ Vector3{ minX, minY, MinZ }, Vector3{ maxX, maxY, MaxZ } };
+}
+
 void TerrainTile::SetHeightsFromImage(Image& image)
 {
     TerrainHeightMap.resize((Info.TerrainGridSize + 3) * (Info.TerrainGridSize + 3));
+
+    float minZ = 1e30f;
+    float maxZ = -1e30f;
 
     for (int y = 0; y < image.height; y++)
     {
@@ -30,8 +42,17 @@ void TerrainTile::SetHeightsFromImage(Image& image)
             z += Info.TerrainMinZ;
 
             TerrainHeightMap[index] = z;
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
         }
     }
+
+    if (minZ <= maxZ)
+    {
+        MinZ = minZ;
+        MaxZ = maxZ;
+    }
+    Bounds = GetBoundingBox();
 }
 
 void TerrainTile::InitHeightMap()
@@ -49,6 +70,9 @@ void TerrainTile::SetHeightAt(int x, int y, float param)
     {
         size_t index = (y * maxDimension) + x;
         TerrainHeightMap[index] = z;
+        if (z < MinZ) MinZ = z;
+        if (z > MaxZ) MaxZ = z;
+        Bounds = GetBoundingBox();
     }
 }
 

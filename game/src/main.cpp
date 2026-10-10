@@ -45,10 +45,15 @@ void IGNORE(const char*) {}
 
 
 int LODLevel = 0;
+bool EnableCulling = true;
+bool ShowBoundingBoxes = false;
+int VisibleTilesCount = 0;
+int CulledTilesCount = 0;
 
 #include "TerrainTile.h"
 #include "TerrainBuilder.h"
 #include "TerrainRender.h"
+#include "TerrainFrustum.h"
 
 #include <algorithm>
 #include <cmath>
@@ -209,7 +214,7 @@ void GameInit()
 
 	TileMeshBuilder builder;
 
-    int grid = 10;
+    int grid = 20;
 
     Image testSplat = GenImageChecked(65, 65, 2, 2, Color{ 255,0,0,0 }, Color{ 0,255,0,0 });
     ImageDrawRectangle(&testSplat, 16, 16, 32, 32, Color{ 0,0,0,0 });
@@ -321,6 +326,11 @@ bool GameUpdate()
 	if (IsKeyDown(KEY_FOUR))
 		LODLevel = 3;
 
+	if (IsKeyPressed(KEY_C))
+		EnableCulling = !EnableCulling;
+	if (IsKeyPressed(KEY_B))
+		ShowBoundingBoxes = !ShowBoundingBoxes;
+
 	SunVector[0] = sinf(float(GetTime()) / 4);
 	SunVector[1] = cosf(float(GetTime()) / 1.4f);
 	SunVector[1] = abs(cosf(float(GetTime()) / 2.4f));
@@ -369,9 +379,26 @@ void GameDraw()
 
 	DrawCube(Vector3{ 0,1,0 }, 0.125f, 2, 0.125f, PURPLE);
 	
+	Frustum frustum = Frustum::ExtractFromCurrent();
+	VisibleTilesCount = 0;
+	CulledTilesCount = 0;
+
 	//rlEnableWireMode();
 	for (int i = 0; i < Tiles.size(); i++)
 	{
+		BoundingBox box = Tiles[i].GetBoundingBox();
+		if (EnableCulling && !frustum.IsBoxVisible(box))
+		{
+			CulledTilesCount++;
+			if (ShowBoundingBoxes)
+				DrawBoundingBox(box, RED);
+			continue;
+		}
+
+		VisibleTilesCount++;
+		if (ShowBoundingBoxes)
+			DrawBoundingBox(box, GREEN);
+
         int lod = GetLODLevel(Tiles[i].Origin, ViewCameraState.Position);
         lod = std::max(LODLevel, lod);
 		if (lod >= MaxLODLevels)
@@ -418,9 +445,11 @@ void GameDraw()
 
 	EndMode3D();
 
-	DrawText(TextFormat("LOD Level = %d", LODLevel), 3, 20, 20, WHITE);
+	DrawText(TextFormat("LOD Level = %d (Keys 1-4)", LODLevel), 3, 20, 20, WHITE);
 	DrawText(TextFormat("Camera Pos: (%.1f, %.1f, %.1f)", ViewCameraState.Position.x, ViewCameraState.Position.y, ViewCameraState.Position.z), 3, 40, 20, WHITE);
 	DrawText(TextFormat("Terrain Height: %.2f (+%.1f offset)", GetTerrainHeight(ViewCameraState.Position.x, ViewCameraState.Position.y), ViewCameraState.Offset), 3, 60, 20, WHITE);
+	DrawText(TextFormat("Tiles Drawn: %d / %d (Culled: %d) [C] Culling: %s", VisibleTilesCount, (int)Tiles.size(), CulledTilesCount, EnableCulling ? "ON" : "OFF"), 3, 80, 20, EnableCulling ? GREEN : YELLOW);
+	DrawText(TextFormat("[B] Bounding Boxes: %s", ShowBoundingBoxes ? "ON" : "OFF"), 3, 100, 20, WHITE);
 	DrawFPS(3, 3);
 	EndDrawing();
 }

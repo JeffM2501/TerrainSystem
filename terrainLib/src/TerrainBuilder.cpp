@@ -289,6 +289,9 @@ void TileMeshBuilder::Build(TerrainTile& tile)
 
     float vertexScale = tile.Info.TerrainTileSize / tile.Info.TerrainGridSize;
 
+    float minZ = 1e30f;
+    float maxZ = -1e30f;
+
     // generate the attribute buffers
     int vertIndex = 0;
     for (int y = 0; y < tile.Info.TerrainGridSize + 1; y++)
@@ -296,6 +299,8 @@ void TileMeshBuilder::Build(TerrainTile& tile)
         for (int x = 0; x < tile.Info.TerrainGridSize + 1; x++)
         {
             float z = tile.GetLocalHeight(x, y);
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
 
             verts[(vertIndex * 3) + 0] = x * vertexScale;
             verts[(vertIndex * 3) + 1] = y * vertexScale;
@@ -314,6 +319,13 @@ void TileMeshBuilder::Build(TerrainTile& tile)
             vertIndex++;
         }
     }
+
+    if (minZ <= maxZ)
+    {
+        tile.MinZ = minZ;
+        tile.MaxZ = maxZ;
+    }
+    tile.Bounds = tile.GetBoundingBox();
 
     tile.VaoId = rlLoadVertexArray();
     rlEnableVertexArray(tile.VaoId);

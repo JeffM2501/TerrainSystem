@@ -56,6 +56,12 @@ struct TerrainTile
 
     TerrainPosition Origin = { 0,0 };
 
+    float MinZ = 0.0f;
+    float MaxZ = 0.0f;
+    BoundingBox Bounds = { 0 };
+
+    BoundingBox GetBoundingBox() const;
+
     std::vector<float> TerrainHeightMap;
 
     std::vector<const TerrainMaterial*> LayerMaterials;

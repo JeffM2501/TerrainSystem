@@ -3,6 +3,7 @@
 #include "raylib.h"
 
 #include "TerrainTile.h"
+#include "TerrainFrustum.h"
 
 #include <vector>
 #include <unordered_map>
@@ -29,4 +30,9 @@ public:
     void SetShader(Shader& shader);
 
     void Draw(TerrainTile& tile, size_t lod = 0, uint8_t transitionMask = 0, float* tint = nullptr);
+
+    inline bool IsVisible(const TerrainTile& tile, const Frustum& frustum) const
+    {
+        return frustum.IsBoxVisible(tile.GetBoundingBox());
+    }
 };
